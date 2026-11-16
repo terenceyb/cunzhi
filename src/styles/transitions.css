@@ -1,0 +1,739 @@
+/* ============================================================================
+   transitions.dev · 微交互规范层
+   ----------------------------------------------------------------------------
+   来源：transitions.dev/library（recipes.json v12）的原始 token 与 CSS 逐条搬运。
+   本项目约定（与规范一致的部分原样保留，只把状态载体统一）：
+     1. 只用原生 t-* class + CSS 变量，不引入 framer-motion / GSAP；
+     2. 状态一律由 data-state="open" | "closed" 驱动，配套原生 JS 切换；
+     3. 每条 recipe 自带 prefers-reduced-motion 兜底；
+     4. 时长 / 缓动 / 位移全部走变量，改一个变量即可统一调参。
+   状态映射说明（transitions.dev 原文 → 本项目）：
+     · modal / dropdown 原文用 .is-open / .is-closing → data-state="open" | "closed"
+     · panel / badge 原文用 data-open="true" | "false"  → data-state="open" | "closed"
+     · icon-swap 原文用 data-state="a" | "b"            → 同时支持 open/closed（open = 图标 a）
+     · error-shake 原文用 .is-error / .is-shaking        → data-state="error" / "shaking"
+     · number-pop-in 原文用 .is-animating                → data-state="open"（播完回 closed）
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- tokens */
+:root {
+  /* modal */
+  --modal-open-dur: 250ms;
+  --modal-close-dur: 150ms;
+  --modal-scale: 0.96;
+  --modal-scale-close: 0.96;
+  --modal-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* dropdown */
+  --dropdown-open-dur: 250ms;
+  --dropdown-close-dur: 150ms;
+  --dropdown-pre-scale: 0.97;
+  --dropdown-closing-scale: 0.99;
+  --dropdown-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* card resize */
+  --resize-dur: 300ms;
+  --resize-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* panel reveal */
+  --panel-open-dur: 400ms;
+  --panel-close-dur: 350ms;
+  --panel-translate-y: 100px;
+  --panel-blur: 2px;
+  --panel-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* number pop-in */
+  --digit-dur: 600ms;
+  --digit-exit-dur: 155ms;
+  --digit-enter-delay: 50ms;
+  --digit-stagger: 40ms;
+  --digit-distance: 0.52em;
+  --digit-exit-distance: 0.52em;
+  --digit-blur: max(0.067em, 0.171em - 2.1px);
+  --digit-lift: 0.125em;
+  --digit-start-scale: 0.7;
+  --digit-peak: 1.03;
+
+  /* icon swap */
+  --icon-swap-dur: 250ms;
+  --icon-swap-blur: 2px;
+  --icon-swap-start-scale: 0.25;
+  --icon-swap-ease: ease-in-out;
+
+  /* error shake */
+  --shake-distance: 6px;
+  --shake-overshoot: 4px;
+  --shake-dur-a: 80ms;
+  --shake-dur-b: 60ms;
+  --shake-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --revert-hold: 3000ms;
+  --revert-dur: 280ms;
+
+  /* notification badge */
+  --badge-slide-dur: 260ms;
+  --badge-pop-dur: 500ms;
+  --badge-pop-close-dur: 180ms;
+  --badge-fade-dur: 400ms;
+  --badge-fade-close-dur: 180ms;
+  --badge-blur: 2px;
+  --badge-offset-x: -8.2px;
+  --badge-offset-y: 12.4px;
+  --badge-slide-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --badge-pop-ease: cubic-bezier(0.34, 1.36, 0.64, 1);
+  --badge-close-ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* card tilt */
+  --tilt-perspective: 1000px;
+  --tilt-return: 1000ms;
+  --tilt-return-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --tilt-follow: 400ms;
+  --tilt-follow-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --tilt-glare-opacity: 0.32;
+  --tilt-glare-fade: 300ms;
+  --tilt-glare-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ==========================================================================
+   1. Modal open / close
+   ========================================================================== */
+.t-modal {
+  transform-origin: center;
+  transform: scale(var(--modal-scale));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--modal-open-dur) var(--modal-ease),
+    opacity var(--modal-open-dur) var(--modal-ease);
+  will-change: transform, opacity;
+}
+.t-modal[data-state='open'] {
+  transform: scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+.t-modal[data-state='closed'] {
+  transform: scale(var(--modal-scale-close));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--modal-close-dur) var(--modal-ease),
+    opacity var(--modal-close-dur) var(--modal-ease);
+}
+
+/* 遮罩层：与 modal 同源 token，只动 opacity，收放同步 */
+.t-scrim {
+  opacity: 0;
+  transition: opacity var(--modal-open-dur) var(--modal-ease);
+}
+.t-scrim[data-state='open'] {
+  opacity: 1;
+}
+.t-scrim[data-state='closed'] {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--modal-close-dur) var(--modal-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-modal,
+  .t-scrim {
+    transition: none !important;
+  }
+}
+
+/* ==========================================================================
+   2. Dropdown menu（origin-aware）
+   ========================================================================== */
+.t-dropdown {
+  transform-origin: top left;
+  transform: scale(var(--dropdown-pre-scale));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--dropdown-open-dur) var(--dropdown-ease),
+    opacity var(--dropdown-open-dur) var(--dropdown-ease);
+  will-change: transform, opacity;
+}
+.t-dropdown[data-origin='top-right'] {
+  transform-origin: top right;
+}
+.t-dropdown[data-origin='top-center'] {
+  transform-origin: top center;
+}
+.t-dropdown[data-origin='bottom-left'] {
+  transform-origin: bottom left;
+}
+.t-dropdown[data-origin='bottom-center'] {
+  transform-origin: bottom center;
+}
+.t-dropdown[data-origin='bottom-right'] {
+  transform-origin: bottom right;
+}
+.t-dropdown[data-state='open'] {
+  transform: scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+.t-dropdown[data-state='closed'] {
+  transform: scale(var(--dropdown-closing-scale));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--dropdown-close-dur) var(--dropdown-ease),
+    opacity var(--dropdown-close-dur) var(--dropdown-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-dropdown {
+    transition: none !important;
+  }
+}
+
+/* ==========================================================================
+   3. Card resize
+   ========================================================================== */
+.t-resize {
+  transition:
+    width var(--resize-dur) var(--resize-ease),
+    height var(--resize-dur) var(--resize-ease);
+  /* 不挂常驻 will-change：侧栏一直在 DOM 里，提前提层会让导航文字发虚，
+     而这层过渡只有 300ms、元素少，浏览器自己会处理 */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-resize {
+    transition: none !important;
+  }
+}
+
+/* ==========================================================================
+   4. Panel reveal
+   ========================================================================== */
+.t-panel-slide {
+  transform: translateY(var(--panel-translate-y));
+  opacity: 0;
+  filter: blur(var(--panel-blur));
+  pointer-events: none;
+  transition:
+    transform var(--panel-close-dur) var(--panel-ease),
+    opacity var(--panel-close-dur) var(--panel-ease),
+    filter var(--panel-close-dur) var(--panel-ease);
+  /* filter 本身就会建层，不再叠 will-change，避免面板里的正文发虚 */
+}
+.t-panel-slide[data-state='open'] {
+  transform: translateY(0);
+  opacity: 1;
+  filter: blur(0);
+  pointer-events: auto;
+  transition:
+    transform var(--panel-open-dur) var(--panel-ease),
+    opacity var(--panel-open-dur) var(--panel-ease),
+    filter var(--panel-open-dur) var(--panel-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-panel-slide {
+    transition: none !important;
+  }
+}
+
+/* ==========================================================================
+   5. Number pop-in（3D 鼓轮换位）
+   ========================================================================== */
+.t-digit-group {
+  display: inline-flex;
+  align-items: baseline;
+  font-variant-numeric: tabular-nums;
+}
+.t-digit-slot {
+  position: relative;
+  display: inline-block;
+  /* 裁掉上下溢出的旧/新数字，徽标这种小尺寸容器里才像鼓轮而不是文字外溢 */
+  overflow: hidden;
+}
+.t-digit-old {
+  position: absolute;
+  inset: 0;
+  text-align: center;
+  pointer-events: none;
+}
+.t-digit {
+  display: inline-block;
+}
+.t-digit-group[data-state='open'] .t-digit {
+  animation: t-digit-in var(--digit-dur) linear both;
+  animation-delay: calc(var(--digit-stagger) * var(--digit-i, 0) + var(--digit-enter-delay));
+}
+.t-digit-group[data-state='open'] .t-digit-old {
+  animation: t-digit-out var(--digit-exit-dur) linear both;
+  animation-delay: calc(var(--digit-stagger) * var(--digit-i, 0));
+}
+.t-digit-group[data-state='open'] [data-stagger='1'] {
+  --digit-i: 1;
+}
+.t-digit-group[data-state='open'] [data-stagger='2'] {
+  --digit-i: 2;
+}
+/* 新旧数字共用的高位数字保持不动，只换变了的位 */
+.t-digit-group[data-state='open'] .t-digit[data-same] {
+  animation: none;
+}
+
+@keyframes t-digit-in {
+  0% {
+    transform: translateY(calc(var(--digit-distance) * 1 + var(--digit-lift) * 0)) scale(var(--digit-start-scale));
+    opacity: 0;
+    filter: blur(calc(var(--digit-blur) * 1));
+  }
+  5% {
+    transform: translateY(calc(var(--digit-distance) * 0.941 + var(--digit-lift) * 0.216)) scale(var(--digit-start-scale));
+    opacity: 0.059;
+    filter: blur(calc(var(--digit-blur) * 1));
+  }
+  10% {
+    transform: translateY(calc(var(--digit-distance) * 0.755 + var(--digit-lift) * 0.648)) scale(var(--digit-start-scale));
+    opacity: 0.245;
+    filter: blur(calc(var(--digit-blur) * 1));
+  }
+  15% {
+    transform: translateY(calc(var(--digit-distance) * 0.475 + var(--digit-lift) * 0.972)) scale(var(--digit-start-scale));
+    opacity: 0.525;
+    filter: blur(calc(var(--digit-blur) * 1));
+  }
+  20% {
+    transform: translateY(calc(var(--digit-distance) * 0.206 + var(--digit-lift) * 0.792))
+      scale(calc(1 + (var(--digit-start-scale) - 1) * 0.792));
+    opacity: 0.794;
+    filter: blur(calc(var(--digit-blur) * 0.9));
+  }
+  25% {
+    transform: translateY(calc(var(--digit-distance) * 0.041 + var(--digit-lift) * 0.392))
+      scale(calc(1 + (var(--digit-start-scale) - 1) * 0.392));
+    opacity: 0.959;
+    filter: blur(calc(var(--digit-blur) * 0.75));
+  }
+  30% {
+    transform: translateY(calc(var(--digit-distance) * 0 + var(--digit-lift) * 0.033))
+      scale(calc(1 + (var(--digit-start-scale) - 1) * 0.033));
+    opacity: 1;
+    filter: blur(calc(var(--digit-blur) * 0.6));
+  }
+  35% {
+    transform: translateY(calc(var(--digit-distance) * 0 + var(--digit-lift) * -0.194))
+      scale(calc(1 + (var(--digit-peak) - 1) * 0.711));
+    opacity: 1;
+    filter: blur(calc(var(--digit-blur) * 0.45));
+  }
+  40% {
+    transform: translateY(calc(var(--digit-distance) * 0 + var(--digit-lift) * -0.272))
+      scale(calc(1 + (var(--digit-peak) - 1) * 0.997));
+    opacity: 1;
+    filter: blur(calc(var(--digit-blur) * 0.3));
+  }
+  45% {
+    transform: translateY(calc(var(--digit-distance) * 0 + var(--digit-lift) * -0.238))
+      scale(calc(1 + (var(--digit-peak) - 1) * 0.87));
+    opacity: 1;
+    filter: blur(calc(var(--digit-blur) * 0.15));
+  }
+  50% {
+    transform: translateY(calc(var(--digit-distance) * 0 + var(--digit-lift) * -0.146))
+      scale(calc(1 + (var(--digit-peak) - 1) * 0.535));
+    opacity: 1;
+    filter: blur(calc(var(--digit-blur) * 0));
+  }
+  55% {
+    transform: translateY(calc(var(--digit-distance) * 0 + var(--digit-lift) * -0.05))
+      scale(calc(1 + (var(--digit-peak) - 1) * 0.183));
+    opacity: 1;
+    filter: blur(calc(var(--digit-blur) * 0));
+  }
+  60% {
+    transform: translateY(calc(var(--digit-distance) * 0 + var(--digit-lift) * 0.019))
+      scale(calc(1 + (var(--digit-peak) - 1) * -0.069));
+    opacity: 1;
+    filter: blur(calc(var(--digit-blur) * 0));
+  }
+  65% {
+    transform: translateY(calc(var(--digit-distance) * 0 + var(--digit-lift) * 0.05))
+      scale(calc(1 + (var(--digit-peak) - 1) * -0.185));
+    opacity: 1;
+    filter: blur(calc(var(--digit-blur) * 0));
+  }
+  70% {
+    transform: translateY(calc(var(--digit-distance) * 0 + var(--digit-lift) * 0.051))
+      scale(calc(1 + (var(--digit-peak) - 1) * -0.187));
+    opacity: 1;
+    filter: blur(calc(var(--digit-blur) * 0));
+  }
+  75% {
+    transform: translateY(calc(var(--digit-distance) * 0 + var(--digit-lift) * 0.035))
+      scale(calc(1 + (var(--digit-peak) - 1) * -0.128));
+    opacity: 1;
+    filter: blur(calc(var(--digit-blur) * 0));
+  }
+  80% {
+    transform: translateY(calc(var(--digit-distance) * 0 + var(--digit-lift) * 0.016))
+      scale(calc(1 + (var(--digit-peak) - 1) * -0.057));
+    opacity: 1;
+    filter: blur(calc(var(--digit-blur) * 0));
+  }
+  85% {
+    transform: translateY(calc(var(--digit-distance) * 0 + var(--digit-lift) * 0.002))
+      scale(calc(1 + (var(--digit-peak) - 1) * -0.007));
+    opacity: 1;
+    filter: blur(calc(var(--digit-blur) * 0));
+  }
+  90% {
+    transform: translateY(calc(var(--digit-distance) * 0 + var(--digit-lift) * -0.004))
+      scale(calc(1 + (var(--digit-peak) - 1) * 0.013));
+    opacity: 1;
+    filter: blur(calc(var(--digit-blur) * 0));
+  }
+  95% {
+    transform: translateY(calc(var(--digit-distance) * 0 + var(--digit-lift) * -0.003))
+      scale(calc(1 + (var(--digit-peak) - 1) * 0.011));
+    opacity: 1;
+    filter: blur(calc(var(--digit-blur) * 0));
+  }
+  100% {
+    transform: translateY(calc(var(--digit-distance) * 0 + var(--digit-lift) * 0)) scale(1);
+    opacity: 1;
+    filter: blur(calc(var(--digit-blur) * 0));
+  }
+}
+@keyframes t-digit-out {
+  0% {
+    transform: translateY(calc(var(--digit-exit-distance) * 0)) scale(calc(1 + (var(--digit-start-scale) - 1) * 0));
+    opacity: 1;
+    filter: blur(calc(var(--digit-blur) * 0));
+  }
+  10% {
+    transform: translateY(calc(var(--digit-exit-distance) * -0.009)) scale(calc(1 + (var(--digit-start-scale) - 1) * 0.009));
+    opacity: 1;
+    filter: blur(calc(var(--digit-blur) * 0.009));
+  }
+  20% {
+    transform: translateY(calc(var(--digit-exit-distance) * -0.042)) scale(calc(1 + (var(--digit-start-scale) - 1) * 0.042));
+    opacity: 1;
+    filter: blur(calc(var(--digit-blur) * 0.042));
+  }
+  30% {
+    transform: translateY(calc(var(--digit-exit-distance) * -0.112)) scale(calc(1 + (var(--digit-start-scale) - 1) * 0.112));
+    opacity: 1;
+    filter: blur(calc(var(--digit-blur) * 0.112));
+  }
+  40% {
+    transform: translateY(calc(var(--digit-exit-distance) * -0.252)) scale(calc(1 + (var(--digit-start-scale) - 1) * 0.252));
+    opacity: 1;
+    filter: blur(calc(var(--digit-blur) * 0.252));
+  }
+  50% {
+    transform: translateY(calc(var(--digit-exit-distance) * -0.5)) scale(calc(1 + (var(--digit-start-scale) - 1) * 0.5));
+    opacity: 0.833;
+    filter: blur(calc(var(--digit-blur) * 0.5));
+  }
+  60% {
+    transform: translateY(calc(var(--digit-exit-distance) * -0.748)) scale(calc(1 + (var(--digit-start-scale) - 1) * 0.748));
+    opacity: 0.42;
+    filter: blur(calc(var(--digit-blur) * 0.748));
+  }
+  70% {
+    transform: translateY(calc(var(--digit-exit-distance) * -0.888)) scale(calc(1 + (var(--digit-start-scale) - 1) * 0.888));
+    opacity: 0.187;
+    filter: blur(calc(var(--digit-blur) * 0.888));
+  }
+  80% {
+    transform: translateY(calc(var(--digit-exit-distance) * -0.958)) scale(calc(1 + (var(--digit-start-scale) - 1) * 0.958));
+    opacity: 0.069;
+    filter: blur(calc(var(--digit-blur) * 0.958));
+  }
+  90% {
+    transform: translateY(calc(var(--digit-exit-distance) * -0.991)) scale(calc(1 + (var(--digit-start-scale) - 1) * 0.991));
+    opacity: 0.015;
+    filter: blur(calc(var(--digit-blur) * 0.991));
+  }
+  100% {
+    transform: translateY(calc(var(--digit-exit-distance) * -1)) scale(calc(1 + (var(--digit-start-scale) - 1) * 1));
+    opacity: 0;
+    filter: blur(calc(var(--digit-blur) * 1));
+  }
+}
+
+/* 静止态（closed）不渲染旧数字：否则动画撤掉后旧数字会以 opacity:1 留在原位，
+   和新数字叠在一起 */
+.t-digit-group[data-state='closed'] .t-digit-old {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-digit-group .t-digit {
+    animation: none !important;
+  }
+  .t-digit-group .t-digit-old {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   6. Icon swap
+   ========================================================================== */
+.t-icon-swap {
+  position: relative;
+  display: inline-grid;
+}
+.t-icon-swap .t-icon {
+  grid-area: 1 / 1;
+  transition:
+    opacity var(--icon-swap-dur) var(--icon-swap-ease),
+    filter var(--icon-swap-dur) var(--icon-swap-ease),
+    transform var(--icon-swap-dur) var(--icon-swap-ease);
+  /* 不加 will-change：会按 0.25 起始缩放冻结位图，放大后发虚 */
+}
+.t-icon-swap[data-state='open'] .t-icon[data-icon='a'],
+.t-icon-swap[data-state='a'] .t-icon[data-icon='a'],
+.t-icon-swap[data-state='closed'] .t-icon[data-icon='b'],
+.t-icon-swap[data-state='b'] .t-icon[data-icon='b'] {
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
+}
+.t-icon-swap[data-state='open'] .t-icon[data-icon='b'],
+.t-icon-swap[data-state='a'] .t-icon[data-icon='b'],
+.t-icon-swap[data-state='closed'] .t-icon[data-icon='a'],
+.t-icon-swap[data-state='b'] .t-icon[data-icon='a'] {
+  opacity: 0;
+  filter: blur(var(--icon-swap-blur));
+  transform: scale(var(--icon-swap-start-scale));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-icon-swap .t-icon {
+    transition: none !important;
+  }
+}
+
+/* ==========================================================================
+   7. Error state shake
+   ========================================================================== */
+.t-input {
+  transition: border-color 150ms ease-out;
+}
+.t-input[data-state='error'] {
+  transition: border-color var(--revert-dur, 280ms) ease-out;
+}
+.t-error-msg {
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--revert-dur, 280ms) ease-out,
+    visibility 0s linear var(--revert-dur, 280ms);
+}
+.t-input-wrap[data-state='error'] .t-error-msg {
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity var(--revert-dur, 280ms) ease-out,
+    visibility 0s linear 0s;
+}
+.t-input[data-state='shaking'] {
+  animation: t-input-shake calc(var(--shake-dur-a) * 2 + var(--shake-dur-b) * 2) linear;
+}
+@keyframes t-input-shake {
+  0% {
+    transform: translateX(0);
+    animation-timing-function: var(--shake-ease);
+  }
+  28.57% {
+    transform: translateX(var(--shake-distance));
+    animation-timing-function: var(--shake-ease);
+  }
+  57.14% {
+    transform: translateX(calc(var(--shake-distance) * -1));
+    animation-timing-function: var(--shake-ease);
+  }
+  78.57% {
+    transform: translateX(var(--shake-overshoot));
+    animation-timing-function: var(--shake-ease);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-input {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+/* ==========================================================================
+   8. Notification badge
+   ========================================================================== */
+@keyframes t-badge-slide-in {
+  from {
+    transform: translate(var(--badge-offset-x), var(--badge-offset-y));
+  }
+  to {
+    transform: translate(0, 0);
+  }
+}
+.t-badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  pointer-events: none;
+  will-change: transform;
+}
+.t-badge[data-state='open'] {
+  animation: t-badge-slide-in var(--badge-slide-dur) var(--badge-slide-ease);
+}
+.t-badge-dot {
+  display: block;
+  transform-origin: center;
+  transform: scale(1);
+  opacity: 1;
+  filter: blur(0);
+  transition:
+    transform var(--badge-pop-dur) var(--badge-pop-ease),
+    opacity var(--badge-fade-dur) var(--badge-pop-ease),
+    filter var(--badge-pop-dur) var(--badge-pop-ease);
+  will-change: transform, opacity, filter;
+}
+.t-badge[data-state='closed'] .t-badge-dot {
+  transform: scale(0);
+  opacity: 0;
+  filter: blur(var(--badge-blur));
+  transition:
+    transform var(--badge-pop-close-dur) var(--badge-close-ease),
+    opacity var(--badge-fade-close-dur) var(--badge-close-ease),
+    filter var(--badge-pop-close-dur) var(--badge-close-ease);
+}
+/* 行内变体：不脱离文档流，用于导航计数等已就位的槽位（只改布局，不改动效） */
+.t-badge.is-inline {
+  position: relative;
+  top: auto;
+  right: auto;
+  display: inline-flex;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-badge,
+  .t-badge-dot {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ==========================================================================
+   9. Card tilt（3D 悬浮倾斜 + 光标跟随高光）
+   --------------------------------------------------------------------------
+   原文：外层 .t-tilt 是不形变的平整命中区，内层 .t-tilt-card 承担 rotateX/Y，
+   另有一层 .t-tilt-glare 用 screen 混合叠出随光标的柔光。
+
+   本项目三处适配（其余逐字沿用规范）：
+     a) 状态容器统一：原文 .is-hover / .is-tilting → data-state="open" | "closed"
+        （.t-tilt 的 open = 指针在卡上，.t-tilt-card 的 open = 正在跟随指针）
+     b) 去掉 touch-action: none：规范用它让手指按住拖拽倾斜，但人脉卡在可滚动
+       列表里，禁止纵向手势会让列表滑不动。改为只在鼠标指针下启用（JS 里
+       按 pointerType 判断），触摸端保持原生滚动 + 点击进详情。
+     c) 圆角 / 溢出交给宿主（.wallet-card 已有 20px 圆角 + overflow:hidden），
+       本段只负责运动本身。
+   ========================================================================== */
+.t-tilt {
+  display: flex;
+  height: 100%;
+  /* 命中区铺满网格单元格，倾斜才不会只在中段生效 */
+  min-width: 0;
+}
+.t-tilt-card {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  transform: perspective(var(--tilt-perspective)) rotateX(var(--tilt-rx, 0deg)) rotateY(var(--tilt-ry, 0deg));
+  transform-style: preserve-3d;
+  transition: transform var(--tilt-return) var(--tilt-return-ease);
+}
+/* 指针移动中：换成短时长缓动，让倾斜 1:1 跟手 */
+.t-tilt-card[data-state='open'] {
+  transition: transform var(--tilt-follow) var(--tilt-follow-ease);
+}
+/* 只在真正要动的时候提合成层：常驻 will-change 会让卡片文字发虚 */
+.t-tilt:hover .t-tilt-card {
+  will-change: transform;
+}
+.t-tilt-glare {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  mix-blend-mode: screen;
+  background:
+    radial-gradient(
+      circle 95px at var(--tilt-gx, 50%) var(--tilt-gy, 50%),
+      rgba(255, 255, 255, 0.48),
+      rgba(255, 255, 255, 0.06) 52%,
+      rgba(255, 255, 255, 0) 84%
+    ),
+    radial-gradient(
+      circle 200px at var(--tilt-gx, 50%) var(--tilt-gy, 50%),
+      rgba(255, 255, 255, 0.22),
+      rgba(255, 255, 255, 0.04) 58%,
+      rgba(255, 255, 255, 0) 78%
+    ),
+    radial-gradient(
+      circle 360px at var(--tilt-gx, 50%) var(--tilt-gy, 50%),
+      rgba(255, 255, 255, 0.1),
+      rgba(255, 255, 255, 0) 88%
+    );
+  transition: opacity var(--tilt-glare-fade) var(--tilt-glare-ease);
+}
+.t-tilt[data-state='open'] .t-tilt-glare {
+  opacity: var(--tilt-glare-opacity);
+}
+/* 触屏设备（无 hover 且粗指针）不启用倾斜，高光层也不必参与合成 */
+@media (hover: none) and (pointer: coarse) {
+  .t-tilt-glare {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-tilt-card {
+    transform: none !important;
+    transition: none !important;
+  }
+  .t-tilt[data-state='open'] .t-tilt-glare {
+    opacity: 0 !important;
+  }
+}
+
+/* ==========================================================================
+   10. 全局兜底：减少动态偏好下所有 recipe token 归零
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --modal-open-dur: 0ms;
+    --modal-close-dur: 0ms;
+    --dropdown-open-dur: 0ms;
+    --dropdown-close-dur: 0ms;
+    --resize-dur: 0ms;
+    --panel-open-dur: 0ms;
+    --panel-close-dur: 0ms;
+    --digit-dur: 0ms;
+    --digit-exit-dur: 0ms;
+    --digit-enter-delay: 0ms;
+    --digit-stagger: 0ms;
+    --icon-swap-dur: 0ms;
+    --badge-slide-dur: 0ms;
+    --badge-pop-dur: 0ms;
+    --badge-fade-dur: 0ms;
+    --badge-pop-close-dur: 0ms;
+    --badge-fade-close-dur: 0ms;
+    --revert-dur: 0ms;
+    --tilt-return: 0ms;
+    --tilt-follow: 0ms;
+    --tilt-glare-fade: 0ms;
+  }
+}
