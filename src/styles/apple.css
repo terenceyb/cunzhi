@@ -693,7 +693,9 @@ html[data-theme='dark'] {
   font-weight: 600;
 }
 .set-card-body {
-  padding: 4px 0;
+  /* 左右必须有内边距：否则 .kv .k / .field-label / 说明文字贴着卡片边缘，
+     比卡片头（14px 内缩）还靠左，看起来像排版错乱 */
+  padding: 10px 14px;
 }
 /* 设置项行高与缩进：像 iOS 的 grouped list，行与行之间只留发丝线 */
 .set-row {
@@ -1607,9 +1609,15 @@ html[data-theme='dark'] .save-pill.no-file .led {
   .set-list {
     border-radius: 18px;
   }
-  .set-row {
+  /* 一级清单的整行是可点按钮，自己带 14px 内缩；
+     卡片内的 .set-row 父级 .set-card-body 已有 14px，这里不能再缩进，否则双倍留白 */
+  .set-index .set-row {
     min-height: 62px;
     padding: 12px 14px;
+    gap: 12px;
+  }
+  .set-card-body .set-row {
+    padding: 11px 0;
     gap: 12px;
   }
   .set-row-icon {
@@ -1793,5 +1801,118 @@ html[data-theme='dark'] .save-pill.no-file .led {
     border-radius: 11px;
     background: var(--surface-2);
     font-size: 16px;
+  }
+}
+
+/* ================================================================================
+   v2.9 · 首页卡片重做 + 人脉卡堆修正 + 设置内页排版
+   ----------------------------------------------------------------------------
+   ---------------- 1. 首页三张卡片：去角影、去淡蓝，改沉稳中性 ---------------- */
+/* 1.1 顶角两道弧形阴影：整个拿掉（原 v2.8 用 ::before 画的径向渐变） */
+.dash-flow .dash-module::before {
+  display: none !important;
+}
+/* 1.2 卡片头：不再铺主题色（默认靛蓝）柔光，改纯卡片底 + 中性发丝线 */
+.dash-page .dash-module-head {
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+}
+/* 图标块：深墨底 + 白图标，像设置页的方形图标，沉稳不轻飘 */
+.dash-page .dash-module-icon {
+  color: var(--surface);
+  background: var(--text);
+  box-shadow: none;
+}
+html[data-theme='dark'] .dash-page .dash-module-icon {
+  color: #1c1c1e;
+  background: #f5f5f7;
+}
+/* 计数徽标：中性浅灰底 + 深灰字，去掉那一抹蓝 */
+.dash-page .dash-module-head .badge,
+.dash-page .dash-module-head .badge.soft {
+  background: var(--surface-3);
+  color: var(--text-2);
+  box-shadow: none;
+}
+.dash-page .dash-module-head .actions .btn.icon.sm:hover {
+  background: var(--surface-3);
+}
+
+/* ---------------- 2. 人脉卡堆 ---------------- */
+@media (max-width: 767px) {
+  /* 2.1 删掉固定卡下方那道「进卡口」阴影元素（槽体 + 两瓣唇片一起隐藏） */
+  .w2-slotmouth {
+    display: none !important;
+  }
+  /* 固定卡底部那道投影也去掉，交界处干净利落 */
+  .w2-pin .w2-card {
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+  }
+  /* 2.2 顶部搜索/筛选区改实底：堆叠卡上滑到这里被完全遮住，
+     不再透过液态玻璃看到下面滑过的卡片；固定卡下沿 = 卡片消失的位置 */
+  .people-toolbar {
+    background: var(--bg) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  /* 工具栏与固定卡之间那条投影也去掉（否则工具条下沿会露出一条灰影） */
+  .people-toolbar::after {
+    display: none;
+  }
+  /* 2.3 卡堆底部留足空间，最后一张卡能完整滚上来不被玻璃导航挡住 */
+  .people-scroll {
+    padding-bottom: calc(118px + var(--safe-b)) !important;
+  }
+}
+
+/* ---------------- 3. 设置内页排版 ---------------- */
+/* 3.1 我的信息：.page-embed 继承 .page 的 max-width + margin:auto，
+     在窄容器里残留约 9px 自动外边距，导致整块比别的卡片多缩进一圈 */
+.page-embed {
+  margin: 0 !important;
+  width: 100%;
+}
+/* 名片卡与表单卡左右对齐到同一条轴；卡片自己不再有横向缩进 */
+.settings-detail-body .page-embed > .card,
+.settings-detail-body .page-embed > .set-card {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+/* 3.2 数据包管理：顶部那条蓝色提示版式重做 ——
+     原来是 .banner.info 的 flex + 硬编码蓝边框，长文案挤成一坨。
+     改成有呼吸感的卡片式提示：图标单独占列、文字左对齐、去掉刺眼描边。 */
+.settings-section > .banner.info {
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px 14px;
+  border: 0;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface));
+  color: var(--text-2);
+  font-size: 12.5px;
+  line-height: 1.65;
+  box-shadow: 0 0 0 0.5px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.settings-section > .banner.info > svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: var(--accent);
+}
+/* 卡片内的 KV：键不再固定 96px（手机上把值挤到只剩一半），
+     改成键短、值自适应，长值换行不重叠 */
+.set-card-body .kv .k {
+  flex: 0 0 auto;
+  min-width: 72px;
+}
+.set-card-body .kv .v {
+  text-align: right;
+}
+
+/* 3.3 关于存知：那个 340px 高的「弹性面板缩放」交互样张在手机上
+     只剩一块空白大方框，既没内容又占地方 —— 隐藏整张卡片（头 + 空场景） */
+@media (max-width: 767px) {
+  .settings-section > .set-card:has(.epr-scene) {
+    display: none;
   }
 }
