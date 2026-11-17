@@ -82,6 +82,8 @@ const TAB_HINT: Record<string, string> = {
 export function Settings() {
   const tab = useUI((s) => s.settingsTab)
   const openTab = useUI((s) => s.openSettingsTab)
+  const detail = useUI((s) => s.settingsDetail)
+  const backToIndex = useUI((s) => s.backToSettingsIndex)
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768)
 
   useEffect(() => {
@@ -106,32 +108,48 @@ export function Settings() {
     </>
   )
 
-  /* 移动端：不再一层层点进去，所有分组排在一条长页里上下滑动；
-     顶部一排粘住的胶囊只负责跳转，不做分页，少一次点击也少一次「回退」的困惑。 */
+  /* 移动端：两级结构。
+     一级是一张分组的清单（图标 + 名称 + 一句说明 + 右箭头），
+     点哪一条进哪一页，页面顶部留返回；从底部导航进设置永远落回这张清单。 */
   if (isMobile) {
+    if (!detail) {
+      return (
+        <div className="settings-index">
+          <ul className="settings-list">
+            {NAV.map((n) => (
+              <li key={n.key}>
+                <button className="settings-item" onClick={() => openTab(n.key)}>
+                  <span className="settings-item-icon" aria-hidden="true">
+                    {n.icon}
+                  </span>
+                  <span className="settings-item-text">
+                    <span className="settings-item-label">{n.label}</span>
+                    <span className="settings-item-hint">{TAB_HINT[n.key]}</span>
+                  </span>
+                  <ChevronRight size={17} className="settings-item-arrow" aria-hidden="true" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+    }
+
     return (
-      <div className="settings-sheet">
-        <nav className="settings-jump" aria-label="设置分组">
-          {NAV.map((n) => (
-            <button
-              key={n.key}
-              className={cn('settings-jump-item', tab === n.key && 'on')}
-              onClick={() => {
-                openTab(n.key)
-                document
-                  .getElementById(`setsec-${n.key}`)
-                  ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              }}
-            >
-              {n.label}
-            </button>
-          ))}
-        </nav>
-        {NAV.map((n) => (
-          <div key={n.key} id={`setsec-${n.key}`} className="settings-block">
-            {renderPanel(n.key)}
-          </div>
-        ))}
+      <div className="settings-detail">
+        {/* 标题交给正文自己出（各分页本来就有大标题），这里只放回上层的入口，
+            否则「字段管理」会在同一屏出现两次 */}
+        <div className="settings-detail-head">
+          <button className="btn icon sm glass-icon" onClick={backToIndex} aria-label="返回设置清单">
+            <ChevronLeft size={17} />
+          </button>
+          <button className="settings-detail-crumb" onClick={backToIndex}>
+            设置
+          </button>
+        </div>
+        <div className="settings-detail-body" key={tab}>
+          {renderPanel(tab)}
+        </div>
       </div>
     )
   }
@@ -259,7 +277,7 @@ function AppearanceSettings() {
           </label>
         </div>
         <p className="field-hint accent-hint">
-          默认是「云母」——带一点暖调的浅灰褐，长时间看不累；换任何颜色，按钮、选中态、图表都会跟着走。
+          默认是「素白」——几乎无彩的冷灰，白底上最不抢内容；换任何颜色，按钮、选中态、图标、图表都会跟着走。
         </p>
       </div>
 

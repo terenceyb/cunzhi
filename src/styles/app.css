@@ -7767,56 +7767,109 @@ html[data-theme='dark'] .ix-range.on {
   margin-left: 0;
 }
 
-/* ---- 移动端设置：一条长页，顶部胶囊只做锚点 ---- */
-.settings-sheet {
+/* ---- 移动端设置：一级清单 → 二级分页 ---- */
+.settings-index {
+  padding: 4px 14px calc(150px + var(--safe-b));
+}
+.settings-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 22px;
-  padding: 8px 14px calc(150px + var(--safe-b));
+  gap: 8px;
 }
-.settings-jump {
+.settings-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 13px;
+  border-radius: 15px;
+  text-align: left;
+  color: var(--text);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.46));
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 1px rgba(17, 22, 30, 0.04),
+    0 10px 24px -18px rgba(50, 48, 60, 0.6);
+  transition: transform 0.15s var(--ease-out), background 0.15s ease;
+}
+.settings-item:active {
+  transform: scale(0.985);
+}
+html[data-theme='dark'] .settings-item {
+  background: linear-gradient(160deg, rgba(62, 66, 76, 0.62), rgba(28, 31, 38, 0.5));
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 10px 24px -18px rgba(0, 0, 0, 0.8);
+}
+.settings-item-icon {
+  flex: 0 0 auto;
+  width: 35px;
+  height: 35px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  color: var(--text-2);
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+  box-shadow: inset 0 0 0 1px rgba(17, 22, 30, 0.05);
+}
+html[data-theme='dark'] .settings-item-icon {
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+}
+.settings-item-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.settings-item-label {
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+.settings-item-hint {
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--text-3);
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+}
+.settings-item-arrow {
+  flex: 0 0 auto;
+  color: var(--text-3);
+}
+
+.settings-detail {
+  padding-bottom: calc(150px + var(--safe-b));
+}
+.settings-detail-head {
   position: sticky;
-  top: -2px;
+  top: 0;
   z-index: 6;
   display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  padding: 8px 0 10px;
-  margin: -8px 0 0;
-  scrollbar-width: none;
-  background: linear-gradient(to bottom, var(--bg) 78%, transparent);
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px 10px;
+  background: linear-gradient(to bottom, var(--bg) 76%, transparent);
 }
-.settings-jump::-webkit-scrollbar {
-  display: none;
-}
-.settings-jump-item {
-  flex: 0 0 auto;
-  height: 32px;
-  padding: 0 12px;
-  border-radius: 11px;
-  font-size: 12.5px;
-  color: var(--text-2);
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.66), rgba(255, 255, 255, 0.34));
-  border: 1px solid rgba(255, 255, 255, 0.76);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
-}
-html[data-theme='dark'] .settings-jump-item {
-  background: linear-gradient(160deg, rgba(62, 66, 76, 0.62), rgba(28, 31, 38, 0.5));
-  border-color: rgba(255, 255, 255, 0.13);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
-}
-.settings-jump-item.on {
-  background: rgba(255, 255, 255, 0.95);
-  color: var(--text);
+.settings-detail-crumb {
+  font-size: 13px;
   font-weight: 600;
+  color: var(--text-2);
+  padding: 4px 2px;
 }
-html[data-theme='dark'] .settings-jump-item.on {
-  background: rgba(255, 255, 255, 0.16);
+.settings-detail-crumb:hover {
+  color: var(--text);
 }
-.settings-block {
-  scroll-margin-top: 56px;
+.settings-detail-body {
+  padding: 2px 14px 10px;
 }
 
 /* 侧栏与顶栏的立体图标：跟文字基线对齐，选中时全亮 */
@@ -7834,4 +7887,17 @@ html[data-theme='dark'] .nav-item > .gi {
 }
 .btn.icon > .gi {
   display: block;
+}
+
+/* 二级页在窄屏：行内操作组（开关 + 查看/编辑/删除）挤不下时整组换行右对齐，
+   别跟主标题抢同一行，否则开关和按钮会各自折行、左边缘参差 */
+@media (max-width: 640px) {
+  .settings-detail-body .field-manage-row {
+    flex-wrap: wrap;
+  }
+  .settings-detail-body .field-manage-row > .row:last-child {
+    flex: 0 0 100%;
+    justify-content: flex-end;
+    margin-top: 8px;
+  }
 }
