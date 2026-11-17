@@ -66,17 +66,19 @@ const NAV = [
   { key: 'about', label: '关于存知', icon: <Info size={15} /> },
 ]
 
+/* 一行说明只回答「点进去能看到什么」，不超过十个字：
+   手机上这句话会和标题挤在同一行，写长了整行就被文字撑满 */
 const TAB_HINT: Record<string, string> = {
-  profile: '昵称、头像、一句话介绍，作为「我」出现在关系网中心',
-  appearance: '跟随系统、浅色或深色，即时生效',
-  fields: '增删字段、改显示名、调整顺序与必填可见',
-  package: '当前数据包、实时回写、加密与快照',
-  io: 'CSV / vCard 导入，数据包与 JSON 导出',
-  reminders: '默认走动频率、纪念日提前天数',
-  views: '智能视图的筛选条件、颜色与提醒频率',
-  health: '缺电话、缺头像、疑似重复等 7 项体检',
-  privacy: '应用锁、数据清除、本地优先说明',
-  about: '版本号、开发者与官网',
+  profile: '昵称、头像与简介',
+  appearance: '深浅色与主题色',
+  fields: '增删字段与顺序',
+  package: '当前文件与快照',
+  io: 'CSV / vCard 互转',
+  reminders: '走动频率与纪念日',
+  views: '筛选条件与频次',
+  health: '缺失与重复项体检',
+  privacy: '应用锁与数据清除',
+  about: '版本与开发者',
 }
 
 export function Settings() {
@@ -148,14 +150,12 @@ export function Settings() {
 
     return (
       <div className="settings-detail">
-        {/* 标题交给正文自己出（各分页本来就有大标题），这里只放回上层的入口，
-            否则「字段管理」会在同一屏出现两次 */}
+        {/* 顶栏在二级页显示当前分组名，这条只负责「回到上一层」。
+            正文里各分组自带的 h2 用 CSS 隐藏，否则同一个名字会出现两次。 */}
         <div className="settings-detail-head">
-          <button className="btn icon sm glass-icon" onClick={backToIndex} aria-label="返回设置清单">
-            <ChevronLeft size={17} />
-          </button>
-          <button className="settings-detail-crumb" onClick={backToIndex}>
-            设置
+          <button className="settings-detail-back" onClick={backToIndex} aria-label="返回设置清单">
+            <ChevronLeft size={18} />
+            <span>设置</span>
           </button>
         </div>
         <div className="settings-detail-body" key={tab}>
@@ -226,7 +226,7 @@ function AppearanceSettings() {
   return (
     <div className="settings-section">
       <h2>外观</h2>
-      <p className="desc">模式只影响这台设备的显示，不改动任何数据；切换后立即生效。</p>
+      <p className="desc">只影响这台设备的显示，不改动数据；切换后立即生效。</p>
       <div className="set-card">
         <div className="theme-list">
           {THEMES.map((t) => (
@@ -251,7 +251,7 @@ function AppearanceSettings() {
       <div className="set-card" style={{ marginTop: 14 }}>
         <div className="set-card-head">
           <h3>主题色</h3>
-          <span className="field-hint">全局强调色：按钮、选中态、图标、图表都跟着变</span>
+          <span className="field-hint">按钮、图标、选中态跟着变</span>
         </div>
         <div className="accent-row">
           {ACCENTS.map((a) => (
@@ -287,9 +287,8 @@ function AppearanceSettings() {
             自定义
           </label>
         </div>
-        <p className="field-hint accent-hint">
-          默认是「素白」——几乎无彩的冷灰，白底上最不抢内容；换任何颜色，按钮、选中态、图标、图表都会跟着走。
-        </p>
+        {/* 上面那行已经说了「会跟着变」，这里只说默认值好坏，不复述效果 */}
+        <p className="field-hint accent-hint">默认「素白」：几乎无彩的冷灰，白底上最不抢内容。</p>
       </div>
 
       {/* 提高对比度：把文字、描边、浅底都加深一档，强光下更好认 */}
@@ -298,7 +297,7 @@ function AppearanceSettings() {
           <div className="set-row">
             <div>
               <div className="lbl">提高全局对比度</div>
-              <div className="hint">文字更深、描边更实、浅底更灰；弱光或投影环境下层次更清楚</div>
+              <div className="hint">文字更深、描边更实，强光下更好认</div>
             </div>
             <Switch
               on={highContrast}
@@ -316,7 +315,7 @@ function AppearanceSettings() {
       <div className="set-card" style={{ marginTop: 14 }}>
         <div className="set-card-head">
           <h3>首页卡片顺序</h3>
-          <span className="field-hint">只影响手机上首页的排列</span>
+          <span className="field-hint">只改手机首页</span>
         </div>
         <div className="order-list">
           {mobileOrder.map((k, i) => (

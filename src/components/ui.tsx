@@ -597,6 +597,8 @@ export function PromptHost() {
 }
 
 /* ---------------- 保存状态 ---------------- */
+/* 两个版本同一颗按钮：桌面端说清楚「存到哪」，手机上只够放四个字。
+   两颗字全渲染，交给 CSS 按断点取舍，省得再用 JS 判断视口。 */
 export function SavePill() {
   const pkg = useStore((s) => s.pkg)
   const prefs = useStore((s) => s.prefs)
@@ -618,6 +620,22 @@ export function SavePill() {
         return '本地工作台'
     }
   }
+  const short = () => {
+    switch (pkg.status) {
+      case 'saving':
+        return '保存中'
+      case 'dirty':
+        return '未保存'
+      case 'saved':
+        return '已保存'
+      case 'no-file':
+        return '未存文件'
+      case 'error':
+        return '保存失败'
+      default:
+        return '本地'
+    }
+  }
   const cls = cn(
     'save-pill',
     pkg.status === 'dirty' && 'dirty',
@@ -627,14 +645,16 @@ export function SavePill() {
   return (
     <button
       className={cls}
-      title={pkg.fileName ? `${pkg.fileName}${pkg.error ? ` · ${pkg.error}` : ''}` : '当前未关联数据包文件'}
+      title={pkg.fileName ? `${label()} · ${pkg.fileName}${pkg.error ? ` · ${pkg.error}` : ''}` : `${label()} · 点击打开数据包设置`}
+      aria-label={`${label()}，点击打开数据包设置`}
       onClick={() => {
         if (!pkg.fileName) setPrefs({ landingSeen: true })
         navigate('settings', { tab: 'package' })
       }}
     >
-      <span className="led" />
-      <span>{label()}</span>
+      <span className="led" aria-hidden="true" />
+      <span className="sp">{short()}</span>
+      <span className="lp">{label()}</span>
     </button>
   )
 }

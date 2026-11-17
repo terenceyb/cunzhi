@@ -140,14 +140,17 @@ export function Interactions() {
 
   return (
     <div className="page wide ix-page">
-      <PageHead
-        title="互动记录"
-        desc={
-          all.length
-            ? `近 7 天 ${stats.week} 次互动，覆盖 ${stats.people} 位人脉 · 近 30 天 ${stats.month} 次`
-            : '还没有互动记录。记录一次见面、一通电话，关系就有了时间轴。'
-        }
-      />
+      {/* 桌面端：内容区大标题是唯一的页面标题（顶栏不再重复写一遍） */}
+      {!isMobile && (
+        <PageHead
+          title="互动记录"
+          desc={
+            all.length
+              ? `近 7 天 ${stats.week} 次互动，覆盖 ${stats.people} 位人脉 · 近 30 天 ${stats.month} 次`
+              : '还没有互动记录。记录一次见面、一通电话，关系就有了时间轴。'
+          }
+        />
+      )}
 
       <div className="ix-toolbar">
         <div className="search-box ix-search">
@@ -175,6 +178,13 @@ export function Interactions() {
           </div>
         </div>
         <div className="ix-tool-group ix-tool-group-end">
+          {/* 手机上顶栏已经写着「互动记录」，页内不再叠一个大标题：
+              统计压成一行小字，和时间范围并排放，工具栏只占两行 */}
+          {isMobile && (
+            <p className="ix-summary">
+              {all.length ? `7 天 ${stats.week} 次 · 30 天 ${stats.month} 次` : '还没有记录'}
+            </p>
+          )}
           <div className="ix-ranges">
             {RANGES.map((r) => (
               <button
@@ -260,6 +270,16 @@ export function Interactions() {
                             {meta.group.name}
                           </span>
                         )}
+                        {pinned && (
+                          <span className="ix-pin-flag">
+                            <Pin size={10} /> 置顶
+                          </span>
+                        )}
+                        {/* 时间移到姓名行右端：正文与标签独占下方的整行宽度，
+                            卡片里的信息因此变成「谁 / 多久前 → 说了什么 → 什么类型」三层 */}
+                        <span className="ix-time" title={formatDateTime(e.occurredAt)}>
+                          {relativeTime(e.occurredAt)}
+                        </span>
                       </div>
                       <p className="ix-content">{e.content}</p>
                       <div className="ix-meta">
@@ -267,16 +287,7 @@ export function Interactions() {
                           {KIND[e.type]?.icon}
                           {KIND[e.type]?.label}
                         </span>
-                        {e.channel && e.channel !== '普通备注' && <span className="ix-channel">· {e.channel}</span>}
-                        {/* 相对时间放在底部行右端，与类型 chip 同一条基线，卡片之间才对得齐 */}
-                        <span className="ix-time" title={formatDateTime(e.occurredAt)}>
-                          {relativeTime(e.occurredAt)}
-                        </span>
-                        {pinned && (
-                          <span className="ix-pin-flag">
-                            <Pin size={10} /> 置顶
-                          </span>
-                        )}
+                        {e.channel && e.channel !== '普通备注' && <span className="ix-channel">{e.channel}</span>}
                       </div>
                     </div>
                     <div className="ix-ops">

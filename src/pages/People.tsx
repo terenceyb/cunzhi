@@ -208,14 +208,27 @@ export function People() {
     >
       <div className="people-list-col">
         {/* 桌面端的页面大标题：与首页、互动页共用同一套「一个大标题 + 一句灰字」的节奏。
-            移动端顶栏已经写着「人脉」，这里用 CSS 隐藏，避免同屏两个标题 */}
+            移动端顶栏已经写着「人脉」，这里用 CSS 隐藏，避免同屏两个标题。
+            副标题不再重复「共 N 位」——工具栏的「N 人」已经写着，同一个数字出现两次是噪音。 */}
         <div className="people-head">
-          <div className="hello">人脉</div>
-          <div className="sub">
-            共 {store.persons.length} 位人脉
-            {rows.length !== store.persons.length ? ` · 当前筛选出 ${rows.length} 位` : ''}
-            {reminders.length > 0 ? ` · ${reminders.length} 位待联系` : ''}
+          <div className="people-head-text">
+            <div className="hello">人脉</div>
+            <div className="sub">
+              {rows.length !== store.persons.length
+                ? `当前筛选出 ${rows.length} 位，共 ${store.persons.length} 位`
+                : reminders.length > 0
+                  ? `${reminders.length} 位到了该联系的时候`
+                  : '按最近互动排序'}
+            </div>
           </div>
+          {/* 桌面端主操作跟着标题走，工具栏只留「筛与看」——
+              五个控件挤在 640 的轴里，末尾的「新建」会顶到卡片右边缘 */}
+          {!isMobile && (
+            <button className="btn primary" onClick={() => useUI.getState().openPersonForm()}>
+              <Plus size={14} />
+              新建人脉
+            </button>
+          )}
         </div>
         <div className="people-toolbar" ref={toolbarRef}>
           <div className="pt-main">
@@ -265,10 +278,12 @@ export function People() {
                     ]
               }
             />
-            <button className="btn sm primary" onClick={() => useUI.getState().openPersonForm()}>
-              <Plus size={14} />
-              <span className="hide-mobile">新建</span>
-            </button>
+            {/* 桌面端的「新建」已经上移到标题行，这里只给手机留 */}
+            {isMobile && (
+              <button className="btn sm primary" onClick={() => useUI.getState().openPersonForm()}>
+                <Plus size={14} />
+              </button>
+            )}
           </div>
         </div>
 

@@ -622,6 +622,57 @@ html[data-theme='dark'] {
 .settings-content {
   padding: 26px 30px 56px;
 }
+/* 设置内容不再顶到栏宽：一列 700 居中，表单一行不会拉成一条长带。
+   再窄「字段管理」那一行就放不下两个开关 + 三个按钮，文字会被压成竖排。 */
+.settings-content > * {
+  max-width: 700px;
+  margin-inline: auto;
+}
+/* 「必填 / 可见」四个字原来被挤在 62px 的格子里折成两行，给足 nowrap */
+.fm-switch {
+  width: auto;
+  min-width: 62px;
+}
+.fm-switch > span {
+  flex: 0 0 auto;
+  text-align: right;
+  white-space: nowrap;
+}
+/* 主题色十选一：flex 换行会留下孤儿（八个一行、两个单独一行）。
+   桌面固定五列正好两行；手机上五列只有 66 宽，两字名字会被压成竖排，
+   所以手机四列。 */
+.accent-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+.accent-dot {
+  width: 100%;
+  min-width: 0;
+  white-space: nowrap;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+.accent-dot > span:first-child {
+  flex: 0 0 auto;
+}
+@media (max-width: 767px) {
+  .accent-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 7px;
+    padding: 10px;
+  }
+  .accent-dot {
+    height: 36px;
+    padding: 0 8px 0 7px;
+    gap: 6px;
+    font-size: 12.5px;
+  }
+  .accent-dot > span:first-child {
+    width: 16px;
+    height: 16px;
+  }
+}
 .settings-section > h2,
 .settings-content h2 {
   letter-spacing: -0.024em;
@@ -657,9 +708,17 @@ html[data-theme='dark'] {
   background: transparent;
   border-bottom: 1px solid var(--line);
 }
+/* 标题行：左边标题与说明，右边主操作。两者共用一条 640 的轴，与卡片对齐 */
 .people-head {
-  padding-block: 22px 4px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding-block: 22px 10px;
   padding-inline: max(18px, calc((100% - 640px) / 2));
+}
+.people-head-text {
+  min-width: 0;
 }
 .people-head .hello {
   font-family: var(--font-display);
@@ -753,26 +812,6 @@ html[data-theme='dark'] {
   .input.sm {
     height: 38px;
     font-size: 15px;
-  }
-  /* 顶栏在手机上只留一个状态灯：三个图标 + 一段文字的排布会挤掉标题 */
-  .save-pill {
-    width: 30px;
-    padding: 0;
-    justify-content: center;
-    /* 手机上只留一颗状态灯：有底色的胶囊会被误读成按钮 */
-    background: transparent;
-  }
-  .save-pill > span:not(.led) {
-    display: none;
-  }
-  .save-pill.error,
-  .save-pill.dirty {
-    width: auto;
-    padding: 0 10px;
-  }
-  .save-pill.error > span:not(.led),
-  .save-pill.dirty > span:not(.led) {
-    display: inline;
   }
 }
 
@@ -1029,5 +1068,545 @@ html[data-theme='dark'] .land-aura {
   .land-demo,
   .land-demo-arrow {
     transition-duration: 1ms;
+  }
+}
+
+/* ================================================================================
+   v2.7 · 版式校正
+   ----------------------------------------------------------------------------
+   这一轮解决的都是「看得见但说不清」的问题：
+   1. 图标按钮融进底色，用户分不清哪块能点；
+   2. 手机端顶栏与页内各写一遍页面名，同屏两个标题；
+   3. 手机端滚动时搜索与筛选跟着跑掉；
+   4. 侧栏折叠后只剩一个 15px 箭头，logo 被藏了；
+   5. 设置清单每行文字顶到屏幕边。
+   同样只覆盖视觉与布局属性，交互一行没动。
+   ================================================================================ */
+
+/* ---------------- 1. 图标按钮：从「隐形」改成「有底、有边、有按压」 ---------------- */
+/* 顶栏、工具条上的纯图标按钮原来 background/box-shadow 都被清成 transparent，
+   白底上跟装饰图标长得一样。这里统一成一层 6% 的灰底 + 半像素描边：
+   底比卡片深一档，边比底色深一档，一眼能看出是可点的控件。 */
+.btn.icon,
+.btn.icon.sm {
+  background: color-mix(in srgb, var(--text) 7%, var(--surface));
+  box-shadow: 0 0 0 0.5px color-mix(in srgb, var(--text) 13%, transparent),
+    0 1px 1px rgba(16, 24, 40, 0.03);
+  color: var(--text-2);
+}
+.btn.icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+}
+.btn.icon.sm {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+}
+/* 顶栏上三个主动作比正文重一档：它们是每页都会用到的入口 */
+.topbar .btn.icon {
+  background: color-mix(in srgb, var(--text) 8%, var(--surface));
+  color: var(--text);
+}
+html[data-theme='dark'] .btn.icon,
+html[data-theme='dark'] .btn.icon.sm {
+  background: color-mix(in srgb, #fff 9%, transparent);
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.1);
+}
+html[data-theme='dark'] .topbar .btn.icon {
+  background: color-mix(in srgb, #fff 12%, transparent);
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn.icon:hover:not(:disabled),
+  .btn.icon.sm:hover:not(:disabled),
+  .topbar .btn.icon:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--text) 13%, var(--surface));
+    color: var(--text);
+    box-shadow: 0 0 0 0.5px var(--line-strong), 0 3px 10px -6px rgba(16, 24, 40, 0.4);
+  }
+  html[data-theme='dark'] .btn.icon:hover:not(:disabled),
+  html[data-theme='dark'] .btn.icon.sm:hover:not(:disabled) {
+    background: color-mix(in srgb, #fff 16%, transparent);
+  }
+}
+.btn.icon:active:not(:disabled),
+.btn.icon.sm:active:not(:disabled) {
+  background: color-mix(in srgb, var(--text) 16%, var(--surface));
+}
+/* 不可用的图标按钮去掉底色，和可用状态拉开距离 */
+.field-manage-row .ops .btn:disabled,
+.ops .btn.icon:disabled {
+  background: transparent;
+  box-shadow: none;
+}
+
+/* 只是文字、没有图标的次要按钮保持「无框」，否则一页里全是方框 */
+.btn.ghost {
+  background: transparent;
+  box-shadow: none;
+}
+@media (hover: hover) {
+  .btn.ghost:hover {
+    background: color-mix(in srgb, var(--text) 6%, transparent);
+    box-shadow: none;
+  }
+}
+
+/* ---------------- 2. 顶栏：一屏只有一个标题 ---------------- */
+/* 桌面端顶栏不再写页面名（内容区的大标题才是标题），左侧改为放数据包状态，
+   右侧是三个操作。状态在左、操作在右，正好把工具栏填满且不重复。 */
+.topbar {
+  height: 52px;
+  padding: 0 20px;
+}
+.topbar h1 {
+  font-size: 17px;
+  font-weight: 650;
+  color: var(--text);
+  letter-spacing: -0.024em;
+}
+/* 桌面端顶栏左侧的状态胶囊：它同时是「当前数据包在哪」的答案和「去设置」的入口 */
+.save-pill .sp {
+  display: none;
+}
+.topbar-status .save-pill {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 500;
+}
+/* no-file 用暖色提示，别让它和「已保存」长得一样 */
+.save-pill.no-file {
+  background: color-mix(in srgb, #b45309 12%, transparent);
+  color: #9a4a06;
+}
+html[data-theme='dark'] .save-pill.no-file {
+  background: color-mix(in srgb, #f5a524 16%, transparent);
+  color: #f0b45c;
+}
+.save-pill.no-file .led {
+  background: #b45309;
+}
+html[data-theme='dark'] .save-pill.no-file .led {
+  background: #f0b45c;
+}
+
+/* ---------------- 3. 侧栏折叠：logo 本身就是展开按钮 ---------------- */
+/* app.css 用 span:not(.dot-mark) 统一「视觉隐藏」折叠后的文字，
+   但 GIcon 渲染出来的根节点也是 <span class="gi">，一起被裁成了 1px ——
+   于是折叠后整条导航只剩几个色点。这里把 .gi 排除掉。 */
+.sidebar.collapsed .nav-item span.gi {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  clip-path: none;
+  overflow: visible;
+}
+.sidebar.collapsed .nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+
+/* 原来折叠后 .brand 被 display:none，只剩一个 15px 的箭头飘在顶上；
+   现在整块高度留给 logo，点它展开。 */
+.sidebar.collapsed .brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin: 0 auto;
+  padding: 0;
+  border-radius: 11px;
+}
+.sidebar.collapsed .brand span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.sidebar.collapsed .brand:hover {
+  background: color-mix(in srgb, var(--text) 7%, transparent);
+}
+.sidebar.collapsed .sidebar-head {
+  height: 56px;
+}
+/* 折叠后只剩图标，尺寸要比展开态大一点才压得住 40px 的按钮 */
+.sidebar.collapsed .nav-item svg {
+  width: 20px;
+  height: 20px;
+}
+.sidebar.collapsed .logo-mark {
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.18), 0 0 0 0.5px rgba(0, 0, 0, 0.06);
+}
+
+/* ---------------- 4. 人脉页：桌面端去掉重复计数 ---------------- */
+/* 「共 14 位人脉」和工具栏里的「14 人」是同一件事，副标题只说筛选与待联系 */
+.people-head .sub {
+  min-height: 18px;
+}
+
+/* ---------------- 5. 互动记录：时间归位到姓名行 ---------------- */
+.ix-top {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.ix-time {
+  margin-left: auto;
+  flex: 0 0 auto;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-3);
+}
+.ix-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ix-channel {
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+.ix-summary {
+  margin: 0 0 10px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-3);
+}
+
+/* ---------------- 6. 移动端 ---------------- */
+@media (max-width: 767px) {
+  /* 6.1 顶栏：状态胶囊显示文字，别只剩一个看不出含义的小圆点 */
+  .topbar {
+    height: 50px;
+    padding: 0 14px;
+    gap: 6px;
+  }
+  .topbar-status .save-pill {
+    width: auto;
+    max-width: none;
+    padding: 0 8px;
+    gap: 5px;
+    background: color-mix(in srgb, var(--text) 7%, transparent);
+    font-size: 11px;
+  }
+  /* 手机上只留短文案（未存文件 / 已保存），长句留给桌面端 */
+  .save-pill .lp {
+    display: none;
+  }
+  .save-pill .sp {
+    display: inline;
+  }
+  .topbar-status .save-pill.error,
+  .topbar-status .save-pill.dirty {
+    background: color-mix(in srgb, #b45309 14%, transparent);
+    color: #9a4a06;
+  }
+  html[data-theme='dark'] .topbar-status .save-pill.error,
+  html[data-theme='dark'] .topbar-status .save-pill.dirty {
+    background: color-mix(in srgb, #f5a524 18%, transparent);
+    color: #f0b45c;
+  }
+  /* 手机上三个图标缩到 30，给标题和状态让位 */
+  .topbar .btn.icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+  }
+
+  /* 6.2 人脉：搜索、筛选、计数、视图切换整块钉在顶栏下面 */
+  /* 之前 .people-list-col 是 overflow:hidden，sticky 找不到可滚动的祖先，
+     整块会静止在文档流里被一起卷走。这里把裁剪去掉，滚动权交回 .content。 */
+  .content.no-pad .people-list-col {
+    overflow: visible;
+  }
+  .people-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 8;
+    padding: 10px 14px;
+    background: color-mix(in srgb, var(--bg) 84%, transparent);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    backdrop-filter: blur(22px) saturate(180%);
+    border-bottom: 1px solid var(--line);
+  }
+  /* 吸顶那条边缘：内容从下面滑过时有一层极淡的阴影，才看得出是「浮」在上面 */
+  .people-toolbar::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -10px;
+    height: 10px;
+    background: linear-gradient(to bottom, rgba(16, 24, 40, 0.055), transparent);
+    pointer-events: none;
+  }
+  .people-scroll {
+    padding: 12px 14px calc(20px + var(--safe-b));
+  }
+
+  /* 6.3 互动记录：一行统计 + 吸顶筛选 + 三层卡片 */
+  .ix-page {
+    padding: 0 0 calc(122px + var(--safe-b));
+  }
+  .ix-toolbar {
+    position: sticky;
+    top: 0;
+    z-index: 8;
+    margin: 0;
+    padding: 10px 14px 12px;
+    gap: 9px;
+    background: color-mix(in srgb, var(--bg) 84%, transparent);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    backdrop-filter: blur(22px) saturate(180%);
+    border-bottom: 1px solid var(--line);
+  }
+  .ix-summary {
+    display: none;
+  }
+  .ix-search .input {
+    background: var(--surface);
+  }
+  /* 类别：横向滑动，不换行、不把工具栏撑高 */
+  .ix-filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 0 -14px;
+    padding: 2px 14px 4px;
+  }
+  .ix-filters::-webkit-scrollbar {
+    display: none;
+  }
+  .ix-filters .chip {
+    flex: 0 0 auto;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 9px;
+    font-size: 12.5px;
+  }
+  .ix-ranges {
+    flex: 1 1 auto;
+    display: flex;
+    padding: 2px;
+    border-radius: 10px;
+  }
+  .ix-range {
+    flex: 1 1 0;
+    height: 28px;
+    border-radius: 8px;
+    font-size: 12px;
+  }
+  .ix-tool-group {
+    width: 100%;
+  }
+  /* 统计与时间范围同一行：左边一句话、右边一排分段，省掉一整行高度。
+     手机上宽度不够，统计先让位（列表尾部已有「共 N 条记录」），
+     时间范围四个按钮均分整行，比四个小胶囊挤在右边好点。 */
+  .ix-tool-group-end {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* 列表：日期做成小节标题，卡片之间只留 8px */
+  .ix-stream {
+    display: block;
+    padding: 4px 14px 8px;
+  }
+  .ix-stream > .ix-group {
+    display: block;
+    margin-top: 14px;
+  }
+  .ix-day {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    padding: 0 4px 8px;
+  }
+  .ix-day-main {
+    font-size: 12.5px;
+    font-weight: 650;
+    color: var(--text-2);
+  }
+  .ix-day-sub {
+    font-size: 11.5px;
+    color: var(--text-3);
+  }
+  .ix-row {
+    position: relative;
+    padding: 12px;
+    margin-bottom: 8px;
+    border-radius: 16px;
+    gap: 10px;
+  }
+  .ix-row:last-child {
+    margin-bottom: 0;
+  }
+  .ix-name {
+    font-size: 14px;
+  }
+  .ix-content {
+    margin-top: 3px;
+    font-size: 13.5px;
+    line-height: 1.55;
+    /* 手机上正文压到 3 行：再长就点进详情看，列表只负责扫读 */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .ix-meta {
+    margin-top: 6px;
+    /* 右下角留给两个操作按钮 */
+    padding-right: 60px;
+  }
+  .ix-ops {
+    position: absolute;
+    top: auto;
+    right: 10px;
+    bottom: 9px;
+    gap: 2px;
+    opacity: 1;
+  }
+  .ix-top {
+    padding-right: 0;
+  }
+  .ix-ops .btn.icon.sm {
+    width: 26px;
+    height: 26px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--text) 5%, transparent);
+    box-shadow: none;
+    color: var(--text-3);
+  }
+  .ix-ops .btn.icon.sm:active {
+    background: color-mix(in srgb, var(--text) 9%, transparent);
+  }
+  .ix-foot {
+    padding: 0 14px 8px;
+  }
+
+  /* 6.4 设置：行不贴边，hint 一行截断 */
+  .set-index {
+    padding: 6px 16px calc(148px + var(--safe-b));
+  }
+  /* 卡片头里「标题 + 一句说明」在 390 宽下同一行会互相挤：
+     标题被压成两行、说明又顶到右边缘。手机上改成上下两行。 */
+  .set-card-head {
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 1px 8px;
+    padding: 12px 14px;
+  }
+  .set-card-head .field-hint {
+    flex: 1 1 100%;
+    font-size: 11.5px;
+  }
+  /* 行内说明最多两行：再长就把行高撑起来，和开关也对不齐了 */
+  .set-row .desc {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .set-list {
+    border-radius: 18px;
+  }
+  .set-row {
+    min-height: 62px;
+    padding: 12px 14px;
+    gap: 12px;
+  }
+  .set-row-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+  }
+  .set-row-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+  .set-row-text {
+    gap: 2px;
+  }
+  .set-row-label {
+    font-size: 14.5px;
+    font-weight: 600;
+  }
+  .set-row-hint {
+    font-size: 11.5px;
+    color: var(--text-3);
+  }
+  /* 二级页的标题条：左边返回（带「设置」二字，说明退到哪一层），
+     右边就是当前分组名。正文里的同名 h2 一律不显示。 */
+  .settings-detail-head {
+    position: sticky;
+    top: 0;
+    z-index: 9;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px 10px;
+    background: color-mix(in srgb, var(--bg) 84%, transparent);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    backdrop-filter: blur(22px) saturate(180%);
+    border-bottom: 1px solid var(--line);
+  }
+  .settings-detail-back {
+    justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    height: 30px;
+    padding: 0 8px 0 2px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--accent);
+    font-size: 13.5px;
+    font-weight: 550;
+  }
+  .settings-detail-back:active {
+    background: color-mix(in srgb, var(--text) 7%, transparent);
+  }
+  /* 正文里重复的分组标题：顶栏已经写着同一个名字 */
+  .settings-detail-body > h2:first-child,
+  .settings-detail-body > * > h2:first-child,
+  .settings-detail-body .settings-section > h2:first-child {
+    display: none;
+  }
+  .settings-detail-body {
+    padding: 10px 18px 10px;
+  }
+  .settings-detail-body .settings-section > .desc {
+    margin: 0 2px 12px;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--text-3);
+  }
+  /* 桌面端那一份 .page 的左右内边距在这里不需要，避免和详情页叠加 */
+  .settings-detail .page {
+    padding: 0;
+  }
+}
+
+/* 超过 767 但没到桌面的窄窗口（平板竖屏）也别让工具栏掉出去 */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .topbar {
+    padding: 0 16px;
   }
 }

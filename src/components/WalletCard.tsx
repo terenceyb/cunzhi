@@ -285,7 +285,9 @@ export function WalletStackView({ rows, ctx }: { rows: Person[]; ctx: DeriveCtx 
             <p className="w2-meta">
               距上次与 <span className="w2-caption">{pinnedMeta.name}</span> 联系
             </p>
-            <p className="w2-meta w2-meta--sub">共 {rows.length} 位人脉 · 按联系紧迫度排序</p>
+            {/* 不再重复「共 N 位人脉」：工具栏已经写着「N 人」，
+                同一个数字在一屏里出现两次只是噪音 */}
+            <p className="w2-meta w2-meta--sub">按联系紧迫度排序</p>
           </div>
         </div>
 

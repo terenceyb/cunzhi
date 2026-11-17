@@ -292,22 +292,32 @@ function Sidebar({ ctx, reminderCount }: { ctx: ReturnType<typeof buildCtx>; rem
 
   return (
     <aside className={cn('sidebar', 't-resize', collapsed && 'collapsed')} aria-label="主导航">
+      {/* 折叠后这一格只剩 Logo：它本身就是「展开」按钮（原来收缩后左侧全空，
+          只剩一个 15px 的箭头，既看不出能点，也不知道点了会发生什么） */}
       <div className="sidebar-head">
-        <button className="brand" onClick={() => navigate('dashboard')} style={{ flex: 1, textAlign: 'left' }}>
-          <Logo size={26} />
+        <button
+          className={cn('brand', collapsed && 'brand--collapsed')}
+          onClick={() => (collapsed ? useUI.setState({ sidebarCollapsed: false }) : navigate('dashboard'))}
+          title={collapsed ? '展开侧栏' : '存知 · 回首页'}
+          aria-label={collapsed ? '展开侧栏' : '存知 · 回首页'}
+        >
+          <Logo size={collapsed ? 24 : 26} />
           <span>存知</span>
         </button>
-        <button
-          className="btn icon sm sidebar-collapse-btn"
-          onClick={() => useUI.setState({ sidebarCollapsed: !collapsed })}
-          aria-label={collapsed ? '展开侧栏' : '折叠侧栏'}
-        >
-          <IconSwap
-            open={!collapsed}
-            a={<PanelLeftClose size={15} />}
-            b={<PanelLeftOpen size={15} />}
-          />
-        </button>
+        {!collapsed && (
+          <button
+            className="btn icon sm sidebar-collapse-btn"
+            onClick={() => useUI.setState({ sidebarCollapsed: true })}
+            aria-label="折叠侧栏"
+            title="折叠侧栏"
+          >
+            <IconSwap
+              open={!collapsed}
+              a={<PanelLeftClose size={15} />}
+              b={<PanelLeftOpen size={15} />}
+            />
+          </button>
+        )}
       </div>
 
       <div className="sidebar-scroll">
@@ -328,10 +338,10 @@ function Sidebar({ ctx, reminderCount }: { ctx: ReturnType<typeof buildCtx>; rem
         <button
           className={cn('nav-item', route === 'interactions' && 'active')}
           onClick={() => navigate('interactions')}
-          title="互动"
+          title="互动记录"
         >
           <GIcon name="interactions" size={19} />
-          <span>互动</span>
+          <span>互动记录</span>
           <span className="count">{ctx.timelineEvents.length}</span>
         </button>
 
@@ -378,40 +388,73 @@ function Sidebar({ ctx, reminderCount }: { ctx: ReturnType<typeof buildCtx>; rem
   )
 }
 
+/* 设置页的二级分页：手机上顶栏标题换成该分页的名字，
+   于是「顶栏 = 当前页」只有一处，「‹ 设置」只说明退到哪一层 */
+const SETTING_LABEL: Record<string, string> = {
+  profile: '我的信息',
+  appearance: '外观',
+  fields: '字段管理',
+  package: '数据包管理',
+  io: '导入导出',
+  reminders: '提醒策略',
+  views: '智能视图',
+  health: '数据健康',
+  privacy: '隐私与安全',
+  about: '关于存知',
+}
+
 function TopBar() {
   const mobile = useBreakpoint() === 'mobile'
   const route = useUI((s) => s.route)
-  const navigate = useUI((s) => s.navigate)
-  const profile = useStore((s) => s.settings.profile)
-  const attachments = useStore((s) => s.attachments)
-  const avatar = profile.avatarAttachmentId ? attachments[profile.avatarAttachmentId] : undefined
+  const settingsTab = useUI((s) => s.settingsTab)
+  const settingsDetail = useUI((s) => s.settingsDetail)
   const title =
-    route === 'dashboard' ? '首页' : route === 'people' ? '人脉' : route === 'interactions' ? '互动' : route === 'settings' ? '设置' : route === 'profile' ? '我的名片' : '存知'
+    route === 'dashboard'
+      ? '首页'
+      : route === 'people'
+        ? '人脉'
+        : route === 'interactions'
+          ? '互动记录'
+          : route === 'settings'
+            ? settingsDetail
+              ? SETTING_LABEL[settingsTab] ?? '设置'
+              : '设置'
+            : route === 'profile'
+              ? '我的名片'
+              : '存知'
 
   return (
     <header className="topbar">
-      <button className="avatar-btn" onClick={() => navigate('profile')} aria-label="我的名片" style={{ display: 'none' }}>
-        <Avatar name={profile.nickname || '我'} src={avatar?.data} size={30} color="#131619" />
-      </button>
-      {mobile && route === 'dashboard' ? (
-        <div className="topbar-brand">
-          <Logo size={22} />
-          <span>存知</span>
-        </div>
+      {/* 页面名只在手机上出现在顶栏：手机没有侧栏，这里是唯一的方位提示。
+          桌面端的大标题在内容区，顶栏再写一遍就成了同一屏两个标题。 */}
+      {mobile ? (
+        route === 'dashboard' ? (
+          <div className="topbar-brand">
+            <Logo size={22} />
+            <span>存知</span>
+          </div>
+        ) : (
+          <h1>{title}</h1>
+        )
       ) : (
-        <h1>{title}</h1>
+        /* 桌面端没有标题，状态胶囊落在最左，把工具栏填满 */
+        <div className="topbar-status">
+          <SavePill />
+        </div>
       )}
       <div className="spacer" />
-      <div className="topbar-status">
-        <SavePill />
-      </div>
-      <button className="btn icon" onClick={() => useUI.setState({ searchOpen: true })} aria-label="全局搜索">
+      {mobile && (
+        <div className="topbar-status">
+          <SavePill />
+        </div>
+      )}
+      <button className="btn icon" onClick={() => useUI.setState({ searchOpen: true })} aria-label="全局搜索" title="全局搜索">
         <Search size={16} />
       </button>
-      <button className="btn icon" onClick={() => useUI.setState({ quickNoteOpen: true })} aria-label="速记">
+      <button className="btn icon" onClick={() => useUI.setState({ quickNoteOpen: true })} aria-label="速记" title="速记">
         <Sparkles size={16} />
       </button>
-      <button className="btn icon" onClick={() => useUI.getState().openPersonForm()} aria-label="新建人脉">
+      <button className="btn icon" onClick={() => useUI.getState().openPersonForm()} aria-label="新建人脉" title="新建人脉">
         <Plus size={17} />
       </button>
     </header>
