@@ -867,8 +867,9 @@
   .bottom-tabs {
     display: flex;
   }
+  /* v2.2：速记并进了底部 dock 最右侧那颗圆钮，浮动的 .fab 不再出现 */
   .fab {
-    display: flex;
+    display: none;
   }
   .content {
     padding-bottom: calc(84px + var(--safe-b));

@@ -39,6 +39,8 @@ interface UIState {
   detailOpen: boolean
   searchOpen: boolean
   quickNoteOpen: boolean
+  /** 新建待办弹窗：底部速记菜单也要能唤起，所以提到全局 */
+  todoFormOpen: boolean
   uploadOpen: boolean
   newPersonOpen: boolean
   personFormOpen: boolean
@@ -93,6 +95,7 @@ export const useUI = create<UIState>((set, get) => ({
   detailOpen: false,
   searchOpen: false,
   quickNoteOpen: false,
+  todoFormOpen: false,
   uploadOpen: false,
   newPersonOpen: false,
   personFormOpen: false,

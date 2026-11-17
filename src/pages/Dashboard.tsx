@@ -129,7 +129,9 @@ export function Dashboard() {
   const [selectMode, setSelectMode] = useState(false)
   const [selected, setSelected] = useState<string[]>([])
   const [lastIndex, setLastIndex] = useState<number | null>(null)
-  const [todoOpen, setTodoOpen] = useState(false)
+  /* 新建待办弹窗由全局状态驱动：底部速记菜单在别的路由也能唤起它 */
+  const todoOpen = useUI((s) => s.todoFormOpen)
+  const setTodoOpen = (v: boolean) => useUI.setState({ todoFormOpen: v })
   const [todoCenterOpen, setTodoCenterOpen] = useState(false)
   const [collapsedTodo, setCollapsedTodo] = useState<Record<string, boolean>>({})
   const [ixPerson, setIxPerson] = useState<string | null>(null)

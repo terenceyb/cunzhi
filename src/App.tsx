@@ -13,9 +13,10 @@ import {
   Users,
 } from 'lucide-react'
 import { buildCtx, useStore } from './store'
-import { useUI } from './ui'
+import { useUI, type RouteName } from './ui'
 import { Avatar, Logo, SavePill, ToastHost, ConfirmHost, PromptHost, useBreakpoint } from './components/ui'
 import { IconSwap, TBadge } from './components/motion'
+import { DockTabs } from './components/DockTabs'
 import { OverlayScrollbar } from './components/OverlayScrollbar'
 import { UploadHost } from './components/UploadDialog'
 import { GlobalSearch } from './components/GlobalSearch'
@@ -424,122 +425,41 @@ function StatusBanners() {
 function BottomTabs({ reminderCount }: { reminderCount: number }) {
   const route = useUI((s) => s.route)
   const navigate = useUI((s) => s.navigate)
+  const [menuOpen, setMenuOpen] = useState(false)
+
   const items = [
     { key: 'dashboard', label: '首页', icon: <LayoutDashboard size={19} />, badge: reminderCount },
     { key: 'people', label: '人脉', icon: <Users size={19} />, badge: 0 },
     { key: 'interactions', label: '互动', icon: <History size={19} />, badge: 0 },
     { key: 'settings', label: '设置', icon: <SettingsIcon size={19} />, badge: 0 },
-  ] as const
+  ]
   const isOn = (key: string) => route === key || (key === 'settings' && route === 'profile')
   const activeIdx = Math.max(0, items.findIndex((i) => isOn(i.key)))
 
-  const navRef = useRef<HTMLElement>(null)
-  /** 拖动中：指示块的浮点位置（可以为 0.37 这种小数，所以是「无极」的） */
-  const [dragIdx, setDragIdx] = useState<number | null>(null)
-  /** 按住时那一下折射：key 变化即重播动画 */
-  const [lens, setLens] = useState<{ x: number; k: number } | null>(null)
-  const drag = useRef({ active: false, startX: 0, moved: false, pointerId: -1 })
-  const lensTimer = useRef<number | null>(null)
-
-  useEffect(
-    () => () => {
-      if (lensTimer.current) window.clearTimeout(lensTimer.current)
-    },
-    [],
-  )
-
-  /** 把屏幕 x 换算成「第几个格子」，小数即格与格之间的位置 */
-  const posAt = (clientX: number) => {
-    const el = navRef.current
-    if (!el) return activeIdx
-    const r = el.getBoundingClientRect()
-    const inner = Math.max(1, r.width - 10)
-    const raw = ((clientX - r.left - 5) / inner) * items.length - 0.5
-    return Math.min(items.length - 1, Math.max(0, raw))
-  }
-
-  const fireRefract = (clientX: number) => {
-    const r = navRef.current?.getBoundingClientRect()
-    if (!r) return
-    setLens({ x: clientX - r.left, k: Date.now() })
-    if (lensTimer.current) window.clearTimeout(lensTimer.current)
-    lensTimer.current = window.setTimeout(() => setLens(null), 640)
-  }
-
-  const onDown = (e: React.PointerEvent) => {
-    if (e.pointerType === 'mouse' && e.button !== 0) return
-    drag.current = { active: true, startX: e.clientX, moved: false, pointerId: e.pointerId }
-    navRef.current?.setPointerCapture?.(e.pointerId)
-    setDragIdx(posAt(e.clientX))
-    fireRefract(e.clientX)
-  }
-
-  const onMove = (e: React.PointerEvent) => {
-    if (!drag.current.active) return
-    if (Math.abs(e.clientX - drag.current.startX) > 5) drag.current.moved = true
-    setDragIdx(posAt(e.clientX))
-  }
-
-  const onUp = (e: React.PointerEvent) => {
-    if (!drag.current.active) return
-    const target = posAt(e.clientX)
-    drag.current.active = false
-    navRef.current?.releasePointerCapture?.(drag.current.pointerId)
-    setDragIdx(null)
-    const next = items[Math.round(target)]
-    if (next) navigate(next.key)
-  }
+  /* 换页时菜单自动收起，别让它悬在那 */
+  useEffect(() => setMenuOpen(false), [route])
 
   return (
-    <nav
-      ref={navRef}
-      className="bottom-tabs"
-      aria-label="底部导航"
-      data-drag={dragIdx !== null ? 'true' : 'false'}
-      style={{ ['--i' as string]: dragIdx ?? activeIdx, ['--c' as string]: items.length }}
-      onPointerDown={onDown}
-      onPointerMove={onMove}
-      onPointerUp={onUp}
-      onPointerCancel={onUp}
-    >
-      {/* 液态玻璃：一层高光膜 + 一层随指针走的折射透镜（都裁在玻璃边缘内） */}
-      <span className="tab-glass" aria-hidden>
-        <span className="tab-glass-shine" />
-        {lens && <span key={lens.k} className="tab-lens" style={{ ['--lx' as string]: `${lens.x}px` }} />}
-      </span>
-      <span className="tab-pill" aria-hidden />
-      {items.map((item, i) => {
-        const on = isOn(item.key)
-        return (
-          <button
-            key={item.key}
-            className={cn('tab', on && 'active')}
-            aria-current={on ? 'page' : undefined}
-            onClick={() => {
-              // 拖完松手时浏览器还会补一个 click，落在起点那个 tab 上，这里吞掉
-              if (drag.current.moved) {
-                drag.current.moved = false
-                return
-              }
-              navigate(item.key)
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                navigate(item.key)
-              }
-            }}
-            data-on={on ? 'true' : 'false'}
-            style={{ ['--ti' as string]: i }}
-          >
-            <span className="tab-ico">
-              {item.icon}
-              <TBadge count={item.badge} dotOnly label={item.badge > 0 ? `${item.badge} 位待联系` : undefined} />
-            </span>
-            <span className="tab-label">{item.label}</span>
-          </button>
-        )
-      })}
-    </nav>
+    <DockTabs
+      items={items}
+      activeIdx={activeIdx}
+      isOn={isOn}
+      onPick={(key) => {
+        setMenuOpen(false)
+        navigate(key as RouteName)
+      }}
+      renderBadge={(item) => (
+        <TBadge count={item.badge} dotOnly label={item.badge > 0 ? `${item.badge} 位待联系` : undefined} />
+      )}
+      menuOpen={menuOpen}
+      setMenuOpen={setMenuOpen}
+      onFab={() => {}}
+      onNewPerson={() => useUI.getState().openPersonForm()}
+      onNote={() => useUI.setState({ quickNoteOpen: true })}
+      onNewTodo={() => {
+        navigate('dashboard')
+        useUI.setState({ todoFormOpen: true })
+      }}
+    />
   )
 }
