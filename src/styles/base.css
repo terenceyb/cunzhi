@@ -10,8 +10,9 @@
   --text-3: #6b7583;
   --line: #e6e8ec;
   --line-strong: #d5d9e0;
-  --accent: #2f6feb;
-  --accent-soft: #eaf1fe;
+  /* 默认主题色「云母」：带一点暖调的浅灰褐，安静、耐看，不抢内容 */
+  --accent: #6f6659;
+  --accent-soft: #f1ece4;
   --danger: #d94a3d;
   --danger-soft: #fdecea;
   --warn: #b4530a;
@@ -61,8 +62,8 @@ html[data-theme='dark'] {
   --text-3: #8d97a5;
   --line: #262b34;
   --line-strong: #343b46;
-  --accent: #5b91ff;
-  --accent-soft: #17243c;
+  --accent: #cabdac;
+  --accent-soft: #262219;
   --danger: #f2685b;
   --danger-soft: #331f1d;
   --warn: #e0a15c;
@@ -1153,7 +1154,15 @@ table.data tbody tr:focus-visible {
   outline-offset: -2px;
 }
 
-/* ---- 全局主题色：只换强调色，其余调色板不动 ---- */
+/* ---- 全局主题色：只换强调色，其余调色板不动 ----
+   云母是默认值（写在 :root 里），其余每个色相一对浅 / 深值，
+    --accent-soft 统一由 --accent 混出来，新增色相只需加一行。 */
+html[data-accent='mica'] {
+  --accent: #6f6659;
+}
+html[data-accent='slate'] {
+  --accent: #2f6feb;
+}
 html[data-accent='sand'] {
   --accent: #a9772c;
 }
@@ -1166,11 +1175,28 @@ html[data-accent='ocean'] {
 html[data-accent='plum'] {
   --accent: #7b4a9d;
 }
+html[data-accent='coral'] {
+  --accent: #b8553f;
+}
+html[data-accent='bamboo'] {
+  --accent: #4f7a4a;
+}
+html[data-accent='slate'],
 html[data-accent='sand'],
 html[data-accent='forest'],
 html[data-accent='ocean'],
-html[data-accent='plum'] {
+html[data-accent='plum'],
+html[data-accent='coral'],
+html[data-accent='bamboo'] {
   --accent-soft: color-mix(in srgb, var(--accent) 12%, var(--surface));
+}
+html[data-theme='dark'][data-accent='mica'] {
+  --accent: #cabdac;
+  --accent-soft: #262219;
+}
+html[data-theme='dark'][data-accent='slate'] {
+  --accent: #5b91ff;
+  --accent-soft: #17243c;
 }
 html[data-theme='dark'][data-accent='sand'] {
   --accent: #d7a15a;
@@ -1183,4 +1209,10 @@ html[data-theme='dark'][data-accent='ocean'] {
 }
 html[data-theme='dark'][data-accent='plum'] {
   --accent: #b58ada;
+}
+html[data-theme='dark'][data-accent='coral'] {
+  --accent: #e28a72;
+}
+html[data-theme='dark'][data-accent='bamboo'] {
+  --accent: #86b47d;
 }

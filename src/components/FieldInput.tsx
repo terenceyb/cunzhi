@@ -464,6 +464,15 @@ export function FieldInput({
       )
     }
     case 'barcode': {
+      /* 名片码：内容由本人资料生成，表单里不需要填写 */
+      if (def.config?.source === 'personCard') {
+        return (
+          <div className="row" style={{ gap: 6, fontSize: 12.5, color: 'var(--text-3)' }}>
+            <QrCode size={14} />
+            由这位联系人的姓名、公司、联系方式自动生成，扫码即可存入通讯录
+          </div>
+        )
+      }
       const bv = (value as BarcodeValue) ?? { format: '', rawValue: '' }
       return (
         <div className="stack" style={{ gap: 6 }}>

@@ -40,6 +40,7 @@ import { buildCtx, useStore } from '../store'
 import { useUI } from '../ui'
 import { useDragSort } from '../components/dragSort'
 import { Avatar, Empty, Logo, Modal, PageHead, Switch, useBreakpoint } from '../components/ui'
+import { ElasticPanelResize } from '../components/ElasticPanelResize'
 import { PanelReveal } from '../components/motion'
 import { ProfilePage } from './Profile'
 import { Funnel, SaveViewDialog, fieldChoices } from '../components/FilterPanel'
@@ -154,11 +155,14 @@ export function Settings() {
 
 /* ================= 外观 ================= */
 const ACCENTS: { key: DashAccent; label: string; color: string }[] = [
-  { key: 'slate', label: '石墨', color: '#2f6feb' },
+  { key: 'mica', label: '云母', color: '#6f6659' },
+  { key: 'slate', label: '靛蓝', color: '#2f6feb' },
   { key: 'sand', label: '暖沙', color: '#a9772c' },
   { key: 'forest', label: '松绿', color: '#1e7a58' },
   { key: 'ocean', label: '远海', color: '#1c6ea6' },
   { key: 'plum', label: '梅紫', color: '#7b4a9d' },
+  { key: 'coral', label: '珊瑚', color: '#b8553f' },
+  { key: 'bamboo', label: '竹青', color: '#4f7a4a' },
 ]
 
 const THEMES = [
@@ -172,7 +176,8 @@ const DASH_LABEL: Record<string, string> = { todos: '待办事项', reminders: '
 function AppearanceSettings() {
   const isMobileLayout = useBreakpoint() === 'mobile'
   const theme = useStore((s) => s.prefs.theme ?? 'system')
-  const accent = useStore((s) => s.prefs.dashAccent ?? 'slate')
+  const accent = useStore((s) => s.prefs.dashAccent ?? 'mica')
+  const accentCustom = useStore((s) => s.prefs.accentCustom ?? '#6f6659')
   const highContrast = useStore((s) => s.prefs.highContrast ?? false)
   const mobileOrder = useStore((s) => s.prefs.dashMobileOrder)
   const setPrefs = useStore((s) => s.setPrefs)
@@ -231,7 +236,26 @@ function AppearanceSettings() {
               {a.label}
             </button>
           ))}
+          {/* 自定义：调色盘里给不出想要的色相时，直接取一个 */}
+          <label
+            className={cn('accent-dot accent-custom', accent === 'custom' && 'on')}
+            title="自定义主题色"
+          >
+            <input
+              type="color"
+              value={accentCustom}
+              aria-label="自定义主题色"
+              onChange={(e) => {
+                setPrefs({ dashAccent: 'custom', accentCustom: e.target.value })
+              }}
+            />
+            <span style={{ background: accentCustom }} />
+            自定义
+          </label>
         </div>
+        <p className="field-hint accent-hint">
+          默认是「云母」——带一点暖调的浅灰褐，长时间看不累；换任何颜色，按钮、选中态、图表都会跟着走。
+        </p>
       </div>
 
       {/* 提高对比度：把文字、描边、浅底都加深一档，强光下更好认 */}
@@ -2142,6 +2166,17 @@ function AboutSettings() {
               </span>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* 弹性面板缩放的独立样张：与人脉详情页的左边缘是同一套引擎 */}
+      <div className="set-card">
+        <div className="set-card-head">
+          <h3>交互样张 · 弹性面板缩放</h3>
+          <span className="field-hint">把鼠标放到右侧面板的左边缘，或直接 Tab 过去用方向键</span>
+        </div>
+        <div className="set-card-body" style={{ paddingTop: 0 }}>
+          <ElasticPanelResize height={340} />
         </div>
       </div>
 

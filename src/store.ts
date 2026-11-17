@@ -97,7 +97,9 @@ export const DEFAULT_PREFS: Prefs = {
   },
   theme: 'system',
   highContrast: false,
-  dashAccent: 'slate',
+  dashAccent: 'mica',
+  accentCustom: '#6f6659',
+  accentV: 2,
   dashMobileOrder: ['todos', 'reminders', 'anniversaries'],
   detailPanelWidth: 420,
   columnConfig: ['name', 'phones', 'company', 'groups', 'tags', 'city', 'lastInteraction'],
@@ -240,7 +242,14 @@ function loadPrefs(): Prefs {
   try {
     const raw = localStorage.getItem(PREFS_KEY)
     if (!raw) return { ...DEFAULT_PREFS }
-    return { ...DEFAULT_PREFS, ...(JSON.parse(raw) as Partial<Prefs>) }
+    const parsed = JSON.parse(raw) as Partial<Prefs>
+    const prefs = { ...DEFAULT_PREFS, ...parsed }
+    /* 主题色改版（v2.1）：老版本默认的石墨蓝统一换成云母，只迁一次 */
+    if ((parsed.accentV ?? 1) < 2) {
+      if (!parsed.dashAccent || parsed.dashAccent === 'slate') prefs.dashAccent = 'mica'
+      prefs.accentV = 2
+    }
+    return prefs
   } catch {
     return { ...DEFAULT_PREFS }
   }

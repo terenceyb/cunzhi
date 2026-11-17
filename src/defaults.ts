@@ -381,7 +381,8 @@ export function buildDemoData(): DemoBundle {
       isBuiltIn: false,
     },
     {
-      ...mk('custom_card', '名片码', 'barcode', 22, { group: 'custom' }),
+      /* 名片码由本人资料就地生成（vCard 文本），不存链接、不联网 */
+      ...mk('custom_card', '名片码', 'barcode', 22, { group: 'custom', config: { source: 'personCard' } }),
       isBuiltIn: false,
     },
   ]
@@ -395,10 +396,6 @@ export function buildDemoData(): DemoBundle {
   byId('person_zhangsan').fields.custom_role = '产品经理'
   byId('person_chenmo').fields.custom_role = 'CTO'
   byId('person_linche').fields.custom_role = '总经理'
-  byId('person_zhangsan').fields.custom_card = {
-    format: 'QR_CODE',
-    rawValue: 'https://cunzhi.app/c/zhangsan',
-  }
   byId('person_tangyi').fields.maritalStatus = 'opt_marital_removed'
 
   const timelineEvents: TimelineEvent[] = []

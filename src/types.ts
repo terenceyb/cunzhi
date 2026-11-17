@@ -38,6 +38,8 @@ export interface FieldConfig {
   unit?: 'none' | 'percent' | 'custom'
   unitText?: string
   multiple?: boolean
+  /** barcode 字段的数据来源：personCard = 由本人资料就地生成，不存链接 */
+  source?: 'personCard'
   maxFiles?: number
   acceptedMimeTypes?: string
   min?: number
@@ -318,6 +320,10 @@ export interface Prefs {
   highContrast?: boolean
   /** 工作台主题色（卡片标题与强调色的一层薄着色） */
   dashAccent: DashAccent
+  /** 自定义主题色的色值（dashAccent === 'custom' 时生效） */
+  accentCustom?: string
+  /** 主题色方案版本：老数据迁移用，2 起默认云母 */
+  accentV?: number
   /** 移动端工作台卡片顺序：待办 → 走动提醒 → 纪念日 为默认 */
   dashMobileOrder: string[]
   detailPanelWidth: number
@@ -337,7 +343,7 @@ export interface Prefs {
 
 export type ThemeMode = 'system' | 'light' | 'dark'
 
-export type DashAccent = 'slate' | 'sand' | 'forest' | 'ocean' | 'plum'
+export type DashAccent = 'mica' | 'slate' | 'sand' | 'forest' | 'ocean' | 'plum' | 'coral' | 'bamboo' | 'custom'
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'dirty' | 'error' | 'no-file'
 

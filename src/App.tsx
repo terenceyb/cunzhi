@@ -35,7 +35,8 @@ import { cn, relativeTime } from './lib/utils'
 /** 明暗模式 + 主题色 + 对比度：只改 <html data-*>，CSS 变量接管一切 */
 function ThemeSync() {
   const theme = useStore((s) => s.prefs.theme ?? 'system')
-  const accent = useStore((s) => s.prefs.dashAccent ?? 'slate')
+  const accent = useStore((s) => s.prefs.dashAccent ?? 'mica')
+  const accentCustom = useStore((s) => s.prefs.accentCustom ?? '#6f6659')
   const highContrast = useStore((s) => s.prefs.highContrast ?? false)
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
@@ -48,8 +49,17 @@ function ThemeSync() {
     return () => mq.removeEventListener('change', apply)
   }, [theme])
   useEffect(() => {
-    document.documentElement.dataset.accent = accent
-  }, [accent])
+    const root = document.documentElement
+    root.dataset.accent = accent
+    /* 自定义色不进 CSS 预设表：直接写两个变量，其余规则照样生效 */
+    if (accent === 'custom') {
+      root.style.setProperty('--accent', accentCustom)
+      root.style.setProperty('--accent-soft', `color-mix(in srgb, ${accentCustom} 14%, var(--surface))`)
+    } else {
+      root.style.removeProperty('--accent')
+      root.style.removeProperty('--accent-soft')
+    }
+  }, [accent, accentCustom])
   useEffect(() => {
     document.documentElement.dataset.contrast = highContrast ? 'high' : 'normal'
   }, [highContrast])

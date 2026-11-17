@@ -21,19 +21,19 @@ import {
 import type { FieldDefinition, Person } from '../types'
 import { buildCtx, useStore } from '../store'
 import { useUI } from '../ui'
-import { Avatar, Empty, Menu, MenuSeparator, Segmented, useBreakpoint } from '../components/ui'
+import { Avatar, Empty, Menu, Segmented, useBreakpoint } from '../components/ui'
 import { PersonCard } from '../components/PersonCard'
-import { FieldInput } from '../components/FieldInput'
 import { WalletStackView } from '../components/WalletCard'
 import { PersonDetail } from '../components/PersonDetail'
+import { createElasticPanelResize } from '../components/elastic/ElasticPanelResizeEngine'
 import { ActiveFilterChips, FilterTrigger } from '../components/FilterPanel'
 import { NetworkView } from './Network'
-import { buildPersonMeta, buildMetaMap, displayValue, personName } from '../lib/derive'
+import { buildPersonMeta, displayValue, personName } from '../lib/derive'
 import { applyFilter } from '../lib/filter'
 import { computeReminders } from '../lib/reminders'
 import { pinyinOf } from '../lib/search'
-import { channelId, channelLabel, normalizeChannels } from '../lib/channels'
-import { cn, dayDiff, relativeTime } from '../lib/utils'
+import { channelLabel, normalizeChannels } from '../lib/channels'
+import { cn, relativeTime } from '../lib/utils'
 
 type SortKey = 'lastInteraction' | 'namePinyin' | 'createdAt' | 'urgency'
 
@@ -62,6 +62,7 @@ export function People() {
 
   /* 详情浮层的顶边：从工具栏下沿再让 8px，筛选行与右侧视图切换、新建按钮都不会被盖住 */
   const toolbarRef = useRef<HTMLDivElement>(null)
+  const layoutRef = useRef<HTMLDivElement>(null)
   const [detailTop, setDetailTop] = useState(10)
   useEffect(() => {
     const el = toolbarRef.current
@@ -81,6 +82,51 @@ export function People() {
       window.removeEventListener('resize', measure)
     }
   }, [])
+
+  /* 详情面板左边缘：弹性把手（ElasticPanelResize 引擎）接管拖动，
+     位置与弯曲都由引擎逐帧计算，这里只负责把宽度落进 prefs。
+     1199px 以下面板宽度由样式表锁定（460px），引擎直接销毁，把手随之消失。 */
+  const setPrefs = store.setPrefs
+  const panelWidthRef = useRef(store.prefs.detailPanelWidth)
+  useEffect(() => {
+    if (!detailOpen) return
+    let engine: ReturnType<typeof createElasticPanelResize> | null = null
+
+    const setup = () => {
+      const host = layoutRef.current
+      const panel = host?.querySelector<HTMLElement>('.detail-panel')
+      if (!host || !panel) return
+      if (window.innerWidth < 1200) {
+        engine?.destroy()
+        engine = null
+        return
+      }
+      if (engine) return
+      engine = createElasticPanelResize({
+        host,
+        panel,
+        minWidth: 400,
+        maxWidth: 640,
+        initialWidth: Math.min(640, Math.max(400, panelWidthRef.current)),
+        rightGap: 10,
+        ariaLabel: '调整详情面板宽度',
+        onChange: (m) => host.style.setProperty('--detail-w', `${Math.round(m.width)}px`),
+        onCommit: (m) => {
+          panelWidthRef.current = Math.round(m.width)
+          setPrefs({ detailPanelWidth: Math.round(m.width) })
+        },
+      })
+    }
+
+    setup()
+    window.addEventListener('resize', setup)
+    return () => {
+      window.removeEventListener('resize', setup)
+      engine?.destroy()
+      engine = null
+      layoutRef.current?.style.removeProperty('--detail-w')
+    }
+  }, [detailOpen, setPrefs])
 
   const reminders = useMemo(
     () =>
@@ -153,6 +199,7 @@ export function People() {
 
   return (
     <div
+      ref={layoutRef}
       className={cn('people-layout', detailOpen && 'detail-open')}
       style={{
         ['--detail-w' as string]: `${Math.max(400, store.prefs.detailPanelWidth)}px`,
@@ -403,7 +450,6 @@ export function People() {
 
       {detailOpen && selectedPerson && (
         <div className="detail-panel">
-          <ResizeHandle />
           <PersonDetail personId={selectedPerson.id} ctx={ctx} onClose={() => ui.closePerson()} embedded={false} />
         </div>
       )}
@@ -418,37 +464,6 @@ export function People() {
     toast(`已为 ${selectedIds.length} 人设置联系频率`, 'success')
     setSelectedIds([])
   }
-}
-
-function ResizeHandle() {
-  const setPrefs = useStore((s) => s.setPrefs)
-  const width = useStore((s) => s.prefs.detailPanelWidth)
-  const dragging = useRef(false)
-  useEffect(() => {
-    const onMove = (e: MouseEvent) => {
-      if (!dragging.current) return
-      /* 右侧最多缩到 400：再窄「记录互动 + 更多」就会换行往下掉 */
-      const next = Math.min(640, Math.max(400, window.innerWidth - e.clientX))
-      setPrefs({ detailPanelWidth: next })
-    }
-    const onUp = () => (dragging.current = false)
-    window.addEventListener('mousemove', onMove)
-    window.addEventListener('mouseup', onUp)
-    return () => {
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseup', onUp)
-    }
-  }, [setPrefs])
-  if (window.innerWidth < 1200) return null
-  return (
-    <div
-      className="detail-resizer"
-      onMouseDown={() => (dragging.current = true)}
-      title={`拖动调整宽度（当前 ${width}px）`}
-      role="separator"
-      aria-label="调整详情面板宽度"
-    />
-  )
 }
 
 function TableToolbar({ ctx }: { ctx: ReturnType<typeof buildCtx> }) {
@@ -477,7 +492,7 @@ function TableToolbar({ ctx }: { ctx: ReturnType<typeof buildCtx> }) {
         <button className={cn('btn sm', open && 'accent')} onClick={() => (open ? setOpen(false) : openPanel())} aria-expanded={open}>
           <Columns3 size={13} /> 配置列
         </button>
-        <span className="field-hint">· 点击表头排序，点击任意单元格即可直接编辑</span>
+        <span className="field-hint">· 点表头排序，点单元格改字，改完点右下角「保存」统一写入</span>
       </div>
       {open && (
         <div className="col-config">
@@ -509,7 +524,7 @@ function TableToolbar({ ctx }: { ctx: ReturnType<typeof buildCtx> }) {
                   disabled={c.locked}
                   onClick={() => toggle(c.key)}
                 >
-                  <span className={cn('check', on && 'on')}>{on && <Check size={11} strokeWidth={3} />}</span>
+                  <span className={cn('check', on && 'on')}>{on && <Check size={13} strokeWidth={3} />}</span>
                   <span className="ellipsis">{c.label}</span>
                 </button>
               )
@@ -566,12 +581,16 @@ function VirtualTable({
 }) {
   const prefs = useStore((s) => s.prefs)
   const updatePerson = useStore((s) => s.updatePerson)
+  const toast = useUI((s) => s.toast)
   const scrollRef = useRef<HTMLDivElement>(null)
   const [scrollTop, setScrollTop] = useState(0)
   const [height, setHeight] = useState(600)
   const [sort, setSort] = useState<{ key: string; dir: 1 | -1 }>({ key: 'name', dir: 1 })
   // roving tabindex：整个表格只留一个 Tab 落点，行内用 ↑↓ 走
   const [focusIdx, setFocusIdx] = useState(0)
+  /* 行级草稿：{ 人脉 id: { 字段 key: 新值 } }。改完的格子先落在这里，点保存才写入 */
+  const [drafts, setDrafts] = useState<Record<string, Record<string, unknown>>>({})
+  const [editing, setEditing] = useState<{ id: string; key: string } | null>(null)
   const rowH = 54
 
   useEffect(() => {
@@ -591,8 +610,6 @@ function VirtualTable({
     })
     return list.filter(Boolean) as { key: string; label: string; def?: FieldDefinition }[]
   }, [prefs.columnConfig, ctx.fieldDefinitions])
-
-  const nameDef = useMemo(() => ctx.fieldDefinitions.find((d) => d.key === 'name'), [ctx.fieldDefinitions])
 
   const sorted = useMemo(() => {
     const arr = [...rows]
@@ -615,6 +632,39 @@ function VirtualTable({
   const visible = sorted.slice(start, start + Math.ceil(height / rowH) + 16)
   const padTop = start * rowH
   const padBottom = Math.max(0, (sorted.length - start - visible.length) * rowH)
+
+  /* ---------------- 行级草稿 ---------------- */
+  const dirtyIds = Object.keys(drafts)
+  const dirtyCount = dirtyIds.reduce((n, id) => n + Object.keys(drafts[id]).length, 0)
+  const setCell = (id: string, key: string, value: unknown) =>
+    setDrafts((prev) => ({ ...prev, [id]: { ...(prev[id] ?? {}), [key]: value } }))
+  const dropRow = (id: string) =>
+    setDrafts((prev) => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+  const saveRow = (id: string) => {
+    const patch = drafts[id]
+    if (!patch) return
+    updatePerson(id, patch)
+    dropRow(id)
+  }
+  const saveAll = () => {
+    if (!dirtyIds.length) return
+    dirtyIds.forEach((id) => saveRow(id))
+    setEditing(null)
+    toast(dirtyIds.length === 1 ? '已保存这行的修改' : `已保存 ${dirtyIds.length} 行的修改`, 'success')
+  }
+  const nameOf = (id: string) => {
+    const p = rows.find((x) => x.id === id)
+    return p ? personName(p) : '这一行'
+  }
+  const revertAll = () => {
+    setDrafts({})
+    setEditing(null)
+    toast('已撤销未保存的修改')
+  }
 
   const onRowKey = (e: React.KeyboardEvent<HTMLTableRowElement>, p: Person, idx: number) => {
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
@@ -644,13 +694,17 @@ function VirtualTable({
   }
 
   return (
-    <div className="table-wrap" ref={scrollRef} onScroll={(e) => setScrollTop((e.target as HTMLDivElement).scrollTop)}>
+    <div
+      className={cn('table-wrap', selectedIds.length > 0 && 'has-bulk')}
+      ref={scrollRef}
+      onScroll={(e) => setScrollTop((e.target as HTMLDivElement).scrollTop)}
+    >
       <table className="data">
         <thead>
           <tr>
-            <th style={{ width: 36, paddingLeft: 12 }}>
+            <th style={{ width: 38, paddingLeft: 12 }}>
               <button className={cn('check', allSelected && 'on')} onClick={onToggleAll} aria-label="全选">
-                {allSelected && <Check size={14} strokeWidth={3} />}
+                {allSelected && <Check size={16} strokeWidth={2.6} />}
               </button>
             </th>
             {columns.map((c) => (
@@ -675,12 +729,14 @@ function VirtualTable({
             const idx = sorted.indexOf(p)
             const meta = buildPersonMeta(p, ctx)
             const selected = selectedIds.includes(p.id)
+            const rowDraft = drafts[p.id]
+            const rowDirty = !!rowDraft && Object.keys(rowDraft).length > 0
             return (
               <tr
                 key={p.id}
                 data-idx={idx}
                 tabIndex={idx === focusIdx ? 0 : -1}
-                className={cn(selected && 'selected', activeId === p.id && 'active')}
+                className={cn(selected && 'selected', activeId === p.id && 'active', rowDirty && 'has-draft')}
                 onClick={() => onOpen(p.id)}
                 onFocus={() => setFocusIdx(idx)}
                 onKeyDown={(e) => onRowKey(e, p, idx)}
@@ -691,26 +747,78 @@ function VirtualTable({
                     onClick={(e) => onToggle(p.id, idx, e.shiftKey)}
                     aria-label={`选择 ${meta.name}`}
                   >
-                    {selected && <Check size={14} strokeWidth={3} />}
+                    {selected && <Check size={16} strokeWidth={2.6} />}
                   </button>
                 </td>
-                {columns.map((c) => (
-                  <td
-                    key={c.key}
-                    className={cn(c.key === 'name' && 'cell-name', c.def?.type === 'phone' && 'cell-multi')}
-                  >
-                    {c.key === 'lastInteraction' ? (
-                      <span className="muted">{relativeTime(meta.lastInteractionAt)}</span>
-                    ) : c.key === 'name' ? (
-                      <span className="row cell-name-row" style={{ gap: 7 }}>
-                        <Avatar name={meta.name} src={meta.avatar?.thumbnail} size={22} color={meta.groupColor} />
-                        {nameDef ? <EditableCell def={nameDef} person={p} ctx={ctx} /> : meta.name}
-                      </span>
-                    ) : c.def ? (
-                      <EditableCell def={c.def} person={p} ctx={ctx} />
-                    ) : null}
-                  </td>
-                ))}
+                {columns.map((c) => {
+                  const dirty = rowDraft ? Object.prototype.hasOwnProperty.call(rowDraft, c.key) : false
+                  const isEditing = editing?.id === p.id && editing.key === c.key
+                  /* 姓名与「上次互动」不参与就地编辑：点行（含头像与姓名）直接开详情 */
+                  if (c.key === 'name') {
+                    return (
+                      <td key={c.key} className="cell-name">
+                        <span className="row cell-name-row" style={{ gap: 7 }}>
+                          <Avatar name={meta.name} src={meta.avatar?.thumbnail} size={22} color={meta.groupColor} />
+                          <span className="cell-text">{meta.name}</span>
+                        </span>
+                      </td>
+                    )
+                  }
+                  if (c.key === 'lastInteraction') {
+                    return (
+                      <td key={c.key}>
+                        <span className="muted">{relativeTime(meta.lastInteractionAt)}</span>
+                      </td>
+                    )
+                  }
+                  if (!c.def) return <td key={c.key} />
+                  const def = c.def
+                  const value = dirty ? rowDraft[c.key] : p.fields[def.key]
+                  const simple = isSimpleField(def)
+                  return (
+                    <td
+                      key={c.key}
+                      className={cn(def.type === 'phone' && 'cell-multi', dirty && 'is-dirty')}
+                      data-field={def.key}
+                    >
+                      {isEditing ? (
+                        <CellEditor
+                          def={def}
+                          value={p.fields[def.key]}
+                          onCommit={(next) => {
+                            /* 值没变就不留草稿，避免「点一下就算改过」 */
+                            const same = JSON.stringify(next ?? null) === JSON.stringify(p.fields[def.key] ?? null)
+                            if (!same) setCell(p.id, def.key, next)
+                            setEditing(null)
+                          }}
+                          onCancel={() => setEditing(null)}
+                        />
+                      ) : simple ? (
+                        <button
+                          type="button"
+                          className={cn('cell-view', dirty && 'dirty')}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setEditing({ id: p.id, key: def.key })
+                          }}
+                          title="点击编辑"
+                        >
+                          <span className="cell-text">{cellText(def, value, ctx) || <span className="muted">—</span>}</span>
+                        </button>
+                      ) : (
+                        <span className="cell-static" title="这一列在详情页里编辑">
+                          {def.type === 'phone' ? (
+                            <PhoneLines person={{ ...p, fields: { ...p.fields, phones: dirty ? value : p.fields.phones } }} />
+                          ) : (
+                            <span className="cell-text">
+                              {cellText(def, value, ctx) || <span className="muted">—</span>}
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </td>
+                  )
+                })}
               </tr>
             )
           })}
@@ -721,115 +829,145 @@ function VirtualTable({
           )}
         </tbody>
       </table>
+
+      {/* 行级保存条：改完多个格子只需要点一次「保存」 */}
+      {dirtyCount > 0 && (
+        <div className="save-bar" role="status">
+          <span className="save-bar-text">
+            {dirtyIds.length === 1 ? `「${nameOf(dirtyIds[0])}」改了 ${dirtyCount} 项` : `${dirtyIds.length} 行共 ${dirtyCount} 项修改`}
+            <span className="save-bar-hint">未写入，点保存才生效</span>
+          </span>
+          <button className="btn sm primary" onClick={saveAll}>
+            保存
+          </button>
+          <button className="btn sm ghost" onClick={revertAll}>
+            撤销
+          </button>
+        </div>
+      )}
     </div>
   )
 }
 
-/* 表格单元格：点一下就地编辑，任何字段都能改（姓名与「上次互动」除外） */
-function EditableCell({
+/* 表格里只做「基础编辑」的字段类型：文本 / 数字 / 日期 / 单选。
+   多值、附件、地址、关系、名片码这些结构复杂的，点行进详情页改。 */
+const SIMPLE_TYPES = ['text', 'longtext', 'number', 'date', 'select'] as const
+function isSimpleField(def: FieldDefinition) {
+  return (SIMPLE_TYPES as readonly string[]).includes(def.type)
+}
+
+/** 单元格纯文本：日期、单选这些都要按字段配置转出可读值 */
+function cellText(def: FieldDefinition, value: unknown, ctx: ReturnType<typeof buildCtx>) {
+  if (def.type === 'date') {
+    const dv = value as { value?: string } | string | undefined
+    const iso = typeof dv === 'string' ? dv : dv?.value
+    if (!iso) return ''
+    return iso.slice(0, 10)
+  }
+  return displayValue(def, value, ctx)
+}
+
+/* 就地编辑器：高度、字号、内边距与原单元格一致，不放大、不遮住相邻单元格 */
+function CellEditor({
   def,
-  person,
-  ctx,
+  value,
+  onCommit,
+  onCancel,
 }: {
   def: FieldDefinition
-  person: Person
-  ctx: ReturnType<typeof buildCtx>
+  value: unknown
+  onCommit: (next: unknown) => void
+  onCancel: () => void
 }) {
-  const updatePerson = useStore((s) => s.updatePerson)
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState<unknown>(person.fields[def.key])
-
-  const boxRef = useRef<HTMLDivElement>(null)
-  const open = () => {
-    setDraft(person.fields[def.key])
-    setEditing(true)
-  }
-  /* 进入编辑就把光标放进输入框，键盘直接能打字；选择型字段不抢焦点（面板自带搜索） */
-  useEffect(() => {
-    if (!editing) return
-    if (def.type === 'select' || def.type === 'multiselect') {
-      // 选择型字段：直接展开面板，少一次点击
-      const t = window.setTimeout(() => boxRef.current?.querySelector<HTMLElement>('.pk-trigger')?.click(), 30)
-      return () => window.clearTimeout(t)
+  const initial = useMemo(() => {
+    if (def.type === 'date') {
+      const dv = value as { value?: string } | string | undefined
+      return (typeof dv === 'string' ? dv : dv?.value)?.slice(0, 10) ?? ''
     }
-    const t = window.setTimeout(() => {
-      const el = boxRef.current?.querySelector<HTMLElement>('input:not([type="hidden"]), textarea')
-      el?.focus()
-      if (el instanceof HTMLInputElement) el.select()
-    }, 20)
-    return () => window.clearTimeout(t)
-  }, [editing, def.type])
-  const commit = (next?: unknown) => {
-    updatePerson(person.id, { [def.key]: next === undefined ? draft : next })
-    setEditing(false)
+    if (value == null) return ''
+    return String(value)
+  }, [def.type, value])
+  const [draft, setDraft] = useState(initial)
+  const done = useRef(false)
+  const boxRef = useRef<HTMLDivElement>(null)
+
+  const finish = (save: boolean) => {
+    if (done.current) return
+    done.current = true
+    if (!save) {
+      onCancel()
+      return
+    }
+    if (def.type === 'number') {
+      const t = draft.trim()
+      onCommit(t === '' ? '' : Number.isNaN(Number(t)) ? t : Number(t))
+      return
+    }
+    if (def.type === 'date') {
+      const dv = value as { value?: string; hasTime?: boolean } | undefined
+      const hasTime = dv?.hasTime ?? def.config.hasTime ?? false
+      const time = hasTime ? (dv?.value?.slice(11, 16) ?? '00:00') : ''
+      onCommit(draft ? { value: hasTime ? `${draft}T${time}` : draft, hasTime } : null)
+      return
+    }
+    onCommit(draft.trim() === '' ? null : draft)
   }
 
-  if (!editing) {
-    return (
-      <button
-        type="button"
-        className="cell-view"
-        onClick={(e) => {
-          e.stopPropagation()
-          open()
-        }}
-        title="点击编辑"
-      >
-        {def.type === 'phone' ? (
-          <PhoneLines person={person} />
-        ) : (
-          <span className="cell-text">
-            {displayValue(def, person.fields[def.key], ctx) || <span className="muted">—</span>}
-          </span>
-        )}
-      </button>
-    )
+  useEffect(() => {
+    const el = boxRef.current?.querySelector<HTMLElement>('input, select, textarea')
+    el?.focus()
+    if (el instanceof HTMLInputElement) el.select()
+  }, [])
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    e.stopPropagation()
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      finish(true)
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      finish(false)
+    }
   }
 
-  if (def.type === 'phone') {
-    return <PhoneCellEditor person={person} onDone={() => setEditing(false)} />
-  }
-
-  const choice = def.type === 'select' || def.type === 'multiselect'
   return (
     <div
       ref={boxRef}
-      className={cn('cell-editing', choice && 'is-choice')}
+      className="cell-editor"
       onClick={(e) => e.stopPropagation()}
-      onKeyDown={(e) => {
-        /* 表格行本身用 Enter 打开详情、↑↓ 换行：编辑期间键盘要留在单元格里 */
-        e.stopPropagation()
-        if (e.key === 'Enter') {
-          e.preventDefault()
-          commit()
-        } else if (e.key === 'Escape') {
-          e.preventDefault()
-          setEditing(false)
-        }
+      onKeyDown={onKeyDown}
+      onBlur={(e) => {
+        /* 焦点离开整个编辑器（不是内部换到 select）才算提交 */
+        if (e.currentTarget.contains(e.relatedTarget as Node)) return
+        finish(true)
       }}
     >
-      <FieldInput
-        def={def}
-        value={draft}
-        personId={person.id}
-        onChange={(v) => {
-          setDraft(v)
-          /* 单选一点即生效，和详情页的行为一致 */
-          if (def.type === 'select') {
-            updatePerson(person.id, { [def.key]: v })
-            setEditing(false)
-          }
-        }}
-      />
-      {def.type !== 'select' && (
-        <span className="cell-ops">
-          <button type="button" className="btn icon sm" aria-label="保存" onClick={() => commit()}>
-            <Check size={13} />
-          </button>
-          <button type="button" className="btn icon sm" aria-label="取消" onClick={() => setEditing(false)}>
-            <X size={13} />
-          </button>
-        </span>
+      {def.type === 'select' ? (
+        <select
+          className="cell-input"
+          value={draft}
+          onChange={(e) => {
+            setDraft(e.target.value)
+            done.current = true
+            onCommit(e.target.value || null)
+          }}
+        >
+          <option value="">—</option>
+          {(def.config.options ?? []).map((o) => (
+            <option key={o.id} value={o.id}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <input
+          className="cell-input"
+          type={def.type === 'date' ? 'date' : 'text'}
+          inputMode={def.type === 'number' ? 'decimal' : undefined}
+          value={draft}
+          placeholder={def.label}
+          onChange={(e) => setDraft(e.target.value)}
+        />
       )}
     </div>
   )
@@ -851,102 +989,14 @@ function PhoneLines({ person }: { person: Person }) {
         </span>
       ))}
       {rest > 0 && (
-        <span className="cell-line-more" title={arr.slice(2).map((p) => `${channelLabel(p.label, channels)} ${p.number}`).join('\n')}>
+        <span
+          className="cell-line-more"
+          title={arr.slice(2).map((p) => `${channelLabel(p.label, channels)} ${p.number}`).join('\n')}
+        >
           +{rest}
         </span>
       )}
     </span>
-  )
-}
-
-/* 表格里的联系方式编辑：一行一个通道，改完点保存，不弹二级面板 */
-function PhoneCellEditor({ person, onDone }: { person: Person; onDone: () => void }) {
-  const channels = useStore((s) => normalizeChannels(s.settings.contactChannels))
-  const updatePerson = useStore((s) => s.updatePerson)
-  const [rows, setRows] = useState(() => {
-    const arr = (person.fields.phones as { label: string; number: string }[]) ?? []
-    return arr.length ? arr.map((p) => ({ label: channelId(p.label, channels), number: p.number })) : [{ label: channels[0]?.id ?? 'mobile', number: '' }]
-  })
-
-  const save = () => {
-    const order = channels.map((c) => c.id)
-    const list = rows
-      .filter((r) => (r.number ?? '').trim())
-      .map((r) => ({ label: r.label, number: r.number.trim() }))
-    list.sort((a, b) => order.indexOf(a.label) - order.indexOf(b.label))
-    updatePerson(person.id, { phones: list })
-    onDone()
-  }
-
-  return (
-    <div
-      className="cell-editing cell-editing--phone"
-      onClick={(e) => e.stopPropagation()}
-      onKeyDown={(e) => {
-        e.stopPropagation()
-        if (e.key === 'Enter') {
-          e.preventDefault()
-          save()
-        } else if (e.key === 'Escape') {
-          e.preventDefault()
-          onDone()
-        }
-      }}
-    >
-      <div className="cell-phone-rows">
-        {rows.map((r, i) => (
-          <div className="cell-phone-row" key={`${r.label}-${i}`}>
-            <select
-              className="cell-phone-ch"
-              value={r.label}
-              aria-label="联系方式通道"
-              onChange={(e) => setRows((prev) => prev.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))}
-            >
-              {channels.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-            <input
-              className="cell-phone-input"
-              autoFocus={i === 0}
-              inputMode={channels.find((c) => c.id === r.label)?.kind === 'tel' ? 'tel' : 'text'}
-              value={r.number}
-              placeholder="填写号码"
-              onChange={(e) => setRows((prev) => prev.map((x, j) => (j === i ? { ...x, number: e.target.value } : x)))}
-            />
-            <button
-              type="button"
-              className="cell-phone-del"
-              aria-label="删除这一行"
-              onClick={() => setRows((prev) => (prev.length > 1 ? prev.filter((_, j) => j !== i) : prev.map((x) => ({ ...x, number: '' }))))}
-            >
-              <Trash2 size={11} />
-            </button>
-          </div>
-        ))}
-        <button
-          type="button"
-          className="cell-phone-add"
-          onClick={() => {
-            const used = new Set(rows.map((r) => r.label))
-            const free = channels.find((c) => !used.has(c.id))
-            if (free) setRows((prev) => [...prev, { label: free.id, number: '' }])
-          }}
-        >
-          <Plus size={11} /> 再加一个通道
-        </button>
-      </div>
-      <span className="cell-ops">
-        <button type="button" className="btn icon sm" aria-label="保存" onClick={save}>
-          <Check size={13} />
-        </button>
-        <button type="button" className="btn icon sm" aria-label="取消" onClick={onDone}>
-          <X size={13} />
-        </button>
-      </span>
-    </div>
   )
 }
 

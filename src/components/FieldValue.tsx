@@ -29,6 +29,7 @@ import { ageOf, daysToBirthday, defByKey, isRefSnapshot, personName } from '../l
 import { channelId, channelLabel, channelOf, normalizeChannels } from '../lib/channels'
 import { Avatar, CopyButton } from './ui'
 import { QrImage } from './QrImage'
+import { buildCardCode, cardCodeSummary } from '../lib/cardCode'
 
 /* 名片码里常见的写法是「www.xxx.com」或「xxx.com」，缺协议头点开只会 404，
    这里统一补全；不像网址的内容（纯号码、MECARD 等）原样交给二维码。 */
@@ -77,7 +78,9 @@ export function FieldValue({
         ? tags.map((t) => ({ id: t.id, label: t.name, color: '#5B6573' }))
         : def.config.options ?? []
 
-  if (value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0)) {
+  /* 名片码是「由本人资料就地生成」的字段：不依赖存储值，所以不参与空值短路 */
+  const autoCard = def.type === 'barcode' && def.config?.source === 'personCard'
+  if (!autoCard && (value === null || value === undefined || value === '' || (Array.isArray(value) && value.length === 0))) {
     return <span className="muted" style={{ fontSize: compact ? 12 : 13 }}>—</span>
   }
 
@@ -333,11 +336,32 @@ export function FieldValue({
       )
     }
     case 'barcode': {
-      const bv = value as BarcodeValue
-      if (!bv?.rawValue) return <span className="muted">—</span>
-      /* 名片码要的是「能扫的码」，不是一串链接文本：把原始值编码成真二维码，
-         内容是网址时直接点码就能打开（补全缺少的协议头，避免点了没反应）。 */
-      const raw = String(bv.rawValue).trim()
+      const bv = (value as BarcodeValue) ?? { format: '', rawValue: '' }
+      /* 名片码：内容由这位联系人的资料在本机拼成 vCard 文本，
+         不是链接、不联网、不写死任何域名，扫码后系统直接问「是否新建联系人」。 */
+      if (autoCard) {
+        const person = personId ? persons.find((p) => p.id === personId) : undefined
+        const text = buildCardCode(person, { fieldDefinitions, groups, tags })
+        return (
+          <span className={cn('barcode-view', compact && 'is-compact')}>
+            <QrImage value={text} size={compact ? 54 : 76} title="名片码：扫码即可存入通讯录" />
+            <span className="barcode-main">
+              <span className="barcode-title">名片码</span>
+              <span className="barcode-raw ellipsis">{cardCodeSummary(person, { groups }) || '由本人资料生成'}</span>
+              <span className="barcode-meta">
+                <span className="chip sm">扫码存联系人</span>
+                {!compact && (
+                  <CopyButton variant="text" text={text} label="复制名片码内容" className="copy-text">
+                    复制
+                  </CopyButton>
+                )}
+              </span>
+            </span>
+          </span>
+        )
+      }
+      const raw = String(bv.rawValue ?? '').trim()
+      if (!raw) return <span className="muted">—</span>
       const href = withProtocol(raw)
       return (
         <span className="barcode-view">

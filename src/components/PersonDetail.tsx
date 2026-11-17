@@ -113,7 +113,15 @@ export function PersonDetail({
     .filter((d) => d.visible && !d.disabled && d.type !== 'timeline' && d.key !== 'avatar' && d.key !== 'name')
     .sort((a, b) => a.sortOrder - b.sortOrder)
     // 联系方式总是显示：它是空的时候也要能点进去填
-    .filter((d) => showEmptyFields || d.key === 'phones' || pinnedKeys.includes(d.key) || !isEmptyValue(person.fields[d.key], d))
+    .filter(
+      (d) =>
+        showEmptyFields ||
+        d.key === 'phones' ||
+        /* 名片码由本人资料生成，永远有内容 */
+        (d.type === 'barcode' && d.config?.source === 'personCard') ||
+        pinnedKeys.includes(d.key) ||
+        !isEmptyValue(person.fields[d.key], d),
+    )
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
