@@ -16,7 +16,7 @@ import { buildCtx, useStore } from './store'
 import { useUI, type RouteName } from './ui'
 import { Avatar, Logo, SavePill, ToastHost, ConfirmHost, PromptHost, useBreakpoint } from './components/ui'
 import { IconSwap, TBadge } from './components/motion'
-import { DockTabs } from './components/DockTabs'
+import { GlassTabMenu } from './components/glass/GlassTabMenu'
 import { OverlayScrollbar } from './components/OverlayScrollbar'
 import { UploadHost } from './components/UploadDialog'
 import { GlobalSearch } from './components/GlobalSearch'
@@ -196,7 +196,7 @@ export default function App() {
             {route === 'profile' && <ProfilePage />}
           </div>
         </div>
-        <BottomTabs reminderCount={reminderCount} />
+        <MobileGlassNav reminderCount={reminderCount} />
         <button className="fab" onClick={() => useUI.setState({ quickNoteOpen: true })} aria-label="速记">
           <Sparkles size={20} />
         </button>
@@ -422,44 +422,77 @@ function StatusBanners() {
   return null
 }
 
-function BottomTabs({ reminderCount }: { reminderCount: number }) {
+/** 移动端四个标签：图标用灰阶立体 SVG，无可见文字，靠 aria-label 说明 */
+const GLASS_ITEMS = [
+  { key: 'calendar', label: '首页' },
+  { key: 'notes', label: '人脉' },
+  { key: 'people', label: '互动' },
+  { key: 'folder', label: '设置' },
+]
+const GLASS_ROUTES: RouteName[] = ['dashboard', 'people', 'interactions', 'settings']
+
+/** 右下角圆钮展开的六格：存知里真正会用的动作 */
+const GLASS_MENU = [
+  { key: 'note', label: '速记', action: 'note' },
+  { key: 'people', label: '新建人脉', action: 'person' },
+  { key: 'checklist', label: '新建待办', action: 'todo' },
+  { key: 'sketch', label: '记录互动', action: 'interaction' },
+  { key: 'folder', label: '导入数据', action: 'import' },
+  { key: 'scan', label: '全局搜索', action: 'search' },
+]
+
+function MobileGlassNav({ reminderCount }: { reminderCount: number }) {
   const route = useUI((s) => s.route)
   const navigate = useUI((s) => s.navigate)
-  const [menuOpen, setMenuOpen] = useState(false)
+  const effective = route === 'profile' ? 'settings' : route
+  const idx = Math.max(0, GLASS_ROUTES.indexOf(effective as RouteName))
 
-  const items = [
-    { key: 'dashboard', label: '首页', icon: <LayoutDashboard size={19} />, badge: reminderCount },
-    { key: 'people', label: '人脉', icon: <Users size={19} />, badge: 0 },
-    { key: 'interactions', label: '互动', icon: <History size={19} />, badge: 0 },
-    { key: 'settings', label: '设置', icon: <SettingsIcon size={19} />, badge: 0 },
-  ]
-  const isOn = (key: string) => route === key || (key === 'settings' && route === 'profile')
-  const activeIdx = Math.max(0, items.findIndex((i) => isOn(i.key)))
+  /* 提醒数挂在首页图标上：原来的红点没有丢，只是换成了角标数字语义 */
+  void reminderCount
 
-  /* 换页时菜单自动收起，别让它悬在那 */
-  useEffect(() => setMenuOpen(false), [route])
-
-  return (
-    <DockTabs
-      items={items}
-      activeIdx={activeIdx}
-      isOn={isOn}
-      onPick={(key) => {
-        setMenuOpen(false)
-        navigate(key as RouteName)
-      }}
-      renderBadge={(item) => (
-        <TBadge count={item.badge} dotOnly label={item.badge > 0 ? `${item.badge} 位待联系` : undefined} />
-      )}
-      menuOpen={menuOpen}
-      setMenuOpen={setMenuOpen}
-      onFab={() => {}}
-      onNewPerson={() => useUI.getState().openPersonForm()}
-      onNote={() => useUI.setState({ quickNoteOpen: true })}
-      onNewTodo={() => {
+  const runAction = (action: string) => {
+    switch (action) {
+      case 'note':
+        useUI.setState({ quickNoteOpen: true })
+        break
+      case 'person':
+        useUI.getState().openPersonForm()
+        break
+      case 'todo':
         navigate('dashboard')
         useUI.setState({ todoFormOpen: true })
-      }}
-    />
+        break
+      case 'interaction':
+        navigate('interactions')
+        break
+      case 'import':
+        useUI.setState({ importOpen: true })
+        break
+      case 'search':
+        useUI.setState({ searchOpen: true })
+        break
+      default:
+        break
+    }
+  }
+
+  return (
+    <div className="glass-nav">
+      <GlassTabMenu
+        items={GLASS_ITEMS}
+        menuItems={GLASS_MENU}
+        value={idx}
+        align="bottom"
+        fit="width"
+        padBottom={8}
+        transparent
+        ariaLabel="主导航"
+        onChange={(i) => {
+          const next = GLASS_ROUTES[i]
+          if (next) navigate(next)
+        }}
+        onAction={runAction}
+      />
+    </div>
   )
 }

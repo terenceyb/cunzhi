@@ -7556,3 +7556,65 @@ table.data tbody tr.active td.cell-name {
 .check {
   padding: 0;
 }
+
+
+/* ================================================================================
+   v2.3 —— 移动端底部导航换成「玻璃标签栏」（引擎见 components/glass）
+   ----------------------------------------------------------------------------
+   组件自己带 ShadowRoot，颜色、圆角、阴影全在影子树里；
+   这里只负责「放哪儿、什么宽度、什么时候出现」，以及让空白区域不挡页面点击。
+   ================================================================================ */
+.glass-nav {
+  display: none;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 42;
+  pointer-events: none;
+}
+/* 玻璃的白色强度（组件默认值就是设计稿的 .42 / .25 / .85）：
+   深色主题下白玻璃会亮成一块板，所以这里把两个值压下去，只留一层薄雾。 */
+.glass-nav {
+  --gts-a: 0.42;
+  --gts-b: 0.25;
+  --gts-line: 0.85;
+}
+html[data-theme='dark'] .glass-nav {
+  --gts-a: 0.13;
+  --gts-b: 0.07;
+  --gts-line: 0.24;
+  /* 选中块、格子底色、文字与加号：深色下换一套，别让白胶囊和黑加号糊掉 */
+  --gts-sel: 0.2;
+  --gts-cell-rgb: 255, 255, 255;
+  --gts-label: #f2f2f4;
+  --gts-ink: #f4f4f6;
+}
+/* 玻璃是半透明的，纯白页面上边界会「消失」；给 dock 脚下垫一层极淡的
+   底部渐隐，玻璃的亮边和投影才有依托，滚动内容也会自然淡出。 */
+.glass-nav::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 112px;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--bg, #fff) 76%, transparent) 0%,
+    color-mix(in srgb, var(--bg, #fff) 44%, transparent) 46%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+@media (max-width: 767px) {
+  .glass-nav {
+    display: block;
+  }
+}
+/* 旧的那套 dock 元素已经不再渲染，规则留着也不会命中，这里清掉兜底位移 */
+@media (max-width: 767px) {
+  .content {
+    padding-bottom: calc(124px + var(--safe-b));
+  }
+}
