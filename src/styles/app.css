@@ -7214,3 +7214,15 @@ table.data td.cell-multi {
   font-weight: 600;
   color: var(--text);
 }
+
+/* 编辑态强制单行：输入区吃掉剩余宽度，按钮永远在右边，不会掉到第二行 */
+.field-row .fv-editor {
+  flex-wrap: nowrap;
+}
+.field-row .fv-editor .field {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.field-row .fv-editor:has(.textarea) {
+  flex-wrap: wrap;
+}
