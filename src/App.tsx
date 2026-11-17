@@ -17,6 +17,7 @@ import { useUI, type RouteName } from './ui'
 import { Avatar, Logo, SavePill, ToastHost, ConfirmHost, PromptHost, useBreakpoint } from './components/ui'
 import { IconSwap, TBadge } from './components/motion'
 import { GlassTabMenu } from './components/glass/GlassTabMenu'
+import { GIcon } from './components/glass/GIcon'
 import { OverlayScrollbar } from './components/OverlayScrollbar'
 import { UploadHost } from './components/UploadDialog'
 import { GlobalSearch } from './components/GlobalSearch'
@@ -64,6 +65,33 @@ function ThemeSync() {
   useEffect(() => {
     document.documentElement.dataset.contrast = highContrast ? 'high' : 'normal'
   }, [highContrast])
+  /* 把当前主题色算成两个 rgb 三元组交给玻璃组件：
+     --gts-tint 是壳体白玻璃里掺的那点色，--gts-sel-rgb 是选中胶囊的底色。
+     这两处以前写死 255,255,255，所以怎么换主题色导航都是纯白的。 */
+  useEffect(() => {
+    const root = document.documentElement
+    const read = () => {
+      const raw = getComputedStyle(root).getPropertyValue('--accent').trim()
+      const hex = raw.replace('#', '')
+      if (!/^[0-9a-f]{3}$|^[0-9a-f]{6}$/i.test(hex)) return null
+      const full = hex.length === 3 ? hex.split('').map((c) => c + c).join('') : hex
+      return [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16)) as [number, number, number]
+    }
+    const mix = (a: number[], b: number[], t: number) =>
+      a.map((v, i) => Math.round(v + (b[i] - v) * t)).join(',')
+    const apply = () => {
+      const rgb = read()
+      if (!rgb) return
+      const dark = root.dataset.theme === 'dark'
+      root.style.setProperty('--gts-tint', dark ? mix(rgb, [255, 255, 255], 0.72) : mix(rgb, [255, 255, 255], 0.94))
+      root.style.setProperty('--gts-sel-rgb', dark ? mix(rgb, [255, 255, 255], 0.62) : mix(rgb, [255, 255, 255], 0.965))
+    }
+    apply()
+    /* 深浅模式切换后 --accent 会变，重新算一次 */
+    const mo = new MutationObserver(apply)
+    mo.observe(root, { attributes: true, attributeFilter: ['data-theme', 'data-accent'] })
+    return () => mo.disconnect()
+  }, [theme, accent, accentCustom])
   return null
 }
 
@@ -278,12 +306,12 @@ function Sidebar({ ctx, reminderCount }: { ctx: ReturnType<typeof buildCtx>; rem
           onClick={() => navigate('dashboard')}
           title={`首页${reminderCount > 0 ? ` · ${reminderCount} 位待联系` : ''}`}
         >
-          <LayoutDashboard size={16} />
+          <GIcon name="home" size={19} />
           <span>首页</span>
           {reminderCount > 0 && <span className="count">{reminderCount}</span>}
         </button>
         <button className={cn('nav-item', route === 'people' && 'active')} onClick={() => navigate('people')} title="人脉">
-          <Users size={16} />
+          <GIcon name="people" size={19} />
           <span>人脉</span>
           <span className="count">{ctx.persons.length}</span>
         </button>
@@ -292,7 +320,7 @@ function Sidebar({ ctx, reminderCount }: { ctx: ReturnType<typeof buildCtx>; rem
           onClick={() => navigate('interactions')}
           title="互动"
         >
-          <History size={16} />
+          <GIcon name="interactions" size={19} />
           <span>互动</span>
           <span className="count">{ctx.timelineEvents.length}</span>
         </button>
@@ -320,7 +348,7 @@ function Sidebar({ ctx, reminderCount }: { ctx: ReturnType<typeof buildCtx>; rem
           onClick={() => navigate('settings', { tab: settingsTab })}
           title="设置"
         >
-          <SettingsIcon size={16} />
+          <GIcon name="settings" size={19} />
           <span>设置</span>
         </button>
       </div>
@@ -367,14 +395,14 @@ function TopBar() {
       <div className="topbar-status">
         <SavePill />
       </div>
-      <button className="btn icon" onClick={() => useUI.setState({ searchOpen: true })} aria-label="全局搜索">
-        <Search size={16} />
+      <button className="btn icon glass-icon" onClick={() => useUI.setState({ searchOpen: true })} aria-label="全局搜索">
+        <GIcon name="search" size={19} />
       </button>
-      <button className="btn icon" onClick={() => useUI.setState({ quickNoteOpen: true })} aria-label="速记">
-        <Sparkles size={16} />
+      <button className="btn icon glass-icon" onClick={() => useUI.setState({ quickNoteOpen: true })} aria-label="速记">
+        <GIcon name="note" size={19} />
       </button>
-      <button className="btn icon" onClick={() => useUI.getState().openPersonForm()} aria-label="新建人脉">
-        <Plus size={17} />
+      <button className="btn icon glass-icon" onClick={() => useUI.getState().openPersonForm()} aria-label="新建人脉">
+        <GIcon name="plus" size={19} />
       </button>
     </header>
   )

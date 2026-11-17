@@ -1531,9 +1531,13 @@ table.data tbody tr.selected td.cell-name {
   max-width: 640px;
   margin-top: 8vh;
   align-self: flex-start;
-  background: var(--surface);
-  border-radius: 16px;
-  box-shadow: var(--shadow-3);
+  /* 与弹窗、底部导航同一套玻璃 */
+  background: linear-gradient(158deg, var(--panel-a), var(--panel-b));
+  backdrop-filter: blur(30px) saturate(185%);
+  -webkit-backdrop-filter: blur(30px) saturate(185%);
+  border: 1px solid var(--panel-line);
+  border-radius: 18px;
+  box-shadow: var(--panel-shadow);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -7617,4 +7621,217 @@ html[data-theme='dark'] .glass-nav {
   .content {
     padding-bottom: calc(124px + var(--safe-b));
   }
+}
+
+/* ================================================================================
+   v2.4 —— 玻璃控件 + 灰阶立体图标
+   ----------------------------------------------------------------------------
+   立体图标来自 components/glass/icons.js（和移动端底部导航同一套材质），
+   GIcon 只是包一层 React。这里定义「一块玻璃」的视觉：半透明渐变 + 背景模糊
+   + 顶部内高光，浅色/深色两套，工具条与筛选行都复用它。
+   ================================================================================ */
+.gi {
+  display: inline-grid;
+  place-items: center;
+  width: var(--gi-size, 20px);
+  height: var(--gi-size, 20px);
+  line-height: 0;
+  flex: 0 0 auto;
+  vertical-align: middle;
+}
+.gi > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.glass-chip,
+.btn.glass-icon,
+.pt-tools .segmented,
+.ix-filters.is-glass,
+.ix-ranges {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.34));
+  border: 1px solid rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.88), 0 0 0 1px rgba(17, 22, 30, 0.045),
+    0 8px 22px -14px rgba(50, 48, 60, 0.55);
+}
+html[data-theme='dark'] .glass-chip,
+html[data-theme='dark'] .btn.glass-icon,
+html[data-theme='dark'] .pt-tools .segmented,
+html[data-theme='dark'] .ix-filters.is-glass,
+html[data-theme='dark'] .ix-ranges {
+  background: linear-gradient(160deg, rgba(62, 66, 76, 0.62), rgba(28, 31, 38, 0.5));
+  border-color: rgba(255, 255, 255, 0.13);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 8px 22px -14px rgba(0, 0, 0, 0.75);
+}
+
+.btn.glass-icon {
+  border-radius: 12px;
+  color: var(--text-2);
+  padding: 0 8px;
+}
+.btn.glass-icon:hover {
+  color: var(--text);
+}
+.btn.glass-icon:active {
+  transform: scale(0.95);
+}
+
+/* 视图切换：外层是托盘，选中项是一块更亮的白玻璃 */
+.pt-tools .segmented {
+  padding: 3px;
+  gap: 3px;
+  border-radius: 13px;
+}
+.pt-tools .segmented button {
+  height: 30px;
+  padding: 0 9px;
+  border-radius: 10px;
+  background: transparent;
+  box-shadow: none;
+}
+.pt-tools .segmented button.active {
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.9);
+}
+html[data-theme='dark'] .pt-tools .segmented button.active {
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--text);
+}
+
+/* 互动页：类别与时间范围，两组都是同一块玻璃 */
+.ix-filters.is-glass {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 13px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  max-width: 100%;
+}
+.ix-filters.is-glass::-webkit-scrollbar {
+  display: none;
+}
+.ix-filters.is-glass .tl-filter-chip {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  height: 30px;
+}
+.ix-filters.is-glass .tl-filter-chip.accent {
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.12);
+}
+html[data-theme='dark'] .ix-filters.is-glass .tl-filter-chip.accent {
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--text);
+}
+.ix-ranges {
+  padding: 3px;
+  gap: 3px;
+  border-radius: 13px;
+}
+.ix-range {
+  height: 30px;
+  border-radius: 10px;
+  background: transparent;
+}
+.ix-range.on {
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.12);
+}
+html[data-theme='dark'] .ix-range.on {
+  background: rgba(255, 255, 255, 0.16);
+}
+/* 两组左边各放一枚立体图标做组标识 */
+.ix-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.ix-group > .gi {
+  margin-left: 6px;
+  opacity: 0.9;
+}
+.ix-group-end {
+  margin-left: auto;
+}
+.ix-group-end .ix-ranges {
+  margin-left: 0;
+}
+
+/* ---- 移动端设置：一条长页，顶部胶囊只做锚点 ---- */
+.settings-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 8px 14px calc(150px + var(--safe-b));
+}
+.settings-jump {
+  position: sticky;
+  top: -2px;
+  z-index: 6;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 8px 0 10px;
+  margin: -8px 0 0;
+  scrollbar-width: none;
+  background: linear-gradient(to bottom, var(--bg) 78%, transparent);
+}
+.settings-jump::-webkit-scrollbar {
+  display: none;
+}
+.settings-jump-item {
+  flex: 0 0 auto;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 11px;
+  font-size: 12.5px;
+  color: var(--text-2);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.66), rgba(255, 255, 255, 0.34));
+  border: 1px solid rgba(255, 255, 255, 0.76);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+html[data-theme='dark'] .settings-jump-item {
+  background: linear-gradient(160deg, rgba(62, 66, 76, 0.62), rgba(28, 31, 38, 0.5));
+  border-color: rgba(255, 255, 255, 0.13);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+.settings-jump-item.on {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--text);
+  font-weight: 600;
+}
+html[data-theme='dark'] .settings-jump-item.on {
+  background: rgba(255, 255, 255, 0.16);
+}
+.settings-block {
+  scroll-margin-top: 56px;
+}
+
+/* 侧栏与顶栏的立体图标：跟文字基线对齐，选中时全亮 */
+.nav-item > .gi {
+  flex: 0 0 auto;
+  opacity: 0.94;
+  transition: opacity 0.14s ease;
+}
+.nav-item:hover > .gi,
+.nav-item.active > .gi {
+  opacity: 1;
+}
+html[data-theme='dark'] .nav-item > .gi {
+  opacity: 0.88;
+}
+.btn.icon > .gi {
+  display: block;
 }

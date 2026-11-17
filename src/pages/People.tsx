@@ -21,6 +21,7 @@ import {
 import type { FieldDefinition, Person } from '../types'
 import { buildCtx, useStore } from '../store'
 import { useUI } from '../ui'
+import { GIcon } from '../components/glass/GIcon'
 import { Avatar, Empty, Menu, Segmented, useBreakpoint } from '../components/ui'
 import { PersonCard } from '../components/PersonCard'
 import { WalletStackView } from '../components/WalletCard'
@@ -225,8 +226,8 @@ export function People() {
             <span className="field-hint pt-count">{rows.length} 人</span>
             <Menu
               trigger={(open) => (
-                <button className="btn icon sm" onClick={open} aria-label="排序">
-                  <ArrowDownUp size={15} />
+                <button className="btn icon sm glass-icon" onClick={open} aria-label="排序">
+                  <GIcon name="sort" size={17} />
                 </button>
               )}
               items={[
@@ -243,15 +244,15 @@ export function People() {
               options={
                 isMobile
                   ? [
-                      { value: 'cards' as const, label: '', icon: <Rows3 size={15} /> },
-                      { value: 'grid' as const, label: '', icon: <LayoutGrid size={15} /> },
-                      { value: 'network' as const, label: '', icon: <Network size={15} /> },
+                      { value: 'cards' as const, label: '', icon: <GIcon name="list" size={17} /> },
+                      { value: 'grid' as const, label: '', icon: <GIcon name="grid" size={17} /> },
+                      { value: 'network' as const, label: '', icon: <GIcon name="network" size={17} /> },
                     ]
                   : [
-                      { value: 'cards' as const, label: '', icon: <Rows3 size={15} /> },
-                      { value: 'grid' as const, label: '', icon: <LayoutGrid size={15} /> },
-                      { value: 'table' as const, label: '', icon: <List size={15} /> },
-                      { value: 'network' as const, label: '', icon: <Network size={15} /> },
+                      { value: 'cards' as const, label: '', icon: <GIcon name="list" size={17} /> },
+                      { value: 'grid' as const, label: '', icon: <GIcon name="grid" size={17} /> },
+                      { value: 'table' as const, label: '', icon: <GIcon name="table" size={17} /> },
+                      { value: 'network' as const, label: '', icon: <GIcon name="network" size={17} /> },
                     ]
               }
             />

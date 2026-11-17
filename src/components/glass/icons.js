@@ -45,6 +45,54 @@ const PATHS = {
   interactions: `<g transform="translate(32 32) scale(1.06) translate(-32 -32)"><path d="${BUBBLE}" fill="{dark}"/><path d="M16 10h30a10 10 0 0 1 10 10v4H6v-4a10 10 0 0 1 10-10Z" fill="{rim}" opacity=".45"/><rect x="14" y="20" width="34" height="6" rx="3" fill="{paper}"/><rect x="14" y="30" width="24" height="6" rx="3" fill="{paper}"/><rect x="14" y="40" width="14" height="6" rx="3" fill="{paper}"/></g>`,
   /** 设置：八枚平顶粗齿朝外，银面圆盘压住齿根，中心近黑轴 */
   settings: `<g transform="translate(32 32) scale(.86) translate(-32 -32)"><g fill="{dark}">${GEAR_TEETH}</g><circle cx="32" cy="32" r="24" fill="{dark}"/><circle cx="32" cy="32" r="17" fill="{paper}"/><circle cx="32" cy="32" r="17" fill="{transmission}" opacity=".45"/><circle cx="32" cy="32" r="17" fill="none" stroke="{rim}" stroke-width="1.6"/><circle cx="32" cy="32" r="8" fill="{black}"/></g>`,
+  /** 加号：两根圆端条，深灰垫底一圈，银面压上 */
+  plus:
+    '<rect x="27" y="6" width="10" height="52" rx="5" fill="{dark}"/><rect x="6" y="27" width="52" height="10" rx="5" fill="{dark}"/><rect x="27" y="10" width="10" height="44" rx="5" fill="{paper}"/><rect x="10" y="27" width="44" height="10" rx="5" fill="{paper}"/>',
+  /** 删除：银面桶 + 深灰盖与提手 */
+  trash:
+    '<path d="M18 16h28l-3 39a6 6 0 0 1-6 5H27a6 6 0 0 1-6-5Z" fill="{paper}" stroke="{dark}" stroke-width="3"/><rect x="13" y="9" width="38" height="9" rx="4.5" fill="{dark}"/><path d="M26 5h12v6H26Z" fill="{dark}"/><path d="M28 26v23M36 26v23" stroke="#2c2d30" stroke-width="4" stroke-linecap="round" opacity=".85"/>',
+  /** 搜索：银面镜片 + 深灰镜环与手柄 */
+  search:
+    '<circle cx="27" cy="26" r="17" fill="{paper}" stroke="{dark}" stroke-width="7"/><path d="M39 39 54 54" stroke="{dark}" stroke-width="10" stroke-linecap="round"/><circle cx="21" cy="19" r="5.5" fill="#fff" opacity=".72"/>',
+  /** 筛选：三根滑杆 + 银面旋钮 */
+  filter:
+    '<path d="M7 11h50L35 35v15l-10 8V35Z" fill="{paper}" stroke="{dark}" stroke-width="4" stroke-linejoin="round"/><path d="M10 14h44L33 34v13" fill="none" stroke="{rim}" stroke-width="1.6"/>',
+  /** 排序：两根深灰竖轨 + 银面上下箭头 */
+  sort:
+    '<rect x="14" y="14" width="7" height="40" rx="3.5" fill="{dark}"/><rect x="43" y="10" width="7" height="40" rx="3.5" fill="{dark}"/><path d="M6 23 17.5 8 29 23Z" fill="{paper}" stroke="{dark}" stroke-width="3" stroke-linejoin="round"/><path d="M35 41 46.5 56 58 41Z" fill="{paper}" stroke="{dark}" stroke-width="3" stroke-linejoin="round"/>',
+  /** 列表视图：三行，左侧深灰圆点 + 银面长条 */
+  list:
+    '<circle cx="13" cy="16" r="5.5" fill="{dark}"/><rect x="25" y="12" width="31" height="8" rx="4" fill="{paper}" stroke="{dark}" stroke-width="2.4"/><circle cx="13" cy="32" r="5.5" fill="{dark}"/><rect x="25" y="28" width="31" height="8" rx="4" fill="{paper}" stroke="{dark}" stroke-width="2.4"/><circle cx="13" cy="48" r="5.5" fill="{dark}"/><rect x="25" y="44" width="31" height="8" rx="4" fill="{paper}" stroke="{dark}" stroke-width="2.4"/>',
+  /** 宫格视图：四块圆角方块，明暗交错 */
+  grid:
+    '<rect x="8" y="8" width="21" height="21" rx="7" fill="{paper}" stroke="{dark}" stroke-width="3"/><rect x="35" y="8" width="21" height="21" rx="7" fill="{dark}"/><rect x="8" y="35" width="21" height="21" rx="7" fill="{dark}"/><rect x="35" y="35" width="21" height="21" rx="7" fill="{paper}" stroke="{dark}" stroke-width="3"/>',
+  /** 表格视图：银面表格 + 深灰网格 */
+  table:
+    '<rect x="5" y="9" width="54" height="46" rx="9" fill="{paper}"/><path d="M7 24h50M7 40h50M25 11v42" stroke="{dark}" stroke-width="5" stroke-linecap="round"/><rect x="5" y="9" width="54" height="46" rx="9" fill="none" stroke="{dark}" stroke-width="4"/>',
+  /** 关系图：三个银面节点与深灰连线 */
+  network:
+    '<path d="M32 20 16 44M32 20 48 44M17 46h30" stroke="{dark}" stroke-width="5.5" stroke-linecap="round" fill="none"/><circle cx="32" cy="17" r="11" fill="{paper}" stroke="{dark}" stroke-width="3.4"/><circle cx="15" cy="47" r="10" fill="{paper}" stroke="{dark}" stroke-width="3.4"/><circle cx="49" cy="47" r="10" fill="{paper}" stroke="{dark}" stroke-width="3.4"/>',
+  /** 关闭：深灰粗叉 + 银面高光 */
+  close:
+    '<path d="M17 17 47 47M47 17 17 47" stroke="{dark}" stroke-width="10" stroke-linecap="round"/><path d="M19 18 46 45M45 18 18 45" stroke="{paper}" stroke-width="3.2" stroke-linecap="round" opacity=".85"/>',
+  /** 编辑：银面笔杆 + 深灰笔尖 */
+  pen:
+    '<path d="M41 8 56 23 28 51 9 55 13 36Z" fill="{paper}" stroke="{dark}" stroke-width="3"/><path d="M13 36 28 51 9 55Z" fill="{dark}"/><path d="M47 14 50 11" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".8"/>',
+  /** 对勾：深灰粗勾 + 银面内线 */
+  check:
+    '<path d="M12 33 26 48 52 15" fill="none" stroke="{dark}" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 33 26 47 51 16" fill="none" stroke="{paper}" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/>',
+  /** 上传：银面箭头 + 深灰托盘 */
+  upload:
+    '<path d="M32 42V12M18 26 32 12 46 26" fill="none" stroke="{dark}" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 40V14M20 26 32 14 44 26" fill="none" stroke="{paper}" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 42v6a6 6 0 0 0 6 6h30a6 6 0 0 0 6-6v-6" fill="none" stroke="{dark}" stroke-width="6" stroke-linecap="round"/>',
+  /** 下载：银面箭头朝下 + 深灰托盘 */
+  download:
+    '<path d="M32 12v30M18 30 32 44 46 30" fill="none" stroke="{dark}" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 14v26M20 30 32 42 44 30" fill="none" stroke="{paper}" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M11 42v6a6 6 0 0 0 6 6h30a6 6 0 0 0 6-6v-6" fill="none" stroke="{dark}" stroke-width="6" stroke-linecap="round"/>',
+  /** 二维码：三个定位角 + 深灰数据块 */
+  qr:
+    '<rect x="7" y="7" width="20" height="20" rx="5" fill="{dark}"/><rect x="12" y="12" width="10" height="10" rx="2.5" fill="{paper}"/><rect x="37" y="7" width="20" height="20" rx="5" fill="{dark}"/><rect x="42" y="12" width="10" height="10" rx="2.5" fill="{paper}"/><rect x="7" y="37" width="20" height="20" rx="5" fill="{dark}"/><rect x="12" y="42" width="10" height="10" rx="2.5" fill="{paper}"/><rect x="37" y="37" width="9" height="9" rx="3" fill="{dark}"/><rect x="49" y="41" width="8" height="8" rx="2.5" fill="{dark}"/><rect x="41" y="50" width="8" height="7" rx="2.5" fill="{dark}"/>',
+  /** 时钟：银面表盘 + 深灰指针与表圈 */
+  clock:
+    '<circle cx="32" cy="32" r="25" fill="{paper}" stroke="{dark}" stroke-width="5"/><path d="M32 17v16l12 7" fill="none" stroke="{dark}" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="32" cy="32" r="3.4" fill="{dark}"/>',
   note: '<rect x="5" y="9" width="42" height="49" rx="10" fill="{paper}" stroke="{rim}" stroke-width="1.2"/><path d="M15 25h17M15 36h10" stroke="#4c4d50" stroke-width="4.5" stroke-linecap="round"/><path d="m39 39 15-16" stroke="{dark}" stroke-width="11" stroke-linecap="round"/><path d="M33 49Q32 49 33 46L35 38 43 44 35 49Q34 50 33 49Z" fill="#26272a"/>',
   checklist:
     '<rect x="7" y="6" width="50" height="53" rx="12" fill="{paper}" stroke="{rim}" stroke-width="1.3"/><path d="m17 21 5 5 10-10M41 21h8m-8 22h8" stroke="#444548" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="23" cy="44" r="7" fill="none" stroke="#292a2c" stroke-width="5"/>',
@@ -62,12 +110,45 @@ export const ICON_KEYS = Object.keys(PATHS)
 /** 标签栏用；菜单用同一套图形，只是银面暗一档 */
 const BUTTON_KEYS = new Set(['home', 'people', 'interactions', 'settings', 'calendar', 'notes', 'folder'])
 
-const stops = (list) =>
-  list
-    .map((s) => {
-      const [o, c] = s.split('|')
-      return `<stop offset="${o}" stop-color="${c}"/>`
-    })
+/* --------------------------- 主题色接管 --------------------------- */
+/* SVG 里的 stop-color 写成 var(--gi-*, 兜底色)，所以宿主只要改一组变量，
+   整套灰阶立体图就跟着主题色走；没定义变量时退回原来的灰阶。 */
+
+const rgbOf = (hex) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16))
+const hexOf = (arr) => '#' + arr.map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')
+const mixHex = (a, b, t) => {
+  const A = rgbOf(a)
+  const B = rgbOf(b)
+  return hexOf(A.map((v, i) => v + (B[i] - v) * t))
+}
+
+/** 把任意档位（3 档或 4 档）重采样成 4 档，这样所有图标共用 --gi-p0..p3 */
+function resample4(list) {
+  const pts = list.map((s) => {
+    const [o, c] = s.split('|')
+    return [parseFloat(o), c]
+  })
+  const out = []
+  for (let i = 0; i < 4; i++) {
+    const t = i / 3
+    let a = pts[0]
+    let b = pts[pts.length - 1]
+    for (let j = 0; j < pts.length - 1; j++) {
+      if (t >= pts[j][0] && t <= pts[j + 1][0]) {
+        a = pts[j]
+        b = pts[j + 1]
+        break
+      }
+    }
+    const span = b[0] - a[0] || 1
+    out.push(mixHex(a[1], b[1], (t - a[0]) / span))
+  }
+  return out
+}
+
+const stopsVar = (prefix, colors) =>
+  colors
+    .map((c, i) => `<stop offset="${i / (colors.length - 1)}" style="stop-color:var(--gi-${prefix}${i},${c})"/>`)
     .join('')
 
 function paperStops(key) {
@@ -91,9 +172,9 @@ export function iconSvg(key, uid) {
   const vertical = key === 'calendar' || key === 'folder'
 
   const defs = [
-    `<linearGradient id="${id('paper')}" x1="0" y1="0" x2="${vertical ? 0 : 1}" y2="1">${stops(paperStops(key))}</linearGradient>`,
-    `<linearGradient id="${id('dark')}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5d5e60"/><stop offset="1" stop-color="#1d1e20"/></linearGradient>`,
-    `<radialGradient id="${id('black')}" cx="0.3" cy="0.25" r="0.8"><stop offset="0" stop-color="#505153"/><stop offset="1" stop-color="#050506"/></radialGradient>`,
+    `<linearGradient id="${id('paper')}" x1="0" y1="0" x2="${vertical ? 0 : 1}" y2="1">${stopsVar('p', resample4(paperStops(key)))}</linearGradient>`,
+    `<linearGradient id="${id('dark')}" x1="0" y1="0" x2="1" y2="1">${stopsVar('d', ['#5d5e60', '#1d1e20'])}</linearGradient>`,
+    `<radialGradient id="${id('black')}" cx="0.3" cy="0.25" r="0.8">${stopsVar('k', ['#505153', '#050506'])}</radialGradient>`,
     `<linearGradient id="${id('rim')}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0.95"/><stop offset="0.48" stop-color="#fff" stop-opacity="0.3"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>`,
     `<radialGradient id="${id('transmission')}" cx="0.9" cy="0.35" r="0.95"><stop offset="0" stop-color="#242426" stop-opacity="0.58"/><stop offset="0.45" stop-color="#242426" stop-opacity="0.3"/><stop offset="1" stop-color="#242426" stop-opacity="0"/></radialGradient>`,
   ].join('')

@@ -17,6 +17,7 @@ import {
 import type { TimelineEvent } from '../types'
 import { buildCtx, useStore } from '../store'
 import { useUI } from '../ui'
+import { GIcon } from '../components/glass/GIcon'
 import { Avatar, Empty, PageHead, useBreakpoint } from '../components/ui'
 import { buildPersonMeta, personName } from '../lib/derive'
 import { cn, formatDate, formatDateTime, relativeTime } from '../lib/utils'
@@ -155,30 +156,36 @@ export function Interactions() {
             onChange={(e) => setQ(e.target.value)}
           />
         </div>
-        <div className="ix-filters" role="tablist" aria-label="互动类别">
-          {FILTERS.map((t) => (
-            <button
-              key={t}
-              role="tab"
-              aria-selected={type === t}
-              className={cn('chip tl-filter-chip', type === t && 'accent')}
-              onClick={() => setType(t)}
-            >
-              {t === 'all' ? '全部' : KIND[t].label}
-            </button>
-          ))}
+        <div className="ix-group">
+          <GIcon name="filter" size={18} />
+          <div className="ix-filters is-glass" role="tablist" aria-label="互动类别">
+            {FILTERS.map((t) => (
+              <button
+                key={t}
+                role="tab"
+                aria-selected={type === t}
+                className={cn('chip tl-filter-chip', type === t && 'accent')}
+                onClick={() => setType(t)}
+              >
+                {t === 'all' ? '全部' : KIND[t].label}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="ix-ranges">
-          {RANGES.map((r) => (
-            <button
-              key={r.key}
-              className={cn('ix-range', range === r.key && 'on')}
-              aria-pressed={range === r.key}
-              onClick={() => setRange(r.key)}
-            >
-              {r.label}
-            </button>
-          ))}
+        <div className="ix-group ix-group-end">
+          <GIcon name="clock" size={18} />
+          <div className="ix-ranges">
+            {RANGES.map((r) => (
+              <button
+                key={r.key}
+                className={cn('ix-range', range === r.key && 'on')}
+                aria-pressed={range === r.key}
+                onClick={() => setRange(r.key)}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 

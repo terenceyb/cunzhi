@@ -10,9 +10,9 @@
   --text-3: #6b7583;
   --line: #e6e8ec;
   --line-strong: #d5d9e0;
-  /* 默认主题色「云母」：带一点暖调的浅灰褐，安静、耐看，不抢内容 */
-  --accent: #6f6659;
-  --accent-soft: #f1ece4;
+  /* 默认主题色「素白」：几乎无彩的石板灰，白底上只做一点点温度 */
+  --accent: #6b7280;
+  --accent-soft: #eef0f4;
   --danger: #d94a3d;
   --danger-soft: #fdecea;
   --warn: #b4530a;
@@ -39,6 +39,13 @@
   --dur-in: 200ms;
   --dur-out: 130ms;
   --focus-ring: color-mix(in srgb, var(--accent) 58%, transparent);
+  /* 浮层面板（弹窗 / 抽屉 / 下拉）：与底部导航同一套玻璃语言 */
+  --panel-a: rgba(255, 255, 255, 0.82);
+  --panel-b: rgba(255, 255, 255, 0.6);
+  --panel-line: rgba(255, 255, 255, 0.72);
+  --panel-hair: rgba(19, 22, 25, 0.07);
+  --panel-shadow: 0 30px 80px -24px rgba(52, 50, 62, 0.45), 0 2px 10px -2px rgba(52, 50, 62, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
   /* 亚克力浮层统一出口：深色模式只需换这几个值 */
   --glass: rgba(255, 255, 255, 0.72);
   --glass-soft: rgba(255, 255, 255, 0.6);
@@ -47,6 +54,16 @@
   --bg-glow: rgba(255, 255, 255, 0.9);
   /* 「墨底按钮」上的字色：浅色模式是白，深色模式反转为近黑 */
   --on-inverse: #ffffff;
+  /* 灰阶立体图标（底部导航 / 工具栏 / 弹窗按钮）的材质色：
+     全部由主题色混出来，换主题色时整套图标跟着变，不用改任何 SVG */
+  --gi-p0: color-mix(in srgb, var(--accent) 3%, #e2e3e7);
+  --gi-p1: color-mix(in srgb, var(--accent) 6%, #cfd0d5);
+  --gi-p2: color-mix(in srgb, var(--accent) 9%, #bcbdc4);
+  --gi-p3: color-mix(in srgb, var(--accent) 12%, #a8aab1);
+  --gi-d0: color-mix(in srgb, var(--accent) 16%, #5d5e60);
+  --gi-d1: color-mix(in srgb, var(--accent) 20%, #1d1e20);
+  --gi-k0: color-mix(in srgb, var(--accent) 14%, #505153);
+  --gi-k1: color-mix(in srgb, var(--accent) 8%, #050506);
   color-scheme: light;
 }
 
@@ -77,8 +94,23 @@ html[data-theme='dark'] {
   --glass-soft: rgba(23, 26, 33, 0.7);
   --glass-strong: rgba(20, 23, 29, 0.9);
   --glass-line: rgba(255, 255, 255, 0.08);
+  --panel-a: rgba(44, 48, 56, 0.74);
+  --panel-b: rgba(22, 25, 31, 0.66);
+  --panel-line: rgba(255, 255, 255, 0.13);
+  --panel-hair: rgba(255, 255, 255, 0.08);
+  --panel-shadow: 0 30px 80px -24px rgba(0, 0, 0, 0.7), 0 2px 10px -2px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.09);
   --bg-glow: rgba(91, 145, 255, 0.1);
   --on-inverse: #0e1014;
+  /* 深色下图标亮面提亮、暗面压深，主题色只在中间调和 */
+  --gi-p0: color-mix(in srgb, var(--accent) 14%, #f4f5f8);
+  --gi-p1: color-mix(in srgb, var(--accent) 16%, #e2e4e9);
+  --gi-p2: color-mix(in srgb, var(--accent) 18%, #d2d5dc);
+  --gi-p3: color-mix(in srgb, var(--accent) 20%, #bfc2ca);
+  --gi-d0: color-mix(in srgb, var(--accent) 16%, #4a4c50);
+  --gi-d1: color-mix(in srgb, var(--accent) 12%, #17181b);
+  --gi-k0: color-mix(in srgb, var(--accent) 14%, #505153);
+  --gi-k1: color-mix(in srgb, var(--accent) 8%, #050506);
   color-scheme: dark;
 }
 html[data-theme='dark'] img,
@@ -573,8 +605,9 @@ select.input {
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 20, 26, 0.42);
-  backdrop-filter: blur(2px);
+  background: rgba(15, 20, 26, 0.34);
+  backdrop-filter: blur(8px) saturate(120%);
+  -webkit-backdrop-filter: blur(8px) saturate(120%);
   z-index: 60;
   display: flex;
   align-items: center;
@@ -607,12 +640,17 @@ select.input {
   width: 100%;
   max-width: 520px;
   max-height: calc(100vh - 48px);
-  background: var(--surface);
+  /* 玻璃：和底部导航同一套（半透明渐变 + 背景模糊 + 内高光边） */
+  background: linear-gradient(158deg, var(--panel-a), var(--panel-b));
+  backdrop-filter: blur(30px) saturate(185%);
+  -webkit-backdrop-filter: blur(30px) saturate(185%);
+  border: 1px solid var(--panel-line);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-3);
+  box-shadow: var(--panel-shadow);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  animation: pop-in 0.24s var(--ease-out);
 }
 .modal.wide {
   max-width: 760px;
@@ -625,7 +663,7 @@ select.input {
   align-items: center;
   justify-content: space-between;
   padding: 16px 18px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--panel-hair);
   gap: 12px;
   flex: 0 0 auto;
 }
@@ -641,13 +679,13 @@ select.input {
 }
 .modal-footer {
   padding: 14px 18px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--panel-hair);
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
   flex: 0 0 auto;
-  background: var(--surface-2);
+  background: color-mix(in srgb, var(--surface) 26%, transparent);
 }
 .modal-footer .left {
   margin-right: auto;
@@ -655,9 +693,12 @@ select.input {
 
 .sheet {
   width: 100%;
-  background: var(--surface);
+  background: linear-gradient(178deg, var(--panel-a), var(--panel-b));
+  backdrop-filter: blur(30px) saturate(185%);
+  -webkit-backdrop-filter: blur(30px) saturate(185%);
+  border-top: 1px solid var(--panel-line);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  box-shadow: var(--shadow-3);
+  box-shadow: var(--panel-shadow);
   max-height: 92vh;
   display: flex;
   flex-direction: column;
@@ -683,10 +724,12 @@ select.input {
 /* 右键 / 下拉菜单 */
 .menu {
   min-width: 180px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  box-shadow: var(--shadow-2);
+  background: linear-gradient(158deg, var(--panel-a), var(--panel-b));
+  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(26px) saturate(180%);
+  border: 1px solid var(--panel-line);
+  border-radius: 14px;
+  box-shadow: var(--panel-shadow);
   padding: 5px;
   z-index: 80;
 }
@@ -1157,6 +1200,11 @@ table.data tbody tr:focus-visible {
 /* ---- 全局主题色：只换强调色，其余调色板不动 ----
    云母是默认值（写在 :root 里），其余每个色相一对浅 / 深值，
     --accent-soft 统一由 --accent 混出来，新增色相只需加一行。 */
+html[data-accent='snow'] {
+  --accent: #6b7280;
+  --accent-soft: #eef0f4;
+  --bg: #f5f6f8;
+}
 html[data-accent='mica'] {
   --accent: #6f6659;
 }
@@ -1189,6 +1237,11 @@ html[data-accent='plum'],
 html[data-accent='coral'],
 html[data-accent='bamboo'] {
   --accent-soft: color-mix(in srgb, var(--accent) 12%, var(--surface));
+}
+html[data-theme='dark'][data-accent='snow'] {
+  --accent: #c5ccd8;
+  --accent-soft: #21252c;
+  --bg: #0d0f13;
 }
 html[data-theme='dark'][data-accent='mica'] {
   --accent: #cabdac;

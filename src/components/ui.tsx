@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { Check, CheckCircle2, Copy, Info, TriangleAlert, X, XCircle } from 'lucide-react'
 import { useUI } from '../ui'
 import { cn, initials } from '../lib/utils'
+import { GIcon } from './glass/GIcon'
 import { usePresence } from '../lib/motion'
 import { IconSwap } from './motion'
 import { useStore } from '../store'
@@ -263,8 +264,8 @@ export function Modal({
         {!hideHeader && (
           <div className="modal-header">
             <h2>{title}</h2>
-            <button className="btn icon sm" onClick={onClose} aria-label="关闭">
-              <X size={16} />
+            <button className="btn icon sm glass-icon" onClick={onClose} aria-label="关闭">
+              <GIcon name="close" size={15} />
             </button>
           </div>
         )}
@@ -310,8 +311,8 @@ export function Sheet({
         {title && (
           <div className="modal-header">
             <h2>{title}</h2>
-            <button className="btn icon sm" onClick={onClose} aria-label="关闭">
-              <X size={16} />
+            <button className="btn icon sm glass-icon" onClick={onClose} aria-label="关闭">
+              <GIcon name="close" size={15} />
             </button>
           </div>
         )}

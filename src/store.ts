@@ -97,9 +97,9 @@ export const DEFAULT_PREFS: Prefs = {
   },
   theme: 'system',
   highContrast: false,
-  dashAccent: 'mica',
+  dashAccent: 'snow',
   accentCustom: '#6f6659',
-  accentV: 2,
+  accentV: 3,
   dashMobileOrder: ['todos', 'reminders', 'anniversaries'],
   detailPanelWidth: 420,
   columnConfig: ['name', 'phones', 'company', 'groups', 'tags', 'city', 'lastInteraction'],
@@ -248,6 +248,11 @@ function loadPrefs(): Prefs {
     if ((parsed.accentV ?? 1) < 2) {
       if (!parsed.dashAccent || parsed.dashAccent === 'slate') prefs.dashAccent = 'mica'
       prefs.accentV = 2
+    }
+    /* v3：默认主题色由「云母」换成「素白」，只迁移从没主动换过色的人 */
+    if ((parsed.accentV ?? 1) < 3) {
+      if (!parsed.dashAccent || parsed.dashAccent === 'mica') prefs.dashAccent = 'snow'
+      prefs.accentV = 3
     }
     return prefs
   } catch {

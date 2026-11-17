@@ -116,9 +116,9 @@ const CSS = `
 
 /* 玻璃外壳：轻薄半透明灰白 + 明亮边缘，不是一个厚灰卡片 */
 .gts-shell{position:absolute;left:0;bottom:0;width:${SHELL_W}px;height:${SHELL_H}px;border-radius:${RADIUS}px;
-  background:linear-gradient(160deg,rgba(255,255,255,var(--gts-a,.42)),rgba(255,255,255,var(--gts-b,.25)));
-  border:2px solid rgba(255,255,255,var(--gts-line,.85));
-  box-shadow:inset 0 1px 2px rgba(255,255,255,var(--gts-line,.85)),0 13px 42px -13px rgba(76,73,91,.22);
+  background:linear-gradient(160deg,rgba(var(--gts-tint,255,255,255),var(--gts-a,.42)),rgba(var(--gts-tint,255,255,255),var(--gts-b,.25)));
+  border:2px solid rgba(var(--gts-tint,255,255,255),var(--gts-line,.85));
+  box-shadow:inset 0 1px 2px rgba(var(--gts-tint,255,255,255),var(--gts-line,.85)),0 13px 42px -13px rgba(76,73,91,.22);
   -webkit-backdrop-filter:blur(25px) saturate(1.1);backdrop-filter:blur(25px) saturate(1.1);
   overflow:hidden;will-change:width,height,border-radius;pointer-events:auto}
 
@@ -134,7 +134,9 @@ const CSS = `
   background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(.65px);backdrop-filter:blur(.65px);
   opacity:0;pointer-events:none;z-index:3;will-change:transform,opacity}
 
-.gts-tabs{position:absolute;left:15px;top:15px;width:${TAB_W * 4}px;height:${SEL_H + 1}px;display:flex;z-index:2}
+.gts-tabs{position:absolute;left:15px;top:15px;width:${TAB_W * 4}px;height:${SEL_H + 1}px;display:flex;z-index:2;
+  /* 横向手势归我们，纵向留给页面滚动 */
+  touch-action:pan-y;-webkit-user-select:none;user-select:none}
 .gts-tab{flex:1 1 0;width:${TAB_W}px;height:${SEL_H + 1}px;display:grid;place-items:center;padding:0;margin:0;
   border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent;
   color:inherit;font:inherit}
@@ -163,9 +165,9 @@ const CSS = `
 /* 圆按钮：同一套玻璃材质，右下角 */
 .gts-fab{position:absolute;right:0;bottom:0;width:${FAB}px;height:${FAB}px;border-radius:50%;
   display:grid;place-items:center;padding:0;cursor:pointer;
-  background:linear-gradient(160deg,rgba(255,255,255,var(--gts-a,.42)),rgba(255,255,255,var(--gts-b,.25)));
-  border:2px solid rgba(255,255,255,var(--gts-line,.85));
-  box-shadow:inset 0 1px 2px rgba(255,255,255,var(--gts-line,.85)),0 13px 42px -13px rgba(76,73,91,.22);
+  background:linear-gradient(160deg,rgba(var(--gts-tint,255,255,255),var(--gts-a,.42)),rgba(var(--gts-tint,255,255,255),var(--gts-b,.25)));
+  border:2px solid rgba(var(--gts-tint,255,255,255),var(--gts-line,.85));
+  box-shadow:inset 0 1px 2px rgba(var(--gts-tint,255,255,255),var(--gts-line,.85)),0 13px 42px -13px rgba(76,73,91,.22);
   -webkit-backdrop-filter:blur(25px) saturate(1.1);backdrop-filter:blur(25px) saturate(1.1);
   -webkit-tap-highlight-color:transparent;will-change:transform;overflow:hidden;pointer-events:auto}
 .gts-fab:focus{outline:none}
@@ -341,6 +343,9 @@ export function createGlassTabMenu(options) {
 
   /* ------------------------------ 绘制 ------------------------------ */
 
+  /** 选中块的底色：默认纯白，宿主可用 --gts-sel-rgb 换成带主题色的白 */
+  let selRgb = '255,255,255'
+
   let lastWidth = -1
   let lastHeight = -1
   let lastRadius = -1
@@ -386,14 +391,14 @@ export function createGlassTabMenu(options) {
     menuContent.style.filter = menuBlur < 0.01 ? 'none' : `blur(${menuBlur.toFixed(2)}px)`
 
     /* 选中块：带速度的横向位置 → 薄玻璃轮廓 */
-    const travel = clamp(Math.abs(sSelection.v) / 7, 0, 1)
+    const travel = clamp(Math.max(Math.abs(sSelection.v) / 7, dragTravel), 0, 1)
     const x = sSelection.p * TAB_W
     const sx = 1 + 0.08 * travel
     const sy = 1 + 0.25 * travel
     const tf = `translate3d(${x.toFixed(3)}px,0,0) scale(${sx.toFixed(4)},${sy.toFixed(4)})`
     sel.style.transform = tf
-    sel.style.background = rgba(255, 255, 255, selBase * (1 - 0.95 * travel))
-    sel.style.boxShadow = `inset 0 0 0 1.5px rgba(255,255,255,.9), 0 ${(7 - 3 * travel).toFixed(2)}px ${(
+    sel.style.background = `rgba(${selRgb}, ${(selBase * (1 - 0.95 * travel)).toFixed(4)})`
+    sel.style.boxShadow = `inset 0 0 0 1.5px rgba(${selRgb},.92), 0 ${(7 - 3 * travel).toFixed(2)}px ${(
       17 + 5 * travel
     ).toFixed(2)}px rgba(82,77,99,${(0.15 - 0.07 * travel).toFixed(3)})`
 
@@ -525,6 +530,89 @@ export function createGlassTabMenu(options) {
     }
     kick()
   }
+
+  /* ---------------------- 无极滑动：按住标签栏横向拖动 ---------------------- */
+  let drag = null
+  let suppressClickUntil = 0
+  /** 手指速度单独记：不写进弹簧的 v，否则会被积分成额外位移 */
+  let dragTravel = 0
+
+  /** 越界时只跟手 34%，松手一定弹回端点 */
+  function dragPos(v) {
+    const max = items.length - 1
+    if (v < 0) return v * 0.34
+    if (v > max) return max + (v - max) * 0.34
+    return v
+  }
+
+  tabList.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0 || e.isPrimary === false) return
+    if (clamp(sContent.p, 0, 1) > 0.38) return
+    const rect = tabList.getBoundingClientRect()
+    const step = rect.width > 0 ? rect.width / items.length : TAB_W
+    drag = {
+      id: e.pointerId,
+      x: e.clientX,
+      base: sSelection.p,
+      pos: sSelection.p,
+      step,
+      lastT: performance.now(),
+      moved: false,
+    }
+    try {
+      tabList.setPointerCapture(e.pointerId)
+    } catch {
+      /* 不支持指针捕获就退化成普通拖动 */
+    }
+  })
+
+  tabList.addEventListener('pointermove', (e) => {
+    if (!drag || e.pointerId !== drag.id) return
+    const dx = e.clientX - drag.x
+    if (!drag.moved) {
+      if (Math.abs(dx) < 5) return
+      drag.moved = true
+    }
+    const next = dragPos(drag.base + dx / drag.step)
+    const now = performance.now()
+    const dt = Math.max(8, now - drag.lastT) / 1000
+    /* 手速只用来拉长胶囊，不写进弹簧速度：写进去会被积分成额外位移，跟手就飘了 */
+    dragTravel = clamp(Math.abs(next - drag.pos) / dt / 7, 0, 1)
+    drag.pos = next
+    drag.lastT = now
+    sSelection.v = 0
+    sSelection.p = next
+    sSelection.t = next
+    render()
+  })
+
+  function endDrag(e) {
+    if (!drag || (e && e.pointerId !== drag.id)) return
+    const moved = drag.moved
+    const pos = drag.pos
+    drag = null
+    dragTravel = 0
+    if (!moved) return
+    /* 松手后浏览器还会补发一次 click，别让它把落点那一格再点一次 */
+    suppressClickUntil = performance.now() + 320
+    const target = clamp(Math.round(clamp(pos, 0, items.length - 1)), 0, items.length - 1)
+    drag = null
+    select(target, false)
+  }
+
+  tabList.addEventListener('pointerup', endDrag)
+  tabList.addEventListener('pointercancel', endDrag)
+
+  tabList.addEventListener(
+    'click',
+    (e) => {
+      if (performance.now() < suppressClickUntil) {
+        e.preventDefault()
+        e.stopPropagation()
+      }
+    },
+    true,
+  )
 
   function onTabKeyDown(e) {
     const n = items.length
@@ -680,9 +768,12 @@ export function createGlassTabMenu(options) {
       stage.style.bottom = ''
     }
     stage.style.transform = `scale(${k.toFixed(5)})`
-    const rawSel = getComputedStyle(host).getPropertyValue('--gts-sel').trim()
+    const css = getComputedStyle(host)
+    const rawSel = css.getPropertyValue('--gts-sel').trim()
     const parsed = parseFloat(rawSel)
     selBase = Number.isFinite(parsed) ? parsed : 0.98
+    const rawRgb = css.getPropertyValue('--gts-sel-rgb').trim()
+    if (/^[\d\s,.]+$/.test(rawRgb)) selRgb = rawRgb
     if (opts.height) scene.style.height = `${opts.height}px`
     else if (opts.align === 'bottom') scene.style.height = `${Math.round(GROUP_H * k + opts.padBottom + 10)}px`
     else scene.style.height = ''

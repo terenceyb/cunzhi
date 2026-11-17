@@ -81,9 +81,7 @@ const TAB_HINT: Record<string, string> = {
 
 export function Settings() {
   const tab = useUI((s) => s.settingsTab)
-  const detail = useUI((s) => s.settingsDetail)
   const openTab = useUI((s) => s.openSettingsTab)
-  const back = useUI((s) => s.backToSettingsIndex)
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768)
 
   useEffect(() => {
@@ -92,62 +90,68 @@ export function Settings() {
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
-  // 移动端：设置是一层索引页，点进去才是具体分页
-  // 标题交给顶栏（左上角只留一个「设置」），这里直接进列表
-  if (isMobile && !detail) {
+  /* 每个分组的正文，桌面与移动端共用同一份 */
+  const renderPanel = (key: string) => (
+    <>
+      {key === 'profile' && <ProfilePage />}
+      {key === 'appearance' && <AppearanceSettings />}
+      {key === 'fields' && <FieldsSettings />}
+      {key === 'package' && <PackageSettings />}
+      {key === 'io' && <IOSettings />}
+      {key === 'reminders' && <ReminderSettings />}
+      {key === 'views' && <ViewsSettings />}
+      {key === 'health' && <HealthSettings />}
+      {key === 'privacy' && <PrivacySettings />}
+      {key === 'about' && <AboutSettings />}
+    </>
+  )
+
+  /* 移动端：不再一层层点进去，所有分组排在一条长页里上下滑动；
+     顶部一排粘住的胶囊只负责跳转，不做分页，少一次点击也少一次「回退」的困惑。 */
+  if (isMobile) {
     return (
-      <div className="settings-index">
-        <div className="settings-index-list">
+      <div className="settings-sheet">
+        <nav className="settings-jump" aria-label="设置分组">
           {NAV.map((n) => (
-            <button key={n.key} className="settings-index-item" onClick={() => openTab(n.key)}>
-              <span className="si-icon">{n.icon}</span>
-              <span className="grow" style={{ minWidth: 0 }}>
-                <span className="si-label">{n.label}</span>
-                <span className="si-hint">{TAB_HINT[n.key]}</span>
-              </span>
-              <ChevronRight size={16} className="si-arrow" />
+            <button
+              key={n.key}
+              className={cn('settings-jump-item', tab === n.key && 'on')}
+              onClick={() => {
+                openTab(n.key)
+                document
+                  .getElementById(`setsec-${n.key}`)
+                  ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }}
+            >
+              {n.label}
             </button>
           ))}
-        </div>
+        </nav>
+        {NAV.map((n) => (
+          <div key={n.key} id={`setsec-${n.key}`} className="settings-block">
+            {renderPanel(n.key)}
+          </div>
+        ))}
       </div>
     )
   }
 
   return (
     <div className="settings-layout">
-      {isMobile ? (
-        <div className="settings-mobile-head">
-          {/* 只留一个返回箭头：标题交给顶栏与分页自己的 h2，避免同一个词出现两次 */}
-          <button className="btn icon sm" onClick={back} aria-label="返回设置列表">
-            <ChevronLeft size={18} />
+      <nav className="settings-nav" aria-label="设置导航">
+        {NAV.map((n) => (
+          <button
+            key={n.key}
+            className={cn('nav-item', tab === n.key && 'active')}
+            onClick={() => openTab(n.key)}
+          >
+            {n.icon}
+            <span>{n.label}</span>
           </button>
-        </div>
-      ) : (
-        <nav className="settings-nav" aria-label="设置导航">
-          {NAV.map((n) => (
-            <button
-              key={n.key}
-              className={cn('nav-item', tab === n.key && 'active')}
-              onClick={() => openTab(n.key)}
-            >
-              {n.icon}
-              <span>{n.label}</span>
-            </button>
-          ))}
-        </nav>
-      )}
+        ))}
+      </nav>
       <PanelReveal key={tab} className="settings-content">
-        {tab === 'profile' && <ProfilePage />}
-        {tab === 'appearance' && <AppearanceSettings />}
-        {tab === 'fields' && <FieldsSettings />}
-        {tab === 'package' && <PackageSettings />}
-        {tab === 'io' && <IOSettings />}
-        {tab === 'reminders' && <ReminderSettings />}
-        {tab === 'views' && <ViewsSettings />}
-        {tab === 'health' && <HealthSettings />}
-        {tab === 'audit' && <PackageSettings />}
-        {tab === 'privacy' && <PrivacySettings />}
-        {tab === 'about' && <AboutSettings />}
+        {renderPanel(tab)}
       </PanelReveal>
     </div>
   )
@@ -155,6 +159,7 @@ export function Settings() {
 
 /* ================= 外观 ================= */
 const ACCENTS: { key: DashAccent; label: string; color: string }[] = [
+  { key: 'snow', label: '素白', color: '#dfe3ea' },
   { key: 'mica', label: '云母', color: '#6f6659' },
   { key: 'slate', label: '靛蓝', color: '#2f6feb' },
   { key: 'sand', label: '暖沙', color: '#a9772c' },

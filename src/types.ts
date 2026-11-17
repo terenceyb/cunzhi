@@ -343,7 +343,7 @@ export interface Prefs {
 
 export type ThemeMode = 'system' | 'light' | 'dark'
 
-export type DashAccent = 'mica' | 'slate' | 'sand' | 'forest' | 'ocean' | 'plum' | 'coral' | 'bamboo' | 'custom'
+export type DashAccent = 'snow' | 'mica' | 'slate' | 'sand' | 'forest' | 'ocean' | 'plum' | 'coral' | 'bamboo' | 'custom'
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'dirty' | 'error' | 'no-file'
 
