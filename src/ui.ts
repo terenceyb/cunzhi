@@ -82,6 +82,10 @@ interface UIState {
   closeConfirm: () => void
   askPrompt: (opts: PromptOptions) => void
   closePrompt: () => void
+  /** 首次「从零开始」的本地挂载引导弹窗 */
+  mountHintOpen: boolean
+  openMountHint: () => void
+  closeMountHint: () => void
 }
 
 let toastSeq = 0
@@ -112,6 +116,9 @@ export const useUI = create<UIState>((set, get) => ({
   toasts: [],
   confirm: null,
   prompt: null,
+  mountHintOpen: false,
+  openMountHint: () => set({ mountHintOpen: true }),
+  closeMountHint: () => set({ mountHintOpen: false }),
   peopleView: 'cards',
   networkMode: 'overview',
   mobileDetail: false,

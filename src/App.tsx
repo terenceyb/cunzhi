@@ -30,7 +30,7 @@ import { People } from './pages/People'
 import { Interactions } from './pages/Interactions'
 import { Settings } from './pages/Settings'
 import { ProfilePage } from './pages/Profile'
-import { ConflictDialog, LockScreen, UnlockDialog, Welcome } from './pages/Welcome'
+import { ConflictDialog, LockScreen, MountHintDialog, UnlockDialog, Welcome } from './pages/Welcome'
 import { applyFilter } from './lib/filter'
 import { cn, relativeTime } from './lib/utils'
 
@@ -210,6 +210,7 @@ export default function App() {
         <ConfirmHost />
         <PromptHost />
         <UnlockDialog />
+        <MountHintDialog />
         <LockScreen />
       </>
     )
@@ -252,6 +253,7 @@ export default function App() {
       <PromptHost />
       <UnlockDialog />
       <ConflictDialog />
+      <MountHintDialog />
       <LockScreen />
     </>
   )

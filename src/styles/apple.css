@@ -1916,3 +1916,172 @@ html[data-theme='dark'] .dash-page .dash-module-icon {
     display: none;
   }
 }
+
+/* ================================================================================
+   v3.0 · 卡片图标商务配色 / 底部留白收敛 / 固定卡零位移
+   ----------------------------------------------------------------------------
+   1. 首页卡片头图标：从深墨底改成随主题色走的商务明快色（白图标 + 主题色底）；
+   2. 移动端各页底部留白过大：96/118/122px 统一收敛到 78px；
+   3. 人脉固定卡：取消 sticky 的位移空间，让它从初始就钉在视图切换栏下方，
+      那段空白始终留着，堆叠卡经过固定卡下沿就被实底吞掉。
+   ================================================================================ */
+
+/* ---------------- 1. 首页三张卡片图标：随主题色的商务明快色 ---------------- */
+/* v2.9 的深墨底太黑。每张卡给一个明快商务基色（蓝 / 绿 / 橙），
+   再与当前主题色 --accent 混合：默认中性主题下依然明快，
+   切换主题色时三个图标一起跟着变，且各卡保留自己的色相身份。 */
+.dash-page .dash-module[data-module='todos'] .dash-module-icon {
+  background: color-mix(in srgb, var(--accent) 46%, #2f6feb) !important;
+  box-shadow: 0 2px 6px -2px color-mix(in srgb, #2f6feb 50%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24) !important;
+}
+.dash-page .dash-module[data-module='reminders'] .dash-module-icon {
+  background: color-mix(in srgb, var(--accent) 46%, #1e7a58) !important;
+  box-shadow: 0 2px 6px -2px color-mix(in srgb, #1e7a58 50%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24) !important;
+}
+.dash-page .dash-module[data-module='anniversaries'] .dash-module-icon {
+  background: color-mix(in srgb, var(--accent) 46%, #d2763a) !important;
+  box-shadow: 0 2px 6px -2px color-mix(in srgb, #d2763a 50%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24) !important;
+}
+.dash-page .dash-module-icon {
+  color: #fff !important;
+}
+html[data-theme='dark'] .dash-page .dash-module-icon {
+  color: #fff !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+/* ---------------- 2. 移动端底部留白收敛 ---------------- */
+@media (max-width: 767px) {
+  /* 玻璃导航实际只占底部约 56px（tab 条 42px + 呼吸），原来的
+     96/118/122px 是为整块 179px 容器预留的，导致最后一行悬在半空。
+     统一收到 78px：末行下沿离 tab 条约 20px，既不被挡也不空旷。 */
+  .dash-page,
+  .page.wide,
+  .page,
+  .settings-detail-body,
+  .settings-content,
+  .page.ix-page,
+  .people-scroll {
+    padding-bottom: calc(78px + var(--safe-b)) !important;
+  }
+}
+
+/* ---------------- 3. 人脉固定卡：零位移 + 保留真空白 ---------------- */
+@media (max-width: 767px) {
+  /* 位移根因：sticky 元素在文档里的初始顶边（视口 167）比吸附阈值 top:99
+     低 12px，于是滑动前 12px 它一直往上追，追到贴住工具栏才停。
+     现在把 top 提到与初始文档顶边一致（工具栏高 99 + 那段空白 12），
+     元素一挂上 sticky 就已在它该在的位置，全程不再位移。 */
+  .w2-sticky {
+    top: calc(var(--people-toolbar-h, 99px) + 12px) !important;
+  }
+  /* 实底层同步上移覆盖那段空白：堆叠卡滑到空白区就藏进去，
+     空白是干净的页面底色，不会露出半截卡片。 */
+  .w2-shade {
+    top: -13px !important;
+  }
+}
+
+/* ================================================================================
+   v3.0 · 体验态「结束体验」按钮 + 本地挂载引导弹窗
+   ================================================================================ */
+.dash-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+.end-demo-btn {
+  white-space: nowrap;
+  box-shadow: 0 2px 8px -3px color-mix(in srgb, var(--accent) 60%, transparent) !important;
+}
+@media (max-width: 767px) {
+  .dash-hero {
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .dash-hero .grow {
+    min-width: 0;
+  }
+  .dash-hero .hello {
+    font-size: 23px;
+  }
+  .end-demo-btn {
+    padding: 7px 10px !important;
+    font-size: 12px !important;
+  }
+}
+
+/* 本地挂载引导 */
+.mount-hint-hero {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  margin: 2px auto 12px;
+  border-radius: 16px;
+  color: #fff;
+  background: var(--accent);
+  box-shadow: 0 4px 14px -5px color-mix(in srgb, var(--accent) 65%, transparent);
+}
+.mount-hint-lead {
+  margin: 0 0 6px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.mount-hint-desc {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-2);
+}
+.mount-hint-desc code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--surface-2);
+  font-size: 0.92em;
+}
+.mount-hint-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: color-mix(in srgb, #b45309 10%, var(--surface));
+  color: #b45309;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.mount-hint-warn svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+.mount-hint-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: 8px;
+}
+.mount-hint-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--text-2);
+}
+.mount-hint-list svg {
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+html[data-theme='dark'] .mount-hint-warn {
+  background: color-mix(in srgb, #f0b45a 12%, var(--surface));
+  color: #f0b45a;
+}

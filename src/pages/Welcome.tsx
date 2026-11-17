@@ -1,5 +1,13 @@
 import React from 'react'
-import { ChevronRight, FolderOpen, PenLine, Sparkles } from 'lucide-react'
+import {
+  ChevronRight,
+  CloudOff,
+  FileCheck2,
+  FolderOpen,
+  HardDriveDownload,
+  PenLine,
+  Sparkles,
+} from 'lucide-react'
 import { useStore } from '../store'
 import { useUI } from '../ui'
 import { Logo } from '../components/ui'
@@ -13,7 +21,15 @@ export function Welcome() {
   const toast = useUI((s) => s.toast)
   const navigate = useUI((s) => s.navigate)
   const persons = useStore((s) => s.persons)
+  const prefs = useStore((s) => s.prefs)
   const supportsFsa = typeof window !== 'undefined' && 'showOpenFilePicker' in window
+
+  const startFresh = () => {
+    // 真正从零开始：不是体验态；首次进入弹「挂载本地文件夹」引导
+    setPrefs({ landingSeen: true, demoMode: false })
+    navigate('dashboard')
+    if (!prefs.mountHintSeen) setTimeout(() => useUI.getState().openMountHint(), 280)
+  }
 
   const startDemo = () => {
     if (persons.length > 0) {
@@ -95,7 +111,7 @@ export function Welcome() {
               const res = await openPackage()
               if (res.ok) {
                 toast(res.message ?? '数据包已加载', 'success')
-                setPrefs({ landingSeen: true })
+                setPrefs({ landingSeen: true, demoMode: false })
                 navigate('dashboard')
               } else if (!res.needsPassword) {
                 toast(res.message ?? '未选择文件', 'warn')
@@ -108,10 +124,7 @@ export function Welcome() {
 
           <button
             className="land-btn land-btn--plain"
-            onClick={() => {
-              setPrefs({ landingSeen: true })
-              navigate('dashboard')
-            }}
+            onClick={startFresh}
           >
             <PenLine size={17} />
             <span>从零开始</span>
@@ -266,5 +279,94 @@ export function LockScreen() {
       </button>
       {pinLock && <span className="sr-only">已设置 PIN</span>}
     </div>
+  )
+}
+
+/**
+ * 首次「从零开始」的本地挂载引导。
+ * 弹窗给用户两条清晰的路：把数据包落到本地文件夹（之后自动回写），
+ * 或明确告知「只用浏览器缓存、有丢失风险」。选完一次就不再打扰（mountHintSeen）。
+ */
+export function MountHintDialog() {
+  const open = useUI((s) => s.mountHintOpen)
+  const close = useUI((s) => s.closeMountHint)
+  const toast = useUI((s) => s.toast)
+  const setPrefs = useStore((s) => s.setPrefs)
+  const savePackageAsFile = useStore((s) => s.savePackageAsFile)
+  const [busy, setBusy] = React.useState(false)
+  const [tried, setTried] = React.useState(false)
+  const supportsPicker =
+    typeof window !== 'undefined' && typeof (window as any).showSaveFilePicker === 'function'
+
+  if (!open) return null
+
+  const finish = () => {
+    setPrefs({ mountHintSeen: true })
+    setTried(false)
+    close()
+  }
+
+  const mountLocal = async () => {
+    setBusy(true)
+    try {
+      // 系统文件夹/保存弹窗：让用户挑一个 .czdb 的位置，落盘后即建立句柄自动回写
+      const ok = await savePackageAsFile('我的存知数据包.czdb')
+      if (ok) {
+        toast('数据包已挂载，之后的改动会自动保存进这个文件', 'success')
+        finish()
+      } else {
+        // 用户取消系统弹窗：不强行关闭引导，允许改选「暂不」
+        setTried(true)
+      }
+    } catch {
+      setTried(true)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const useCache = () => {
+    toast('数据将存储在浏览器本地缓存，有数据丢失风险', 'warn')
+    finish()
+  }
+
+  return (
+    <Modal open onClose={useCache} narrow title="把数据存到你的文件夹">
+      <div className="mount-hint">
+        <div className="mount-hint-hero" aria-hidden="true">
+          <HardDriveDownload size={26} />
+        </div>
+        <p className="mount-hint-lead">给数据安一个固定的家</p>
+        <p className="mount-hint-desc">
+          选一个本地文件夹保存 <code>.czdb</code> 数据包，之后每次改动都会自动写回这个文件——换设备、清缓存都不怕丢。
+        </p>
+        {!supportsPicker && (
+          <p className="mount-hint-warn">
+            <CloudOff size={13} /> 当前浏览器不支持直接写入本地文件夹，将以「下载 / 导出覆盖」方式保存。
+          </p>
+        )}
+        {tried && (
+          <p className="mount-hint-warn">
+            <CloudOff size={13} /> 未选择保存位置。你可以再试一次，或选择仅用浏览器缓存。
+          </p>
+        )}
+        <ul className="mount-hint-list">
+          <li>
+            <FileCheck2 size={14} /> 数据是你自己的文件，可随时拷走、备份
+          </li>
+          <li>
+            <FileCheck2 size={14} /> 不注册账号，不上传服务器
+          </li>
+        </ul>
+      </div>
+      <div className="row" style={{ gap: 8, flexWrap: 'wrap', marginTop: 16 }}>
+        <button className="btn primary" disabled={busy} onClick={mountLocal}>
+          <FolderOpen size={14} /> {busy ? '请选择保存位置…' : '选择本地文件夹'}
+        </button>
+        <button className="btn ghost" onClick={useCache}>
+          暂不，用浏览器缓存
+        </button>
+      </div>
+    </Modal>
   )
 }

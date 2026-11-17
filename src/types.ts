@@ -337,6 +337,10 @@ export interface Prefs {
   pinLock?: string | null
   mapProvider: 'amap' | 'baidu' | 'google'
   landingSeen?: boolean
+  /** 正处于「示例数据体验」态：首页显示「结束体验，正式使用」 */
+  demoMode?: boolean
+  /** 是否已经做过首次「挂载本地文件夹」引导（弹过一次就不再打扰） */
+  mountHintSeen?: boolean
   /** 互动方式：内置 + 用户自定义，详情页与速记共用一份 */
   channels: string[]
 }

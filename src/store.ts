@@ -207,6 +207,8 @@ export interface AppState {
   bulkPatch: (ids: string[], fields: Record<string, unknown>) => void
 
   loadDemo: () => void
+  /** 结束示例体验：清空数据回到从零开始，回到工作台首页 */
+  endDemo: () => Promise<void>
   openPackage: () => Promise<{ ok: boolean; needsPassword?: boolean; message?: string }>
   unlockPending: (password: string) => Promise<{ ok: boolean; message?: string }>
   savePackageAsFile: (name?: string) => Promise<boolean>
@@ -1081,7 +1083,16 @@ export const useStore = create<AppState>((set, get) => {
           },
         },
       })
-      set({ prefs: { ...get().prefs, landingSeen: true } })
+      // 示例数据 = 体验态：首页会出现「结束体验，正式使用」，点它清空示例回到空库
+      set({ prefs: { ...get().prefs, landingSeen: true, demoMode: true } })
+      savePrefs(get().prefs)
+    },
+
+    endDemo: async () => {
+      // 清空示例数据、断开任何文件句柄，回到「从零开始」的空库；
+      // prefs 保留（主题色、布局等用户偏好不因结束体验而丢失）
+      await get().resetAll()
+      set({ prefs: { ...get().prefs, demoMode: false, landingSeen: true, mountHintSeen: false } })
       savePrefs(get().prefs)
     },
 

@@ -10,6 +10,7 @@ import {
   ListChecks,
   Plus,
   RotateCcw,
+  Sparkles,
   Users,
 } from 'lucide-react'
 import { DEFAULT_PREFS, buildCtx, useStore } from '../store'
@@ -272,11 +273,34 @@ export function Dashboard() {
             : `共 ${stats.total} 位人脉 · 本周已联系 ${stats.contactedThisWeek} 人 · 关系维护得不错。`
         }
         actions={
-          isMobile ? undefined : (
-            <button className="btn sm ghost" onClick={restoreLayout} title="恢复默认位置与顺序">
-              <RotateCcw size={13} /> 恢复默认布局
-            </button>
-          )
+          <div className="dash-hero-actions">
+            {prefs.demoMode && (
+              <button
+                className="btn sm primary end-demo-btn"
+                onClick={() =>
+                  useUI.getState().askConfirm({
+                    title: '结束体验，正式使用？',
+                    message: '将清空全部示例人脉、待办、互动与纪念日，回到空白工作台。此操作会移除示例数据，且不可撤销。',
+                    confirmText: '清空示例，正式开始',
+                    cancelText: '再体验一会',
+                    danger: true,
+                    onConfirm: async () => {
+                      await useStore.getState().endDemo()
+                      toast('示例已清空，可以正式开始建立你的人脉库了', 'success')
+                    },
+                  })
+                }
+                title="清空示例数据，从零开始正式使用"
+              >
+                <Sparkles size={13} /> 结束体验，正式使用
+              </button>
+            )}
+            {!isMobile && (
+              <button className="btn sm ghost" onClick={restoreLayout} title="恢复默认位置与顺序">
+                <RotateCcw size={13} /> 恢复默认布局
+              </button>
+            )}
+          </div>
         }
       />
 
@@ -304,6 +328,7 @@ export function Dashboard() {
             <section
               key={key}
               className={cn('dash-module', collapsed && 'collapsed')}
+              data-module={key}
               data-density={density}
               data-wide={c.w >= 1.9 ? 'true' : 'false'}
               data-collapsed={collapsed ? 'true' : 'false'}
