@@ -17,7 +17,6 @@ import {
 import type { TimelineEvent } from '../types'
 import { buildCtx, useStore } from '../store'
 import { useUI } from '../ui'
-import { GIcon } from '../components/glass/GIcon'
 import { Avatar, Empty, PageHead, useBreakpoint } from '../components/ui'
 import { buildPersonMeta, personName } from '../lib/derive'
 import { cn, formatDate, formatDateTime, relativeTime } from '../lib/utils'
@@ -50,15 +49,19 @@ function dayKey(iso: string): number {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
 }
 
-function dayLabel(ts: number): string {
+/** 日期拆成主副两段：主段给「今天 / 11月7日」，副段给星期，两段各自对齐才好排 */
+function dayLabel(ts: number): { main: string; sub: string } {
   const today = dayKey(new Date().toISOString())
-  if (ts === today) return '今天'
-  if (ts === today - DAY) return '昨天'
-  if (ts === today - DAY * 2) return '前天'
   const d = new Date(ts)
-  const week = '日一二三四五六'[d.getDay()]
+  const week = `周${'日一二三四五六'[d.getDay()]}`
+  if (ts === today) return { main: '今天', sub: week }
+  if (ts === today - DAY) return { main: '昨天', sub: week }
+  if (ts === today - DAY * 2) return { main: '前天', sub: week }
   const sameYear = d.getFullYear() === new Date().getFullYear()
-  return `${sameYear ? '' : `${d.getFullYear()}年`}${d.getMonth() + 1}月${d.getDate()}日 · 周${week}`
+  return {
+    main: `${sameYear ? '' : `${d.getFullYear()}年`}${d.getMonth() + 1}月${d.getDate()}日`,
+    sub: week,
+  }
 }
 
 export function Interactions() {
@@ -156,9 +159,8 @@ export function Interactions() {
             onChange={(e) => setQ(e.target.value)}
           />
         </div>
-        <div className="ix-group">
-          <GIcon name="filter" size={18} />
-          <div className="ix-filters is-glass" role="tablist" aria-label="互动类别">
+        <div className="ix-tool-group">
+          <div className="ix-filters" role="tablist" aria-label="互动类别">
             {FILTERS.map((t) => (
               <button
                 key={t}
@@ -172,8 +174,7 @@ export function Interactions() {
             ))}
           </div>
         </div>
-        <div className="ix-group ix-group-end">
-          <GIcon name="clock" size={18} />
+        <div className="ix-tool-group ix-tool-group-end">
           <div className="ix-ranges">
             {RANGES.map((r) => (
               <button
@@ -222,10 +223,14 @@ export function Interactions() {
       ) : (
         <div className="ix-stream">
           {groups.map(([ts, list]) => (
-            <section key={ts} className="ix-group">
+            <section key={ts} className="ix-group" style={{ ['--ix-rows' as string]: list.length }}>
               <header className="ix-day">
-                <span>{dayLabel(ts)}</span>
-                <span className="ix-day-count">{list.length} 条</span>
+                <span className="ix-day-main">{dayLabel(ts).main}</span>
+                <span className="ix-day-sub">
+                  {dayLabel(ts).sub}
+                  <span className="ix-day-dot">·</span>
+                  {list.length} 条
+                </span>
               </header>
               {list.map((e) => {
                 const person = personById.get(e.personId)
@@ -255,9 +260,6 @@ export function Interactions() {
                             {meta.group.name}
                           </span>
                         )}
-                        <span className="ix-time" title={formatDateTime(e.occurredAt)}>
-                          {relativeTime(e.occurredAt)}
-                        </span>
                       </div>
                       <p className="ix-content">{e.content}</p>
                       <div className="ix-meta">
@@ -266,6 +268,10 @@ export function Interactions() {
                           {KIND[e.type]?.label}
                         </span>
                         {e.channel && e.channel !== '普通备注' && <span className="ix-channel">· {e.channel}</span>}
+                        {/* 相对时间放在底部行右端，与类型 chip 同一条基线，卡片之间才对得齐 */}
+                        <span className="ix-time" title={formatDateTime(e.occurredAt)}>
+                          {relativeTime(e.occurredAt)}
+                        </span>
                         {pinned && (
                           <span className="ix-pin-flag">
                             <Pin size={10} /> 置顶

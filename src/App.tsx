@@ -158,6 +158,13 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
+  /* 换页时把内容区滚回顶部：滚动权在 .content 手上，路由一变必须手动复位，
+     否则从人脉切到互动会停在上一页的中间位置 */
+  const contentRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    contentRef.current?.scrollTo({ top: 0 })
+  }, [route])
+
   // 注册 Service Worker
   useEffect(() => {
     if ('serviceWorker' in navigator && location.protocol !== 'file:') {
@@ -216,7 +223,10 @@ export default function App() {
         <div className="main">
           <TopBar />
           <StatusBanners />
-          <div className={cn('content', (route === 'people' || route === 'settings' || route === 'interactions') && 'no-pad')}>
+          <div
+            ref={contentRef}
+            className={cn('content', (route === 'people' || route === 'settings' || route === 'interactions') && 'no-pad')}
+          >
             {route === 'dashboard' && <Dashboard />}
             {route === 'people' && <People />}
             {route === 'interactions' && <Interactions />}
@@ -395,14 +405,14 @@ function TopBar() {
       <div className="topbar-status">
         <SavePill />
       </div>
-      <button className="btn icon glass-icon" onClick={() => useUI.setState({ searchOpen: true })} aria-label="全局搜索">
-        <GIcon name="search" size={19} />
+      <button className="btn icon" onClick={() => useUI.setState({ searchOpen: true })} aria-label="全局搜索">
+        <Search size={16} />
       </button>
-      <button className="btn icon glass-icon" onClick={() => useUI.setState({ quickNoteOpen: true })} aria-label="速记">
-        <GIcon name="note" size={19} />
+      <button className="btn icon" onClick={() => useUI.setState({ quickNoteOpen: true })} aria-label="速记">
+        <Sparkles size={16} />
       </button>
-      <button className="btn icon glass-icon" onClick={() => useUI.getState().openPersonForm()} aria-label="新建人脉">
-        <GIcon name="plus" size={19} />
+      <button className="btn icon" onClick={() => useUI.getState().openPersonForm()} aria-label="新建人脉">
+        <Plus size={17} />
       </button>
     </header>
   )

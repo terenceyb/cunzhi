@@ -1,9 +1,9 @@
 import React from 'react'
-import { ArrowRight, Database, FolderOpen, HardDrive, Sparkles } from 'lucide-react'
 import { useStore } from '../store'
 import { useUI } from '../ui'
 import { Logo } from '../components/ui'
 import { Modal } from '../components/ui'
+import { InlineTextMorph } from '../components/morph/InlineTextMorph'
 
 export function Welcome() {
   const openPackage = useStore((s) => s.openPackage)
@@ -35,35 +35,62 @@ export function Welcome() {
     }
   }
 
+  /* 三行句子里嵌三枚可点的胶囊：点一下换词换贴纸，句子在流里重新居中。
+     用中文写，词是这一页想说的三件事：怎么找、怎么联系、怎么记住。 */
+  const morphPills = [
+    {
+      items: [
+        { word: '检索', icon: 'languages' },
+        { word: '回想', icon: 'motion' },
+        { word: '翻阅', icon: 'themes' },
+      ],
+      angleSet: 'languages' as const,
+    },
+    {
+      items: [
+        { word: '问候', icon: 'icons' },
+        { word: '拜访', icon: 'systems' },
+        { word: '联系', icon: 'effects' },
+      ],
+      angleSet: 'models' as const,
+    },
+    {
+      items: [
+        { word: '约定', icon: 'states' },
+        { word: '生日', icon: 'colors' },
+        { word: '待办', icon: 'components' },
+      ],
+      angleSet: 'custom' as const,
+    },
+  ]
+
   return (
-    <div className="welcome">
-      <div className="welcome-inner">
-        {/* 品牌锁：logo 与「存知」放大，副标题落在右下 */}
-        <div className="w-brand">
-          <div className="w-lockup">
-            <Logo size={54} />
-            <span className="w-wordmark">存知</span>
-          </div>
-          <span className="w-tagline">本地优先的人脉管理工作台</span>
+    <div className="land">
+      <div className="land-inner">
+        <div className="land-brand">
+          <Logo size={84} />
+          <h1 className="land-name">存知</h1>
+          <p className="land-sub">本地优先的人脉工作台</p>
         </div>
 
-        <h1>
+        <p className="land-poem">
           海内存知己，
           <br />
           天涯若比邻。
-        </h1>
-        <p className="lede">
-          有些人只是名片上的一行字，有些人会慢慢长成你生活的一部分。存知想替你记住那些容易被日子冲淡的细节：
-          他在哪座城市、最近在忙什么、上次聊到深夜的话题，还有那句说好要兑现的约定。
-          它不催你社交，只在你想起某个人时，让你更快找到他；在关系快要凉下来的时候，轻轻提醒你问候一声。
-        </p>
-        <p className="lede lede--tool">
-          所有内容都写进你选中的那个文件里 —— 不用注册，不上传服务器，换台电脑也能原样打开。
         </p>
 
-        <div className="w-actions">
+        <InlineTextMorph
+          className="land-morph"
+          compact
+          brand="存知"
+          height={320}
+          lines={['把见过的人，连成一张可 {0} 的网，', '让每一次 {1} 都有来处，', '也记得那些 {2}。']}
+          pills={morphPills}
+        />
+
+        <div className="land-actions">
           <button
-            className="w-btn w-btn--primary"
+            className="land-btn land-btn--primary"
             onClick={async () => {
               const res = await openPackage()
               if (res.ok) {
@@ -75,57 +102,26 @@ export function Welcome() {
               }
             }}
           >
-            <span className="w-btn-ic">
-              <FolderOpen size={18} />
-            </span>
-            <span className="w-btn-text">
-              <span className="w-btn-title">打开数据包</span>
-              <span className="w-btn-sub">我已有 .czdb 文件</span>
-            </span>
-            <ArrowRight size={16} className="w-btn-arrow" />
+            打开数据包
           </button>
           <button
-            className="w-btn"
+            className="land-btn"
             onClick={() => {
               setPrefs({ landingSeen: true })
               navigate('dashboard')
             }}
           >
-            <span className="w-btn-ic">
-              <HardDrive size={18} />
-            </span>
-            <span className="w-btn-text">
-              <span className="w-btn-title">从零开始</span>
-              <span className="w-btn-sub">先建空工作台，稍后录入</span>
-            </span>
-          </button>
-          <button className="w-btn w-btn--text" onClick={startDemo}>
-            <Sparkles size={15} />
-            先看看演示数据
+            从零开始
           </button>
         </div>
 
-        <div className="welcome-cards">
-          <div className="welcome-card">
-            <div className="ic"><Sparkles size={15} /></div>
-            <h3>该联系谁，替你排好</h3>
-            <p>按你为每个人设定的联系频率算关系冷却度，逾期越久越靠前，连续忽略会降权，避免提醒疲劳。</p>
-          </div>
-          <div className="welcome-card">
-            <div className="ic"><Database size={15} /></div>
-            <h3>聊过什么，不用再想</h3>
-            <p>一句话速记、纪念日、待办都挂在具体的人身上。下次见面之前，翻一眼就知道上次说到哪儿。</p>
-          </div>
-          <div className="welcome-card">
-            <div className="ic"><ArrowRight size={15} /></div>
-            <h3>数据是你的，一直是</h3>
-            <p>`.czdb` 是能被文本编辑器打开的 UTF-8 JSON，放进任意同步盘即可搬运、检查、长期持有。</p>
-          </div>
-        </div>
+        <button className="land-link" onClick={startDemo}>
+          先看看演示数据
+        </button>
 
-        <p className="w-foot">
-          建议：桌面端编辑数据包，手机端作为查看器与速记器。当前浏览器
-          {supportsFsa ? '支持 File System Access API，可实现实时回写。' : '不支持 File System Access API，将以「导出覆盖」方式保存。'}
+        <p className="land-foot">
+          数据只写在你选中的那个文件里 · 不用注册 · 不上传服务器
+          {supportsFsa ? '' : ' · 当前浏览器以「导出覆盖」方式保存'}
         </p>
       </div>
     </div>

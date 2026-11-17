@@ -7646,10 +7646,7 @@ html[data-theme='dark'] .glass-nav {
 }
 
 .glass-chip,
-.btn.glass-icon,
-.pt-tools .segmented,
-.ix-filters.is-glass,
-.ix-ranges {
+.btn.glass-icon {
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.68), rgba(255, 255, 255, 0.34));
   border: 1px solid rgba(255, 255, 255, 0.76);
   backdrop-filter: blur(18px) saturate(180%);
@@ -7658,15 +7655,11 @@ html[data-theme='dark'] .glass-nav {
     0 8px 22px -14px rgba(50, 48, 60, 0.55);
 }
 html[data-theme='dark'] .glass-chip,
-html[data-theme='dark'] .btn.glass-icon,
-html[data-theme='dark'] .pt-tools .segmented,
-html[data-theme='dark'] .ix-filters.is-glass,
-html[data-theme='dark'] .ix-ranges {
+html[data-theme='dark'] .btn.glass-icon {
   background: linear-gradient(160deg, rgba(62, 66, 76, 0.62), rgba(28, 31, 38, 0.5));
   border-color: rgba(255, 255, 255, 0.13);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 8px 22px -14px rgba(0, 0, 0, 0.75);
 }
-
 .btn.glass-icon {
   border-radius: 12px;
   color: var(--text-2);
@@ -7679,169 +7672,106 @@ html[data-theme='dark'] .ix-ranges {
   transform: scale(0.95);
 }
 
-/* 视图切换：外层是托盘，选中项是一块更亮的白玻璃 */
-.pt-tools .segmented {
-  padding: 3px;
-  gap: 3px;
-  border-radius: 13px;
-}
-.pt-tools .segmented button {
-  height: 30px;
-  padding: 0 9px;
-  border-radius: 10px;
-  background: transparent;
-  box-shadow: none;
-}
-.pt-tools .segmented button.active {
-  background: rgba(255, 255, 255, 0.94);
-  color: var(--text);
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.9);
-}
-html[data-theme='dark'] .pt-tools .segmented button.active {
-  background: rgba(255, 255, 255, 0.16);
-  color: var(--text);
-}
-
-/* 互动页：类别与时间范围，两组都是同一块玻璃 */
-.ix-filters.is-glass {
-  display: inline-flex;
-  flex-wrap: nowrap;
-  gap: 2px;
-  padding: 3px;
-  border-radius: 13px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  max-width: 100%;
-}
-.ix-filters.is-glass::-webkit-scrollbar {
-  display: none;
-}
-.ix-filters.is-glass .tl-filter-chip {
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-  height: 30px;
-}
-.ix-filters.is-glass .tl-filter-chip.accent {
-  background: rgba(255, 255, 255, 0.94);
-  color: var(--text);
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.12);
-}
-html[data-theme='dark'] .ix-filters.is-glass .tl-filter-chip.accent {
-  background: rgba(255, 255, 255, 0.16);
-  color: var(--text);
-}
-.ix-ranges {
-  padding: 3px;
-  gap: 3px;
-  border-radius: 13px;
-}
-.ix-range {
-  height: 30px;
-  border-radius: 10px;
-  background: transparent;
-}
-.ix-range.on {
-  background: rgba(255, 255, 255, 0.94);
-  color: var(--text);
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.12);
-}
-html[data-theme='dark'] .ix-range.on {
-  background: rgba(255, 255, 255, 0.16);
-}
+/* 工具栏的视图切换与筛选走回原来的扁平样式，这里只留分组包裹 */
 /* 两组左边各放一枚立体图标做组标识 */
-.ix-group {
+.ix-tool-group {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   min-width: 0;
 }
-.ix-group > .gi {
+.ix-tool-group > .gi {
   margin-left: 6px;
   opacity: 0.9;
 }
-.ix-group-end {
+.ix-tool-group-end {
   margin-left: auto;
 }
-.ix-group-end .ix-ranges {
+.ix-tool-group-end .ix-ranges {
   margin-left: 0;
 }
 
 /* ---- 移动端设置：一级清单 → 二级分页 ---- */
-.settings-index {
-  padding: 4px 14px calc(150px + var(--safe-b));
+/* 整片列表：十项共用一块玻璃，行与行之间不加间隔、不加分隔线，
+   靠行高（76px）和图标尺寸把呼吸感做出来，而不是靠缝隙 */
+.set-index {
+  padding: 2px 12px calc(148px + var(--safe-b));
 }
-.settings-list {
+.set-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  border-radius: 20px;
+  overflow: hidden;
+  background: linear-gradient(168deg, rgba(255, 255, 255, 0.88), rgba(255, 255, 255, 0.7));
+  border: 1px solid rgba(255, 255, 255, 0.84);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 0 0 1px rgba(17, 22, 30, 0.04),
+    0 16px 34px -24px rgba(50, 48, 60, 0.5);
 }
-.settings-item {
+html[data-theme='dark'] .set-list {
+  background: linear-gradient(168deg, rgba(58, 62, 72, 0.7), rgba(26, 29, 36, 0.6));
+  border-color: rgba(255, 255, 255, 0.11);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), 0 16px 34px -24px rgba(0, 0, 0, 0.8);
+}
+.set-row {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 13px;
-  border-radius: 15px;
+  gap: 15px;
+  min-height: 76px;
+  padding: 19px 16px;
+  border: 0;
+  background: transparent;
   text-align: left;
   color: var(--text);
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.46));
-  border: 1px solid rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(18px) saturate(180%);
-  -webkit-backdrop-filter: blur(18px) saturate(180%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 0 0 1px rgba(17, 22, 30, 0.04),
-    0 10px 24px -18px rgba(50, 48, 60, 0.6);
-  transition: transform 0.15s var(--ease-out), background 0.15s ease;
+  transition: background 0.14s ease;
 }
-.settings-item:active {
-  transform: scale(0.985);
+.set-row:active {
+  background: rgba(17, 22, 30, 0.055);
 }
-html[data-theme='dark'] .settings-item {
-  background: linear-gradient(160deg, rgba(62, 66, 76, 0.62), rgba(28, 31, 38, 0.5));
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 10px 24px -18px rgba(0, 0, 0, 0.8);
+html[data-theme='dark'] .set-row:active {
+  background: rgba(255, 255, 255, 0.07);
 }
-.settings-item-icon {
+.set-row-icon {
   flex: 0 0 auto;
-  width: 35px;
-  height: 35px;
+  width: 40px;
+  height: 40px;
   display: grid;
   place-items: center;
-  border-radius: 11px;
+  border-radius: 13px;
   color: var(--text-2);
   background: color-mix(in srgb, var(--accent) 7%, var(--surface));
   box-shadow: inset 0 0 0 1px rgba(17, 22, 30, 0.05);
 }
-html[data-theme='dark'] .settings-item-icon {
+html[data-theme='dark'] .set-row-icon {
   background: rgba(255, 255, 255, 0.06);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
 }
-.settings-item-text {
+.set-row-text {
   flex: 1 1 auto;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
-.settings-item-label {
-  font-size: 14.5px;
+.set-row-label {
+  font-size: 15px;
   font-weight: 600;
   letter-spacing: 0.01em;
   color: var(--text);
 }
-.settings-item-hint {
-  font-size: 11.5px;
-  line-height: 1.35;
+.set-row-hint {
+  font-size: 12px;
+  line-height: 1.4;
   color: var(--text-3);
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 1;
   -webkit-box-orient: vertical;
 }
-.settings-item-arrow {
+.set-row-arrow {
   flex: 0 0 auto;
   color: var(--text-3);
 }
@@ -7899,5 +7829,344 @@ html[data-theme='dark'] .nav-item > .gi {
     flex: 0 0 100%;
     justify-content: flex-end;
     margin-top: 8px;
+  }
+}
+
+/* ================================================================================
+   v2.5 —— 移动端滚动修复
+   ----------------------------------------------------------------------------
+   `.content.no-pad` 原本给「人脉 / 互动 / 设置」用，靠内部容器各自滚动（桌面双栏
+   就是靠这个固定高度）。移动端没有第二层滚动容器，内容一长就被 overflow:hidden
+   直接剪掉，表现就是「页面滑不动」。移动端把滚动权收回到 .content 身上，内部
+   布局改成自然高度。
+   ================================================================================ */
+@media (max-width: 767px) {
+  .content.no-pad {
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  .content.no-pad .people-layout {
+    height: auto;
+    min-height: 100%;
+  }
+  .content.no-pad .people-list-col {
+    overflow: visible;
+  }
+  .content.no-pad .people-scroll {
+    overflow: visible;
+    overflow-x: hidden;
+    flex: 0 0 auto;
+  }
+}
+
+/* ================================================================================
+   v2.5 —— 互动记录：日期列与条数排整齐
+   ----------------------------------------------------------------------------
+   以前「日期 + N 条」和卡片挤成一排、日期被挤成竖排。现在桌面把日期做成左侧
+   独立一列（主段日期、副段星期 · 条数，右对齐），卡片统一进右列；移动端把日期
+   收成一条分组小标题，卡片占满整行。
+   ================================================================================ */
+.ix-stream > .ix-group {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  column-gap: 16px;
+  align-items: start;
+}
+.ix-group > .ix-day {
+  grid-column: 1;
+  grid-row: 1 / span var(--ix-rows, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  margin: 0;
+  padding-top: 12px;
+  text-align: right;
+  font-weight: 400;
+}
+.ix-day-main {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-2);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.ix-day-sub {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.ix-day-dot {
+  opacity: 0.55;
+}
+.ix-group > .ix-row {
+  grid-column: 2;
+}
+.ix-group > .ix-row + .ix-row {
+  margin-top: 8px;
+}
+/* 时间落在卡片右下角，与类型 chip 同一基线 */
+.ix-meta .ix-time {
+  margin-left: auto;
+  padding-left: 8px;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 767px) {
+  .ix-stream > .ix-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .ix-group > .ix-day {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 6px;
+    padding: 2px 2px 0;
+    text-align: left;
+  }
+  .ix-day-main {
+    font-size: 13px;
+  }
+  .ix-day-sub {
+    font-size: 11.5px;
+  }
+  .ix-group > .ix-row {
+    position: relative;
+    padding: 11px 12px;
+  }
+  .ix-group > .ix-row + .ix-row {
+    margin-top: 0;
+  }
+  .ix-top {
+    padding-right: 56px;
+  }
+  .ix-ops {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    opacity: 1;
+  }
+  .ix-content {
+    margin: 4px 0 8px;
+  }
+}
+
+/* ================================================================================
+   v2.5 —— 首页卡片头重做
+   ----------------------------------------------------------------------------
+   原来卡头顶着一道 3px 彩色渐变条，颜色又和图标、徽标各说各话。现在收成三件事：
+   一枚带主题色底的圆角图标块、一条随主题色走的极淡分隔线、徽标改成同色的软胶囊。
+   彩条去掉，改成卡头一层几乎看不见的由上至下柔光。
+   ================================================================================ */
+.dash-module::before {
+  display: none;
+}
+.dash-module-head {
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--dash-tint, var(--accent)) 12%, var(--line));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--dash-tint, var(--accent)) 7%, transparent),
+    transparent 92%
+  );
+}
+.dash-module-icon {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--dash-tint, var(--accent));
+  background: color-mix(in srgb, var(--dash-tint, var(--accent)) 13%, var(--surface));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dash-tint, var(--accent)) 18%, transparent);
+}
+html[data-theme='dark'] .dash-module-icon {
+  background: color-mix(in srgb, var(--dash-tint, var(--accent)) 26%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--dash-tint, var(--accent)) 30%, transparent);
+}
+.dash-module-head h2 {
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.dash-module-head .badge {
+  height: 20px;
+  min-width: 20px;
+  padding: 0 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 650;
+  background: color-mix(in srgb, var(--dash-tint, var(--accent)) 16%, transparent);
+  color: var(--dash-tint, var(--accent));
+  box-shadow: none;
+}
+.dash-module-head .badge.soft {
+  background: color-mix(in srgb, var(--dash-tint, var(--accent)) 10%, transparent);
+}
+.dash-module-head .actions .btn.icon.sm {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  color: var(--text-3);
+}
+.dash-module-head .actions .btn.icon.sm:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--dash-tint, var(--accent)) 10%, transparent);
+}
+
+/* ================================================================================
+   v2.5 —— 启动页（Apple 风格）
+   ----------------------------------------------------------------------------
+   只留四件东西：图标、字标、一句诗、一条可点的说明。其余介绍交给可交互的三行
+   句子承担，页面不再堆卡片与段落。留白比装饰更重要。
+   ================================================================================ */
+.land {
+  min-height: 100dvh;
+  /* 用 flex 而不是 grid：grid 的列宽会被内部固定宽度的设计舞台撑开，
+     在手机上会把整页顶出屏幕 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-x: hidden;
+  padding: clamp(36px, 7vh, 72px) 20px clamp(40px, 8vh, 80px);
+  overflow-y: auto;
+  background:
+    radial-gradient(760px 460px at 50% -8%, color-mix(in srgb, var(--accent) 9%, transparent), transparent 68%),
+    var(--bg);
+}
+.land-inner {
+  width: 100%;
+  max-width: 900px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.land-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+.land-brand .logo-mark {
+  border-radius: 22px;
+  box-shadow: 0 20px 44px -22px rgba(16, 24, 40, 0.55);
+}
+.land-name {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1;
+  color: var(--text);
+}
+.land-sub {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text-3);
+  margin-top: -4px;
+}
+.land-poem {
+  margin: clamp(26px, 4.4vh, 40px) 0 4px;
+  font-size: clamp(32px, 5.4vw, 58px);
+  line-height: 1.2;
+  font-weight: 620;
+  letter-spacing: -0.025em;
+  color: var(--text);
+  text-wrap: balance;
+}
+.land-morph {
+  width: 100%;
+  max-width: 780px;
+  margin: 6px 0 2px;
+  /* 把主题色与深浅模式透给 ShadowRoot 里的组件：
+     胶囊底色用「文字色 9%」混出来，浅色下≈#ededea，深色下自动变成一层淡白，
+     组件内部不用认识主题，也不会在深色里出现深字深底 */
+  --itm-ink: var(--text);
+  --itm-pill: color-mix(in srgb, var(--text) 9%, transparent);
+  --itm-pill-hover: color-mix(in srgb, var(--text) 13%, transparent);
+  --itm-pill-active: color-mix(in srgb, var(--text) 19%, transparent);
+  --itm-focus: color-mix(in srgb, var(--text) 46%, transparent);
+  --itm-mark-bg: var(--surface);
+  --itm-mark-line: var(--text);
+}
+html[data-theme='dark'] .land-brand .logo-mark {
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.16), 0 20px 44px -18px rgba(0, 0, 0, 0.9);
+}
+.land-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: clamp(18px, 3vh, 28px);
+}
+.land-btn {
+  height: 46px;
+  padding: 0 24px;
+  border-radius: 999px;
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  transition: transform 0.16s var(--ease-out), background-color 0.16s ease, border-color 0.16s ease;
+}
+.land-btn:active {
+  transform: scale(0.97);
+}
+.land-btn--primary {
+  background: var(--text);
+  color: var(--on-inverse);
+  border-color: transparent;
+  box-shadow: 0 14px 30px -18px rgba(16, 24, 40, 0.7);
+}
+@media (hover: hover) and (pointer: fine) {
+  .land-btn:hover {
+    border-color: color-mix(in srgb, var(--accent) 34%, var(--line));
+  }
+  .land-btn--primary:hover {
+    background: color-mix(in srgb, var(--text) 88%, #fff);
+    border-color: transparent;
+  }
+}
+.land-link {
+  margin-top: 16px;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--accent);
+  border-radius: 10px;
+}
+.land-link:hover {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+.land-foot {
+  margin-top: clamp(22px, 4vh, 34px);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-3);
+}
+@media (max-width: 767px) {
+  .land {
+    padding: 32px 16px calc(36px + var(--safe-b));
+    align-items: center;
+  }
+  .land-poem {
+    margin-top: 24px;
+  }
+  .land-btn {
+    height: 44px;
+    padding: 0 20px;
+    font-size: 14px;
   }
 }

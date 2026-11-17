@@ -29,9 +29,9 @@ import {
 import { cn, dayDiff, formatAnniversary, formatDate, relativeTime } from '../lib/utils'
 
 const MODULE_META: Record<string, { title: string; icon: React.ReactNode }> = {
-  reminders: { title: '走动提醒', icon: <Clock size={19} /> },
-  todos: { title: '待办事项', icon: <ListChecks size={19} /> },
-  anniversaries: { title: '纪念日', icon: <Cake size={19} /> },
+  reminders: { title: '走动提醒', icon: <Clock size={17} /> },
+  todos: { title: '待办事项', icon: <ListChecks size={17} /> },
+  anniversaries: { title: '纪念日', icon: <Cake size={17} /> },
 }
 
 type Cell = { x: number; y: number; w: number; h: number }
@@ -319,7 +319,9 @@ export function Dashboard() {
               }
             >
               <div className="dash-module-head" onPointerDown={(e) => startDrag(key, e)}>
-                <span className="muted">{meta.icon}</span>
+                <span className="dash-module-icon" aria-hidden="true">
+                  {meta.icon}
+                </span>
                 <h2>{meta.title}</h2>
                 {key === 'reminders' && reminders.length > 0 && (
                   <span className="badge">

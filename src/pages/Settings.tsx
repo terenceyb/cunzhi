@@ -92,6 +92,11 @@ export function Settings() {
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
+  /* 进二级页（或换分组）时回到页首：滚动权在 .content 上，路由没变也要手动复位 */
+  useEffect(() => {
+    document.querySelector('.content')?.scrollTo({ top: 0 })
+  }, [tab, detail])
+
   /* 每个分组的正文，桌面与移动端共用同一份 */
   const renderPanel = (key: string) => (
     <>
@@ -114,19 +119,19 @@ export function Settings() {
   if (isMobile) {
     if (!detail) {
       return (
-        <div className="settings-index">
-          <ul className="settings-list">
+        <div className="set-index">
+          <ul className="set-list">
             {NAV.map((n) => (
               <li key={n.key}>
-                <button className="settings-item" onClick={() => openTab(n.key)}>
-                  <span className="settings-item-icon" aria-hidden="true">
+                <button className="set-row" onClick={() => openTab(n.key)}>
+                  <span className="set-row-icon" aria-hidden="true">
                     {n.icon}
                   </span>
-                  <span className="settings-item-text">
-                    <span className="settings-item-label">{n.label}</span>
-                    <span className="settings-item-hint">{TAB_HINT[n.key]}</span>
+                  <span className="set-row-text">
+                    <span className="set-row-label">{n.label}</span>
+                    <span className="set-row-hint">{TAB_HINT[n.key]}</span>
                   </span>
-                  <ChevronRight size={17} className="settings-item-arrow" aria-hidden="true" />
+                  <ChevronRight size={17} className="set-row-arrow" aria-hidden="true" />
                 </button>
               </li>
             ))}
