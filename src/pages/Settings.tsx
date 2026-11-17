@@ -38,6 +38,7 @@ import {
 import type { DashAccent, FieldDefinition, FieldType, SelectOption, SmartView } from '../types'
 import { buildCtx, useStore } from '../store'
 import { useUI } from '../ui'
+import { useDragSort } from '../components/dragSort'
 import { Avatar, Empty, Logo, Modal, PageHead, Switch, useBreakpoint } from '../components/ui'
 import { PanelReveal } from '../components/motion'
 import { ProfilePage } from './Profile'
@@ -294,8 +295,18 @@ function FieldsSettings() {
   const [dialogDef, setDialogDef] = useState<FieldDefinition | null>(null)
   const [configDef, setConfigDef] = useState<FieldDefinition | null>(null)
   const [creating, setCreating] = useState(false)
-  const [dragKey, setDragKey] = useState<string | null>(null)
-  const [overKey, setOverKey] = useState<string | null>(null)
+  const ordered = useMemo(
+    () => [...store.fieldDefinitions].sort((a, b) => a.sortOrder - b.sortOrder),
+    [store.fieldDefinitions],
+  )
+  const { containerRef: fieldListRef, activeKey, gripProps } = useDragSort({
+    keys: ordered.map((d) => d.key),
+    onReorder: (from, to) => {
+      const keys = ordered.map((d) => d.key)
+      keys.splice(to, 0, keys.splice(from, 1)[0])
+      reorderFields(keys)
+    },
+  })
   const toast = useUI((s) => s.toast)
   const askConfirm = useUI((s) => s.askConfirm)
 
@@ -335,39 +346,14 @@ function FieldsSettings() {
             </button>
           </div>
         </div>
-        <div>
-          {[...store.fieldDefinitions]
-            .sort((a, b) => a.sortOrder - b.sortOrder)
-            .map((def) => (
+        <div ref={fieldListRef} className="fm-sort-list">
+          {ordered.map((def) => (
               <React.Fragment key={def.key}>
               <div
-                className={cn(
-                  'field-manage-row',
-                  dragKey === def.key && 'dragging',
-                  overKey === def.key && dragKey && dragKey !== def.key && 'drop-over'
-                )}
-                draggable
-                onDragStart={() => setDragKey(def.key)}
-                onDragOver={(e) => {
-                  e.preventDefault()
-                  if (overKey !== def.key) setOverKey(def.key)
-                }}
-                onDragEnd={() => {
-                  setDragKey(null)
-                  setOverKey(null)
-                }}
-                onDrop={() => {
-                  if (!dragKey || dragKey === def.key) return
-                  const keys = [...store.fieldDefinitions].sort((a, b) => a.sortOrder - b.sortOrder).map((d) => d.key)
-                  const from = keys.indexOf(dragKey)
-                  const to = keys.indexOf(def.key)
-                  keys.splice(to, 0, keys.splice(from, 1)[0])
-                  reorderFields(keys)
-                  setDragKey(null)
-                  setOverKey(null)
-                }}
+                className={cn('field-manage-row', activeKey === def.key && 'dragging')}
+                data-sort-key={def.key}
               >
-                <span className="grip" role="img" aria-label="拖动调整详情页顺序">
+                <span className="grip" role="button" title="按住拖动，调整详情页字段顺序" {...gripProps(def.key)}>
                   <GripVertical size={13} />
                 </span>
                 <div className="fm-info">
@@ -527,6 +513,14 @@ function OptionsEditor({ def }: { def: FieldDefinition }) {
   const options = def.config.options ?? []
 
   const write = (next: typeof options) => updateField(def.key, { config: { ...def.config, options: next } })
+  const { containerRef, activeKey, gripProps } = useDragSort({
+    keys: options.map((o) => o.id),
+    onReorder: (from, to) => {
+      const next = [...options]
+      next.splice(to, 0, next.splice(from, 1)[0])
+      write(next)
+    },
+  })
 
   const add = () => {
     const v = draft.trim()
@@ -540,19 +534,18 @@ function OptionsEditor({ def }: { def: FieldDefinition }) {
     setDraft('')
   }
 
-  const move = (i: number, dir: -1 | 1) => {
-    const j = i + dir
-    if (j < 0 || j >= options.length) return
-    const next = [...options]
-    ;[next[i], next[j]] = [next[j], next[i]]
-    write(next)
-  }
-
   return (
-    <div className="fm-sub-body fm-sub-body--flat">
+    <div className="fm-sub-body fm-sub-body--flat fm-sort-list" ref={containerRef}>
       {options.length === 0 && <p className="field-hint">还没有选项，先添加几个，填写时就能直接选。</p>}
-      {options.map((o, i) => (
-        <div className="fm-sub-row fm-opt-row" key={o.id}>
+      {options.map((o) => (
+        <div
+          className={cn('fm-sub-row fm-opt-row', activeKey === o.id && 'dragging')}
+          key={o.id}
+          data-sort-key={o.id}
+        >
+          <span className="grip grip--sub" role="button" title="按住拖动调整选项顺序" {...gripProps(o.id)}>
+            <GripVertical size={12} />
+          </span>
           <span className="fm-opt-color" style={{ background: o.color || 'var(--line-strong)' }} aria-hidden />
           <input
             className="cell-edit fm-sub-name"
@@ -574,17 +567,6 @@ function OptionsEditor({ def }: { def: FieldDefinition }) {
             }}
           />
           <div className="fm-sub-ops">
-            <button className="btn icon sm" aria-label="上移" disabled={i === 0} onClick={() => move(i, -1)}>
-              <ChevronUp size={12} />
-            </button>
-            <button
-              className="btn icon sm"
-              aria-label="下移"
-              disabled={i === options.length - 1}
-              onClick={() => move(i, 1)}
-            >
-              <ChevronDown size={12} />
-            </button>
             <button
               className="btn icon sm"
               aria-label={`删除选项 ${o.label}`}
@@ -628,13 +610,14 @@ function ChannelsEditor() {
 
   const patch = (id: string, next: Partial<{ label: string; kind: 'tel' | 'im'; visible: boolean }>) =>
     setChannels(channels.map((c) => (c.id === id ? { ...c, ...next } : c)))
-  const move = (i: number, dir: -1 | 1) => {
-    const j = i + dir
-    if (j < 0 || j >= channels.length) return
-    const next = [...channels]
-    ;[next[i], next[j]] = [next[j], next[i]]
-    setChannels(next)
-  }
+  const { containerRef, activeKey, gripProps } = useDragSort({
+    keys: channels.map((c) => c.id),
+    onReorder: (from, to) => {
+      const next = [...channels]
+      next.splice(to, 0, next.splice(from, 1)[0])
+      setChannels(next)
+    },
+  })
   const add = () =>
     askPrompt({
       title: '新增联系方式通道',
@@ -653,9 +636,12 @@ function ChannelsEditor() {
     })
 
   return (
-    <div className="fm-sub-body fm-sub-body--flat">
-      {channels.map((c, i) => (
-        <div className="fm-sub-row" key={c.id}>
+    <div className="fm-sub-body fm-sub-body--flat fm-sort-list" ref={containerRef}>
+      {channels.map((c) => (
+        <div className={cn('fm-sub-row', activeKey === c.id && 'dragging')} key={c.id} data-sort-key={c.id}>
+          <span className="grip grip--sub" role="button" title="按住拖动调整通道顺序" {...gripProps(c.id)}>
+            <GripVertical size={12} />
+          </span>
           <input
             className="cell-edit fm-sub-name"
             defaultValue={c.label}
@@ -677,17 +663,6 @@ function ChannelsEditor() {
             <Switch small on={c.visible} onChange={(v) => patch(c.id, { visible: v })} label={`${c.label}可见`} />
           </label>
           <div className="fm-sub-ops">
-            <button className="btn icon sm" aria-label="上移" disabled={i === 0} onClick={() => move(i, -1)}>
-              <ChevronUp size={12} />
-            </button>
-            <button
-              className="btn icon sm"
-              aria-label="下移"
-              disabled={i === channels.length - 1}
-              onClick={() => move(i, 1)}
-            >
-              <ChevronDown size={12} />
-            </button>
             <button
               className="btn icon sm"
               aria-label={`删除${c.label}`}
@@ -711,14 +686,18 @@ function ChannelsEditor() {
 
 /* 圆圈 i 打开的抽屉：联系方式 → 通道管理；单选/多选 → 选项管理 */
 function FieldConfigDialog({ def, onClose }: { def: FieldDefinition | null; onClose: () => void }) {
-  if (!def) return null
-  const isPhones = def.key === 'phones'
-  const isSelect = def.type === 'select' || def.type === 'multiselect'
+  /* 弹窗打开后字段定义会被更新（增删选项、改顺序），必须跟着 store 取最新那份，
+     否则界面一直显示打开瞬间的旧快照，看起来像"改了没生效" */
+  const live = useStore((s) => (def ? s.fieldDefinitions.find((d) => d.key === def.key) : undefined))
+  const current = live ?? def
+  if (!current) return null
+  const isPhones = current.key === 'phones'
+  const isSelect = current.type === 'select' || current.type === 'multiselect'
   return (
     <Modal
       open
       onClose={onClose}
-      title={isPhones ? '联系方式 · 下级通道' : `选项管理 · ${def.label}`}
+      title={isPhones ? '联系方式 · 下级通道' : `选项管理 · ${current.label}`}
       footer={
         <button className="btn primary" onClick={onClose}>
           完成
@@ -730,7 +709,7 @@ function FieldConfigDialog({ def, onClose }: { def: FieldDefinition | null; onCl
           ? '每个通道都会成为「联系方式」下面的一行。改名字、切类型、调顺序都在这里，详情页与新建弹窗即时同步。'
           : '选项集中在这里维护。改动立刻反映到详情页、新建弹窗与筛选条件；重名会被拦下。'}
       </p>
-      {isPhones ? <ChannelsEditor /> : isSelect ? <OptionsEditor def={def} /> : null}
+      {isPhones ? <ChannelsEditor /> : isSelect ? <OptionsEditor def={current} /> : null}
     </Modal>
   )
 }

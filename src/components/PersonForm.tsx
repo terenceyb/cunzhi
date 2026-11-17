@@ -7,7 +7,7 @@ import { Modal } from './ui'
 import { EMAIL_RE, FieldInput } from './FieldInput'
 import { cn, dateIssue } from '../lib/utils'
 import { replayShake } from '../lib/motion'
-import { openUpload } from './UploadDialog'
+import { FieldIcon, iconNameForField } from './FieldIcon'
 
 const groupLabel: Record<string, string> = {
   basic: '基础信息',
@@ -29,7 +29,6 @@ export function PersonForm({
   const updatePerson = useStore((s) => s.updatePerson)
   const patchPerson = useStore((s) => s.patchPerson)
   const attachments = useStore((s) => s.attachments)
-  const addAttachmentFile = useStore((s) => s.addAttachmentFile)
   const toast = useUI((s) => s.toast)
   const openPerson = useUI((s) => s.openPerson)
   const [values, setValues] = useState<Record<string, unknown>>({})
@@ -173,17 +172,6 @@ export function PersonForm({
           attachments={attachments}
           name={String(values.name ?? '')}
           onChange={(next) => setField('avatar', next)}
-          onPick={async () => {
-            const files = await openUpload({
-              title: '上传头像',
-              meta: 'JPG / PNG / WebP，建议正方形，会自动压缩',
-              accept: 'image/*',
-              multiple: false,
-            })
-            if (!files?.length) return
-            const added = await addAttachmentFile(files[0])
-            setField('avatar', [added])
-          }}
         />
         {sections.map((sec) => {
           const defs = editable.filter((d) => (sec === 'custom' ? d.group === 'custom' || !d.isBuiltIn : d.group === sec && d.isBuiltIn))
@@ -264,6 +252,8 @@ export function FieldBlock({
   return (
     <div className={cn('field', 't-input-wrap', full && 'full', error && 'has-error')} data-state={error ? 'error' : 'closed'}>
       <label className={cn('field-label', hideLabel && 'sr-only')} htmlFor={inputId}>
+        {/* 字段前的小图标：和详情页那一列字段名保持同一套图形 */}
+        <FieldIcon name={iconNameForField(def)} size={13} className="field-label-icon" />
         {def.label}
         {def.required && <span style={{ color: 'var(--danger)' }}>*</span>}
         {def.isLocked && <span className="field-hint">锁定</span>}
@@ -291,24 +281,51 @@ export function FieldBlock({
   )
 }
 
-/* 头像：新建时就能上传，圆形预览 + 相机角标，比塞一个 attached 网格更直观 */
+/* 头像：点一下直接唤起系统选图（不再套一层「上传头像」弹窗），
+   圆形预览 + 相机角标，和详情页、名片上的头像保持同一个形状语言 */
 function AvatarField({
   metas,
   attachments,
   name,
   onChange,
-  onPick,
 }: {
   metas: AttachmentMeta[]
   attachments: Record<string, { data?: string; thumbnail?: string }>
   name: string
   onChange: (next: AttachmentMeta[]) => void
-  onPick: () => void
 }) {
+  const addAttachmentFile = useStore((s) => s.addAttachmentFile)
+  const toast = useUI((s) => s.toast)
+  const fileRef = useRef<HTMLInputElement>(null)
   const src = attachments[metas[0]?.id ?? '']?.thumbnail || attachments[metas[0]?.id ?? '']?.data
   return (
     <div className="pf-avatar">
-      <button type="button" className="pf-avatar-btn" onClick={onPick} aria-label={src ? '更换头像' : '上传头像'}>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        hidden
+        onChange={async (e) => {
+          const f = e.target.files?.[0]
+          e.target.value = ''
+          if (!f) return
+          if (!/^image\//.test(f.type)) {
+            toast('请选择图片文件（JPG / PNG / WebP）', 'error')
+            return
+          }
+          try {
+            onChange([await addAttachmentFile(f)])
+          } catch {
+            toast('这张图片读取失败，换一张试试', 'error')
+          }
+        }}
+      />
+      <button
+        type="button"
+        className="pf-avatar-btn"
+        onClick={() => fileRef.current?.click()}
+        aria-label={src ? '更换头像' : '上传头像'}
+      >
         {src ? (
           <img src={src} alt="头像预览" />
         ) : (
@@ -329,7 +346,7 @@ function AvatarField({
             </button>
           )}
         </div>
-        <div className="field-hint">JPG / PNG / WebP，建议正方形，上传后自动压缩</div>
+        <div className="field-hint">点头像即可选择本机图片，JPG / PNG / WebP，会自动压缩成正方形</div>
       </div>
     </div>
   )

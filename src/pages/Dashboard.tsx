@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  ArrowUpRight,
   Cake,
   Check,
   ChevronDown,
@@ -253,9 +254,6 @@ export function Dashboard() {
     setBatchOpen(true)
   }
 
-  /** 卡片变高就多露几条，变矮就少露几条——内容跟着尺寸走 */
-  const limitOf = (key: string) => (isMobile ? 99 : Math.max(2, Math.round((cells[key]?.h ?? 2) * 3)))
-
   const shuffle = () => {
     if (store.persons.length === 0) return
     const p = store.persons[Math.floor(Math.random() * store.persons.length)]
@@ -320,14 +318,7 @@ export function Dashboard() {
             >
               <div className="dash-module-head" onPointerDown={(e) => startDrag(key, e)}>
                 <span className="muted">{meta.icon}</span>
-                {key === 'todos' ? (
-                  <button className="dash-title-btn" onClick={() => setTodoCenterOpen(true)} title="打开待办中心">
-                    <h2>{meta.title}</h2>
-                    <ChevronRight size={14} />
-                  </button>
-                ) : (
-                  <h2>{meta.title}</h2>
-                )}
+                <h2>{meta.title}</h2>
                 {key === 'reminders' && reminders.length > 0 && (
                   <span className="badge">
                     <TNumber value={reminders.length} />
@@ -356,9 +347,19 @@ export function Dashboard() {
                     </button>
                   )}
                   {key === 'todos' && (
-                    <button className="btn icon sm" onClick={() => setTodoOpen(true)} aria-label="新建待办">
-                      <Plus size={14} />
-                    </button>
+                    <>
+                      <button
+                        className="btn icon sm"
+                        onClick={() => setTodoCenterOpen(true)}
+                        aria-label="打开待办中心"
+                        title="待办中心"
+                      >
+                        <ArrowUpRight size={15} />
+                      </button>
+                      <button className="btn icon sm" onClick={() => setTodoOpen(true)} aria-label="新建待办" title="新建待办">
+                        <Plus size={14} />
+                      </button>
+                    </>
                   )}
                   {key === 'anniversaries' && (
                     <button className="btn icon sm" onClick={() => importBirthdays()} aria-label="从生日导入" title="从生日字段一键创建">
@@ -391,7 +392,7 @@ export function Dashboard() {
                       />
                     ) : (
                       <>
-                        {reminders.slice(0, limitOf('reminders')).map((item, idx) => {
+                        {reminders.map((item, idx) => {
                           const meta = buildPersonMeta(item.person, ctx)
                           const on = selected.includes(item.person.id)
                           return (
@@ -456,9 +457,6 @@ export function Dashboard() {
                             </div>
                           )
                         })}
-                        {reminders.length > limitOf('reminders') && !selectMode && (
-                          <div className="dash-more-hint">还有 {reminders.length - limitOf('reminders')} 位，放大卡片或去人脉页处理</div>
-                        )}
                         {selectMode && (
                           <div className="bulk-bar" style={{ margin: '8px auto 4px' }}>
                             <span>已选 {selected.length} 人</span>
@@ -475,7 +473,7 @@ export function Dashboard() {
                 {key === 'todos' && (
                   <>
                     {(['overdue', 'today', 'week'] as const).map((bucket) => {
-                      const list = todos[bucket].slice(0, Math.max(2, Math.ceil(limitOf('todos') / 2)))
+                      const list = todos[bucket]
                       if (list.length === 0) return null
                       const label = bucket === 'overdue' ? '逾期' : bucket === 'today' ? '今天' : '本周'
                       const isCollapsed = collapsedTodo[bucket]
@@ -551,7 +549,7 @@ export function Dashboard() {
                         }
                       />
                     ) : (
-                      anns.slice(0, limitOf('anniversaries')).map(({ anniversary, person, daysLeft }) => {
+                      anns.map(({ anniversary, person, daysLeft }) => {
                         const meta = buildPersonMeta(person, ctx)
                         return (
                           <div key={anniversary.id} className={cn('anniv-item', daysLeft === 0 && 'today')}>

@@ -28,6 +28,17 @@ import { cn, formatDate, hostOf, sanitizeUrl, dayDiff } from '../lib/utils'
 import { ageOf, daysToBirthday, defByKey, isRefSnapshot, personName } from '../lib/derive'
 import { channelId, channelLabel, channelOf, normalizeChannels } from '../lib/channels'
 import { Avatar, CopyButton } from './ui'
+import { QrImage } from './QrImage'
+
+/* 名片码里常见的写法是「www.xxx.com」或「xxx.com」，缺协议头点开只会 404，
+   这里统一补全；不像网址的内容（纯号码、MECARD 等）原样交给二维码。 */
+function withProtocol(raw: string): string | null {
+  const v = raw.trim()
+  if (!v) return null
+  if (/^(https?:|mailto:|tel:)/i.test(v)) return v
+  if (/^[\w-]+(\.[\w-]+)+(\/|$|\?)/.test(v) && !/\s/.test(v)) return `https://${v}`
+  return null
+}
 
 const money = (n: number, decimals: number): string => {
   const [int, dec] = n.toFixed(decimals).split('.')
@@ -324,30 +335,39 @@ export function FieldValue({
     case 'barcode': {
       const bv = value as BarcodeValue
       if (!bv?.rawValue) return <span className="muted">—</span>
+      /* 名片码要的是「能扫的码」，不是一串链接文本：把原始值编码成真二维码，
+         内容是网址时直接点码就能打开（补全缺少的协议头，避免点了没反应）。 */
+      const raw = String(bv.rawValue).trim()
+      const href = withProtocol(raw)
       return (
-        <span className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-          <span className="chip sm">{bv.format || '条码'}</span>
-          <span className="mono ellipsis" style={{ maxWidth: 220 }}>{bv.rawValue}</span>
-          {!compact && (
-            <span
-              style={{
-                width: 34,
-                height: 34,
-                borderRadius: 6,
-                background:
-                  'repeating-conic-gradient(#131619 0% 25%, #fff 0% 50%) 50% / 8px 8px',
-                border: '2px solid #fff',
-                boxShadow: '0 0 0 1px var(--line)',
-              }}
-              title="图形码示意"
-              aria-hidden
-            />
-          )}
-          {/^https?:\/\//.test(bv.rawValue) && (
-            <a href={bv.rawValue} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12 }}>
-              打开链接
-            </a>
-          )}
+        <span className="barcode-view">
+          <a
+            className={cn('barcode-qr', href ? 'is-link' : undefined)}
+            href={href ?? undefined}
+            target={href ? '_blank' : undefined}
+            rel={href ? 'noopener noreferrer' : undefined}
+            onClick={(e) => !href && e.preventDefault()}
+            title={href ? '扫码或在浏览器打开' : '扫码可读取这条内容'}
+            aria-label={href ? '打开名片码链接' : '名片码'}
+          >
+            <QrImage value={raw} size={compact ? 52 : 68} title={`名片码：${raw}`} />
+          </a>
+          <span className="barcode-main">
+            <span className="barcode-raw mono ellipsis">{raw}</span>
+            <span className="barcode-meta">
+              <span className="chip sm">{bv.format || '二维码'}</span>
+              {href && (
+                <a className="barcode-open" href={href} target="_blank" rel="noopener noreferrer">
+                  <ArrowUpRight size={11} /> 打开
+                </a>
+              )}
+              {!compact && (
+                <CopyButton variant="text" text={raw} label="复制名片码内容" className="copy-text">
+                  复制
+                </CopyButton>
+              )}
+            </span>
+          </span>
         </span>
       )
     }

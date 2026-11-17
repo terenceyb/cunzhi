@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import {
   AlertTriangle,
   Database,
+  History,
   LayoutDashboard,
   PanelLeftClose,
   PanelLeftOpen,
@@ -24,6 +25,7 @@ import { FilterPanel } from './components/FilterPanel'
 import { ImportWizard } from './components/ImportWizard'
 import { Dashboard } from './pages/Dashboard'
 import { People } from './pages/People'
+import { Interactions } from './pages/Interactions'
 import { Settings } from './pages/Settings'
 import { ProfilePage } from './pages/Profile'
 import { ConflictDialog, LockScreen, UnlockDialog, Welcome } from './pages/Welcome'
@@ -175,9 +177,10 @@ export default function App() {
         <div className="main">
           <TopBar />
           <StatusBanners />
-          <div className={cn('content', (route === 'people' || route === 'settings') && 'no-pad')}>
+          <div className={cn('content', (route === 'people' || route === 'settings' || route === 'interactions') && 'no-pad')}>
             {route === 'dashboard' && <Dashboard />}
             {route === 'people' && <People />}
+            {route === 'interactions' && <Interactions />}
             {route === 'settings' && <Settings />}
             {route === 'profile' && <ProfilePage />}
           </div>
@@ -273,6 +276,15 @@ function Sidebar({ ctx, reminderCount }: { ctx: ReturnType<typeof buildCtx>; rem
           <span>人脉</span>
           <span className="count">{ctx.persons.length}</span>
         </button>
+        <button
+          className={cn('nav-item', route === 'interactions' && 'active')}
+          onClick={() => navigate('interactions')}
+          title="互动"
+        >
+          <History size={16} />
+          <span>互动</span>
+          <span className="count">{ctx.timelineEvents.length}</span>
+        </button>
 
         <div className="nav-group">智能视图</div>
         {views.map((v) => (
@@ -325,7 +337,7 @@ function TopBar() {
   const attachments = useStore((s) => s.attachments)
   const avatar = profile.avatarAttachmentId ? attachments[profile.avatarAttachmentId] : undefined
   const title =
-    route === 'dashboard' ? '首页' : route === 'people' ? '人脉' : route === 'settings' ? '设置' : route === 'profile' ? '我的名片' : '存知'
+    route === 'dashboard' ? '首页' : route === 'people' ? '人脉' : route === 'interactions' ? '互动' : route === 'settings' ? '设置' : route === 'profile' ? '我的名片' : '存知'
 
   return (
     <header className="topbar">
@@ -405,6 +417,7 @@ function BottomTabs({ reminderCount }: { reminderCount: number }) {
   const items = [
     { key: 'dashboard', label: '首页', icon: <LayoutDashboard size={19} />, badge: reminderCount },
     { key: 'people', label: '人脉', icon: <Users size={19} />, badge: 0 },
+    { key: 'interactions', label: '互动', icon: <History size={19} />, badge: 0 },
     { key: 'settings', label: '设置', icon: <SettingsIcon size={19} />, badge: 0 },
   ] as const
   const isOn = (key: string) => route === key || (key === 'settings' && route === 'profile')

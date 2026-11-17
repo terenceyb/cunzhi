@@ -4583,12 +4583,6 @@ html[data-theme='dark'] .btn.icon.sm {
 .btn.icon.sm:active:not(:disabled) {
   background: color-mix(in srgb, var(--text) 15%, transparent);
 }
-/* 与底色几乎相同的描边按钮（白底白框）：改为一层浅灰底，边界才看得见 */
-.btn:not(.primary):not(.accent):not(.ghost):not(.subtle):not(.danger):not(.icon) {
-  background: var(--surface);
-  border-color: color-mix(in srgb, var(--line) 78%, var(--text) 8%);
-}
-
 /* ---------------- 2. 详情头部：头像右侧三行 ---------------- */
 .dhead {
   display: flex;
@@ -6223,4 +6217,1000 @@ html[data-contrast='high'] .set-card {
   font-size: 13.5px;
   color: var(--text-3);
   line-height: 1.7;
+}
+
+/* ================================================================================
+   v2.0 · 按钮体系 / 表格就地编辑 / 互动页 / 字段行节奏 / 拖动排序 / 名片码二维码
+   仍然追加在文件末尾：同特异性下后者生效
+   ================================================================================ */
+
+/* ---------------- 1. 次级按钮：不再是「灰底方块」 ----------------
+   浅色：白瓷面 + 一层极淡的主题色雾，hover 时主题色渗出来
+   深色：玻璃面 + 顶部 6% 高光，hover 时同样染主题色
+   所有颜色都从 --accent 混出来，换主题色整套按钮跟着走 */
+.btn {
+  background: linear-gradient(180deg, color-mix(in srgb, #fff 62%, var(--surface)), var(--surface) 62%);
+  border: 1px solid color-mix(in srgb, var(--line) 78%, var(--accent) 22%);
+  color: var(--text);
+  font-weight: 550;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 1px 2px rgba(16, 24, 40, 0.045);
+  transition:
+    background-color 0.16s var(--ease-out),
+    border-color 0.16s var(--ease-out),
+    color 0.16s var(--ease-out),
+    box-shadow 0.18s var(--ease-out),
+    transform 0.12s var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+    border-color: color-mix(in srgb, var(--line) 42%, var(--accent) 58%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.76),
+      0 2px 8px -2px color-mix(in srgb, var(--accent) 26%, transparent);
+  }
+}
+.btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 62%, transparent);
+  outline-offset: 1px;
+}
+html[data-theme='dark'] .btn {
+  background: linear-gradient(180deg, color-mix(in srgb, #fff 8%, var(--surface)), var(--surface) 70%);
+  border-color: color-mix(in srgb, var(--line) 62%, var(--accent) 38%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme='dark'] .btn:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--accent) 16%, var(--surface));
+    border-color: color-mix(in srgb, var(--accent) 52%, var(--line));
+  }
+}
+/* 主按钮 / 强调按钮 / 危险按钮保持自己的底色，只借用新的圆角与压感 */
+.btn.primary,
+.btn.accent,
+.btn.danger {
+  border-color: transparent;
+}
+.btn.primary {
+  background: var(--text);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+.btn.accent {
+  background: var(--accent);
+  box-shadow:
+    0 1px 2px color-mix(in srgb, var(--accent) 40%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+.btn.ghost {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--text-2);
+}
+@media (hover: hover) and (pointer: fine) {
+  .btn.ghost:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    color: var(--text);
+    box-shadow: none;
+  }
+}
+.btn:disabled {
+  box-shadow: none;
+  background: var(--surface-2);
+  border-color: var(--line);
+  color: var(--text-3);
+}
+
+/* ---------------- 2. 批量操作条：不再白底白字 ---------------- */
+.bulk-bar {
+  background: color-mix(in srgb, var(--text) 94%, var(--accent) 6%);
+  color: #fff;
+  border: 1px solid color-mix(in srgb, #fff 14%, transparent);
+  box-shadow: 0 12px 28px -12px rgba(16, 24, 40, 0.45), 0 2px 8px rgba(16, 24, 40, 0.16);
+  backdrop-filter: blur(10px);
+}
+.bulk-bar > span {
+  color: #fff;
+  opacity: 0.82;
+  font-variant-numeric: tabular-nums;
+}
+.bulk-bar .btn {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  box-shadow: none;
+  font-weight: 500;
+}
+@media (hover: hover) and (pointer: fine) {
+  .bulk-bar .btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.24);
+    border-color: rgba(255, 255, 255, 0.28);
+    color: #fff;
+  }
+}
+.bulk-bar .btn.danger {
+  color: #ffb4ab;
+  background: rgba(255, 120, 110, 0.16);
+}
+html[data-theme='dark'] .bulk-bar {
+  background: color-mix(in srgb, #fff 12%, var(--surface));
+  border-color: rgba(255, 255, 255, 0.12);
+  color: var(--text);
+}
+html[data-theme='dark'] .bulk-bar > span {
+  color: var(--text);
+}
+
+/* 表格里的复选框：框和对号一起放大，点没点上看得清 */
+table.data .check {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: var(--surface);
+  border-color: color-mix(in srgb, var(--line-strong) 88%, var(--text) 12%);
+}
+table.data .check.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+table.data tbody tr:hover .check:not(.on) {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--line-strong));
+}
+
+/* ---------------- 3. 表格单元格就地编辑 ---------------- */
+table.data td {
+  position: relative;
+  vertical-align: middle;
+}
+table.data td.cell-multi {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+.cell-view {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  padding: 3px 5px;
+  margin: -3px -5px;
+  border-radius: 7px;
+  cursor: text;
+  transition: background-color 0.12s var(--ease-out), box-shadow 0.12s var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  td:hover .cell-view {
+    background: color-mix(in srgb, var(--accent) 6%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 16%, transparent);
+  }
+}
+.cell-view .cell-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cell-editing {
+  position: absolute;
+  inset: 4px 6px;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px;
+  border-radius: 9px;
+  background: var(--surface);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 46%, transparent), 0 8px 20px -10px rgba(16, 24, 40, 0.4);
+}
+.cell-editing > .field,
+.cell-editing > .t-input-wrap,
+.cell-editing > div:first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.cell-editing .field-label,
+.cell-editing .t-error-msg {
+  display: none;
+}
+.cell-editing .input,
+.cell-editing .textarea,
+.cell-editing .pk-trigger {
+  height: 28px;
+  min-height: 28px;
+  font-size: 12.5px;
+  border-radius: 7px;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+.cell-editing .input:focus {
+  border-color: transparent;
+  box-shadow: none;
+}
+.cell-editing .textarea {
+  height: 56px;
+  padding: 4px 6px;
+}
+.cell-editing .cell-ops {
+  display: flex;
+  gap: 1px;
+  flex: 0 0 auto;
+}
+.cell-editing .cell-ops .btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--surface-2);
+  border-color: transparent;
+  box-shadow: none;
+}
+.cell-editing .cell-ops .btn:first-child {
+  color: var(--accent);
+}
+/* 联系方式：一行一个通道 */
+.cell-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.cell-line {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 16px;
+}
+.cell-line-label {
+  flex: 0 0 auto;
+  color: var(--text-3);
+  font-size: 11px;
+}
+.cell-line-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-2);
+}
+.cell-line-more {
+  font-size: 11px;
+  color: var(--text-3);
+}
+/* 配置列：全选按钮贴右边 */
+.col-config-head .col-all {
+  margin-left: auto;
+}
+
+/* ---------------- 4. 详情头部：两个按钮同一套语言，且不许换行下移 ---------------- */
+.dhead {
+  flex-wrap: nowrap;
+  align-items: center;
+}
+.dhead-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.dhead-ops {
+  flex: 0 0 auto;
+  gap: 6px;
+}
+.dhead-ops .btn {
+  height: 30px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  padding: 0 10px;
+  gap: 5px;
+}
+.dhead-ops .btn.dhead-more {
+  width: 30px;
+  padding: 0;
+  justify-content: center;
+}
+.dhead-ops .dhead-ix {
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent) 26%, var(--line));
+  color: color-mix(in srgb, var(--accent) 78%, var(--text));
+}
+@media (hover: hover) and (pointer: fine) {
+  .dhead-ops .dhead-ix:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--accent) 16%, var(--surface));
+    border-color: color-mix(in srgb, var(--accent) 46%, var(--line));
+  }
+}
+
+/* ---------------- 5. 字段行：字段名与内容同一基线 ---------------- */
+.field-row {
+  align-items: flex-start;
+}
+.field-row .fk {
+  height: 22px;
+  padding-top: 0;
+  line-height: 22px;
+  align-items: center;
+}
+.field-row .fv {
+  line-height: 22px;
+}
+.field-row .fv-view {
+  min-height: 22px;
+  padding: 0 4px;
+  margin: 0 -4px;
+  align-items: center;
+}
+/* 编辑态：输入框比阅读态只高一点点，按钮排在右侧而不是整块往下堆 */
+.field-row.is-editing {
+  padding-top: 7px;
+  padding-bottom: 7px;
+}
+.field-row .fv-editor {
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+}
+.field-row .fv-editor .field {
+  flex: 1 1 190px;
+  min-width: 0;
+  gap: 4px;
+}
+.field-row .fv-editor .row {
+  flex: 0 0 auto;
+  gap: 6px;
+}
+.field-row .fv-editor .input,
+.field-row .fv-editor select.input,
+.field-row .fv-editor .pk-trigger {
+  height: 30px;
+  min-height: 30px;
+  font-size: 13.5px;
+  border-radius: 8px;
+}
+.field-row .fv-editor .textarea {
+  min-height: 62px;
+  height: 62px;
+  padding: 8px 10px;
+  font-size: 13.5px;
+  border-radius: 8px;
+}
+.field-row .fv-editor .btn.sm {
+  height: 30px;
+  border-radius: 8px;
+}
+.field-row .fv-editor:has(.textarea) {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* ---------------- 6. 关系备忘：点开前后是同一个盒子 ---------------- */
+.memo-box {
+  min-height: 62px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.65;
+}
+.memo-box--empty {
+  border-style: dashed;
+  border-color: var(--line-strong);
+  color: var(--text-3);
+}
+.memo-box--filled {
+  color: var(--text);
+  background: var(--surface);
+}
+.memo-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.memo-edit .memo-input {
+  min-height: 62px;
+  height: 62px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.65;
+  border-radius: 10px;
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+  resize: vertical;
+}
+
+/* ---------------- 7. 互动时间线：类别标签大一号 ---------------- */
+.tl-type {
+  height: 20px;
+  padding: 0 7px;
+  gap: 4px;
+  font-size: 11.5px;
+  border-radius: 6px;
+}
+.tl-type svg {
+  width: 12px;
+  height: 12px;
+}
+.tl-filter-chip {
+  height: 25px;
+  padding: 0 10px;
+  font-size: 12.5px;
+  border-radius: 8px;
+}
+@media (max-width: 767px) {
+  .tl-filter-chip {
+    height: 30px;
+    font-size: 13px;
+    padding: 0 12px;
+  }
+  .tl-type {
+    height: 22px;
+    font-size: 12px;
+  }
+}
+
+/* ---------------- 8. 新建人脉：圆形头像，只有一层框 ---------------- */
+.pf-avatar-btn {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  box-shadow:
+    0 0 0 1px var(--line),
+    0 2px 8px -2px rgba(16, 24, 40, 0.1);
+  overflow: visible;
+}
+.pf-avatar-btn img {
+  border-radius: 50%;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.pf-avatar-ph {
+  border-radius: 50%;
+  overflow: hidden;
+}
+.pf-avatar-cam {
+  right: -1px;
+  bottom: -1px;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2.5px var(--surface);
+}
+@media (hover: hover) and (pointer: fine) {
+  .pf-avatar-btn:hover {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--accent) 45%, var(--line)),
+      0 4px 14px -4px rgba(16, 24, 40, 0.18);
+  }
+}
+/* 字段名前的图标 */
+.field-label {
+  gap: 6px;
+}
+.field-label-icon {
+  flex: 0 0 auto;
+  color: var(--text-3);
+  opacity: 0.9;
+}
+
+/* ---------------- 9. 拖动排序：柄 + 跟手让位 ---------------- */
+.grip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none;
+  color: var(--text-3);
+  opacity: 0.65;
+  transition: opacity 0.14s var(--ease-out), color 0.14s var(--ease-out), background-color 0.14s var(--ease-out);
+}
+.grip:hover {
+  opacity: 1;
+  color: var(--text-2);
+}
+.grip:active {
+  cursor: grabbing;
+}
+.fm-sort-list {
+  position: relative;
+}
+.fm-sort-list [data-sort-key] {
+  position: relative;
+  will-change: transform;
+}
+.fm-sort-list.is-sorting [data-sort-key] {
+  transition: transform 160ms var(--ease-out);
+}
+.fm-sort-list.is-sorting [data-sort-key].is-dragging {
+  transition: none;
+  z-index: 3;
+}
+.fm-sort-list [data-sort-key].is-dragging,
+.fm-sort-list [data-sort-key].dragging {
+  background: var(--surface);
+  border-radius: 10px;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--accent) 34%, var(--line)),
+    0 12px 26px -12px rgba(16, 24, 40, 0.4);
+}
+.fm-sort-list.is-sorting [data-sort-key]:not(.is-dragging) {
+  opacity: 0.92;
+}
+.grip--sub {
+  width: 14px;
+  height: 22px;
+  margin-left: -2px;
+}
+.fm-sub-row {
+  grid-template-columns: 14px minmax(0, 1fr) 52px 78px auto;
+}
+.fm-opt-row {
+  grid-template-columns: 14px 10px minmax(0, 1fr) auto;
+}
+
+/* ---------------- 10. 互动页 ---------------- */
+.ix-page {
+  padding: 18px 22px 40px;
+  max-width: 1120px;
+}
+.ix-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.ix-search {
+  flex: 1 1 220px;
+  max-width: 320px;
+}
+.ix-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+.ix-ranges {
+  margin-left: auto;
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 9px;
+  background: var(--surface-3);
+}
+.ix-range {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 7px;
+  font-size: 12px;
+  color: var(--text-2);
+  transition: background-color 0.14s var(--ease-out), color 0.14s var(--ease-out), box-shadow 0.14s var(--ease-out);
+}
+.ix-range.on {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 550;
+  box-shadow: var(--shadow-1);
+}
+.ix-stream {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.ix-day {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  letter-spacing: 0.01em;
+}
+.ix-day-count {
+  font-weight: 400;
+  color: var(--text-3);
+}
+.ix-group .ix-row + .ix-row {
+  margin-top: 6px;
+}
+.ix-row {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  transition: border-color 0.16s var(--ease-out), box-shadow 0.16s var(--ease-out), transform 0.16s var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ix-row:hover {
+    border-color: color-mix(in srgb, var(--accent) 26%, var(--line));
+    box-shadow: 0 6px 18px -12px rgba(16, 24, 40, 0.28);
+  }
+}
+.ix-row.is-orphan {
+  opacity: 0.66;
+}
+.ix-avatar {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  border-radius: 50%;
+}
+.ix-body {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.ix-top {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.ix-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  max-width: 46%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ix-name:hover {
+  color: var(--accent);
+}
+.ix-group-chip {
+  flex: 0 0 auto;
+}
+.ix-time {
+  margin-left: auto;
+  flex: 0 0 auto;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+.ix-content {
+  margin: 3px 0 7px;
+  font-size: 13px;
+  line-height: 1.62;
+  color: var(--text-2);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.ix-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+.ix-pin-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--accent);
+}
+.ix-ops {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+  flex: 0 0 auto;
+  opacity: 0;
+  transition: opacity 0.14s var(--ease-out);
+}
+.ix-row:hover .ix-ops,
+.ix-row:focus-within .ix-ops {
+  opacity: 1;
+}
+@media (hover: none) {
+  .ix-ops {
+    opacity: 1;
+  }
+}
+.ix-ops .btn.icon.sm {
+  width: 26px;
+  height: 26px;
+}
+.ix-ops .ix-del:hover {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+.ix-foot {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 18px;
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+@media (max-width: 767px) {
+  .ix-page {
+    padding: 14px 14px calc(84px + var(--safe-b));
+  }
+  .ix-search {
+    max-width: none;
+    flex: 1 1 100%;
+  }
+  .ix-ranges {
+    margin-left: 0;
+    order: 3;
+  }
+  .ix-row {
+    padding: 9px 10px;
+  }
+  .ix-name {
+    max-width: 55%;
+  }
+  .ix-content {
+    font-size: 13.5px;
+  }
+}
+
+/* ---------------- 11. 名片码：真二维码，能扫也能点开 ---------------- */
+.barcode-view {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+.barcode-qr {
+  flex: 0 0 auto;
+  display: block;
+  padding: 4px;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 0 0 1px var(--line), 0 2px 6px -2px rgba(16, 24, 40, 0.14);
+  transition: transform 0.16s var(--ease-out), box-shadow 0.16s var(--ease-out);
+}
+.barcode-qr svg {
+  display: block;
+}
+.barcode-qr.is-link {
+  cursor: pointer;
+}
+@media (hover: hover) and (pointer: fine) {
+  .barcode-qr.is-link:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 40%, var(--line)), 0 8px 18px -8px rgba(16, 24, 40, 0.3);
+  }
+}
+.barcode-main {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding-top: 2px;
+}
+.barcode-raw {
+  font-size: 12px;
+  color: var(--text-2);
+  max-width: 240px;
+}
+.barcode-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11.5px;
+  color: var(--accent);
+}
+
+/* 表格里的联系方式编辑器：一行一个通道，宽度跟着单元格走 */
+.cell-editing--phone {
+  align-items: flex-start;
+  padding: 4px;
+}
+.cell-phone-rows {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 132px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.cell-phone-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.cell-phone-ch {
+  flex: 0 0 auto;
+  max-width: 68px;
+  height: 26px;
+  padding: 0 4px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text-2);
+  font-size: 11.5px;
+}
+.cell-phone-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+.cell-phone-input:focus,
+.cell-phone-ch:focus {
+  outline: none;
+  background: var(--surface);
+  border-color: color-mix(in srgb, var(--accent) 52%, var(--line));
+}
+.cell-phone-del {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 5px;
+  color: var(--text-3);
+}
+.cell-phone-del:hover {
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+.cell-phone-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  align-self: flex-start;
+  padding: 2px 5px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  color: var(--accent);
+}
+.cell-phone-add:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+
+/* 名片码：右侧信息列不许被二维码挤成一列字 */
+.barcode-view {
+  align-items: flex-start;
+  gap: 10px;
+}
+.barcode-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 4px;
+}
+.barcode-raw {
+  display: block;
+  max-width: 100%;
+  font-size: 12px;
+  color: var(--text-2);
+}
+.barcode-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  white-space: nowrap;
+}
+.barcode-meta .copy-text {
+  font-size: 11.5px;
+  color: var(--text-3);
+}
+.barcode-meta .copy-text:hover {
+  color: var(--accent);
+}
+
+/* 头像按钮：清掉浏览器默认内边距，占位层与按钮同尺寸，否则看起来是「圆里套圆」 */
+.pf-avatar-btn {
+  padding: 0;
+  display: grid;
+  place-items: stretch;
+  overflow: visible;
+}
+.pf-avatar-btn > img,
+.pf-avatar-btn > .pf-avatar-ph {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+}
+/* 占位层用纯色，避免渐变在圆内留下第二道边 */
+.pf-avatar-ph {
+  background: var(--surface-2);
+}
+
+/* 配置列头部：说明文字不再把「全选」挤出可视区 */
+.col-config-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+.col-config-head .field-hint {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.col-config-head .col-all {
+  flex: 0 0 auto;
+  margin-left: auto;
+  height: 26px;
+  padding: 0 8px;
+  font-size: 12px;
+  color: var(--accent);
+}
+
+/* 编辑态排成一行：输入框让位给右侧按钮，整行高度只比阅读态高一档 */
+.field-row .fv-editor .field {
+  flex: 1 1 120px;
+  min-width: 88px;
+}
+.field-row .fv-editor > .row {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+/* 字段行：整行等高，字段名与内容（含胶囊值）垂直居中，二者中线始终对齐 */
+.field-row {
+  align-items: stretch;
+}
+.field-row .fk {
+  height: auto;
+  min-height: 22px;
+  align-items: center;
+}
+.field-row .fv {
+  display: flex;
+  align-items: center;
+}
+.field-row .fv-view {
+  width: 100%;
+}
+
+/* 只有「单个 fv-view」的字段才做 flex 居中；
+   联系方式那种「列表 + 添加按钮」的多块内容必须保持块级流，否则会被挤成一列 */
+.field-row .fv:has(> .fv-view) {
+  display: flex;
+  align-items: center;
+}
+.field-row .fv:has(> .contact-list),
+.field-row .fv:has(> .contact-add) {
+  display: block;
+}
+.field-row .fv-view {
+  width: auto;
+  flex: 1 1 auto;
+}
+
+/* 联系方式是多行块：字段名对齐第一行（手机），不要跟着整块居中 */
+.field-row--contact {
+  align-items: flex-start;
+}
+.field-row--contact .fk {
+  min-height: 22px;
+  padding-top: 3px;
+}
+
+/* 两个头部按钮同宽同高（34×30），并排时看不出差别 */
+.dhead-ops .btn.dhead-more {
+  width: 34px;
+}
+
+/* 姓名格：头像 + 可就地编辑的名字 */
+.cell-name-row {
+  min-width: 0;
+}
+.cell-name-row .cell-view {
+  width: auto;
+  flex: 0 1 auto;
+  min-width: 40px;
+}
+.cell-name-row .cell-text {
+  font-weight: 600;
+  color: var(--text);
 }

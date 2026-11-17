@@ -3,7 +3,7 @@ import type { FilterNode, SmartView } from './types'
 import { emptyFilter } from './lib/filter'
 import { deepClone } from './lib/utils'
 
-export type RouteName = 'welcome' | 'dashboard' | 'people' | 'settings' | 'profile'
+export type RouteName = 'welcome' | 'dashboard' | 'people' | 'interactions' | 'settings' | 'profile'
 
 export interface ConfirmOptions {
   title: string

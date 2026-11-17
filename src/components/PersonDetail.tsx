@@ -159,12 +159,12 @@ export function PersonDetail({
         </div>
         <div className="dhead-ops">
           <button className="btn sm dhead-ix" onClick={() => setIxOpen(true)} title="记录一次互动">
-            <MessageSquarePlus size={17} />
+            <MessageSquarePlus size={15} />
             <span className="hide-mobile">记录互动</span>
           </button>
           <Menu
             trigger={(open) => (
-              <button className="btn icon" onClick={open} aria-label="更多操作">
+              <button className="btn sm dhead-more" onClick={open} aria-label="更多操作">
                 <MoreHorizontal size={16} />
               </button>
             )}
@@ -330,11 +330,11 @@ export function PersonDetail({
             </div>
           </div>
 
-          <div className="chip-row" style={{ marginBottom: 10 }}>
+          <div className="chip-row tl-filter" style={{ marginBottom: 10 }}>
             {(['all', 'note', 'reach_out', 'gift', 'todo_completed', 'anniversary'] as const).map((t) => (
               <button
                 key={t}
-                className={cn('chip sm', timelineFilter === t && 'accent')}
+                className={cn('chip tl-filter-chip', timelineFilter === t && 'accent')}
                 onClick={() => setTimelineFilter(t)}
               >
                 {t === 'all' ? '全部' : TL_META[t].label}
@@ -362,7 +362,7 @@ export function PersonDetail({
                   >
                     <div className="tl-meta">
                       {selectMode && <span className={cn('check', on && 'on')} style={{ width: 14, height: 14 }}>{on && <Check size={10} />}</span>}
-                      <span className="chip sm" style={{ height: 18, fontSize: 10, gap: 3 }}>
+                      <span className="chip tl-type">
                         {TL_META[e.type]?.icon}
                         {TL_META[e.type]?.label}
                       </span>
@@ -783,9 +783,15 @@ function MemoEditor({
     )
   }
   return (
-    <div className="stack" style={{ gap: 6 }}>
-      <textarea className="textarea" value={text} onChange={(e) => setText(e.target.value)} rows={4} autoFocus />
-      <div className="row">
+    <div className="memo-edit">
+      <textarea
+        className="textarea memo-input"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        rows={4}
+        autoFocus
+      />
+      <div className="row" style={{ gap: 6 }}>
         <button
           className="btn sm primary"
           onClick={() => {

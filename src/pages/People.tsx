@@ -23,6 +23,7 @@ import { buildCtx, useStore } from '../store'
 import { useUI } from '../ui'
 import { Avatar, Empty, Menu, MenuSeparator, Segmented, useBreakpoint } from '../components/ui'
 import { PersonCard } from '../components/PersonCard'
+import { FieldInput } from '../components/FieldInput'
 import { WalletStackView } from '../components/WalletCard'
 import { PersonDetail } from '../components/PersonDetail'
 import { ActiveFilterChips, FilterTrigger } from '../components/FilterPanel'
@@ -31,6 +32,7 @@ import { buildPersonMeta, buildMetaMap, displayValue, personName } from '../lib/
 import { applyFilter } from '../lib/filter'
 import { computeReminders } from '../lib/reminders'
 import { pinyinOf } from '../lib/search'
+import { channelId, channelLabel, normalizeChannels } from '../lib/channels'
 import { cn, dayDiff, relativeTime } from '../lib/utils'
 
 type SortKey = 'lastInteraction' | 'namePinyin' | 'createdAt' | 'urgency'
@@ -153,7 +155,7 @@ export function People() {
     <div
       className={cn('people-layout', detailOpen && 'detail-open')}
       style={{
-        ['--detail-w' as string]: `${store.prefs.detailPanelWidth}px`,
+        ['--detail-w' as string]: `${Math.max(400, store.prefs.detailPanelWidth)}px`,
         ['--detail-top' as string]: `${detailTop}px`,
       }}
     >
@@ -425,7 +427,8 @@ function ResizeHandle() {
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
       if (!dragging.current) return
-      const next = Math.min(640, Math.max(340, window.innerWidth - e.clientX))
+      /* 右侧最多缩到 400：再窄「记录互动 + 更多」就会换行往下掉 */
+      const next = Math.min(640, Math.max(400, window.innerWidth - e.clientX))
       setPrefs({ detailPanelWidth: next })
     }
     const onUp = () => (dragging.current = false)
@@ -463,6 +466,7 @@ function TableToolbar({ ctx }: { ctx: ReturnType<typeof buildCtx> }) {
     setDraft(prefs.columnConfig)
     setOpen(true)
   }
+  const selectable = columns.filter((c) => !c.locked)
   const toggle = (key: string) =>
     setDraft((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]))
 
@@ -473,13 +477,25 @@ function TableToolbar({ ctx }: { ctx: ReturnType<typeof buildCtx> }) {
         <button className={cn('btn sm', open && 'accent')} onClick={() => (open ? setOpen(false) : openPanel())} aria-expanded={open}>
           <Columns3 size={13} /> 配置列
         </button>
-        <span className="field-hint">· 点击表头排序，公司/单位可直接编辑</span>
+        <span className="field-hint">· 点击表头排序，点击任意单元格即可直接编辑</span>
       </div>
       {open && (
         <div className="col-config">
           <div className="col-config-head">
             <strong>显示哪些列</strong>
             <span className="field-hint">勾选后点保存，表格才会按新配置刷新</span>
+            <button
+              className="btn sm ghost col-all"
+              onClick={() =>
+                setDraft(
+                  selectable.every((c) => draft.includes(c.key))
+                    ? columns.filter((c) => c.locked).map((c) => c.key)
+                    : columns.map((c) => c.key),
+                )
+              }
+            >
+              {selectable.every((c) => draft.includes(c.key)) ? '全不选' : '全选'}
+            </button>
           </div>
           <div className="col-config-grid">
             {columns.map((c) => {
@@ -556,7 +572,7 @@ function VirtualTable({
   const [sort, setSort] = useState<{ key: string; dir: 1 | -1 }>({ key: 'name', dir: 1 })
   // roving tabindex：整个表格只留一个 Tab 落点，行内用 ↑↓ 走
   const [focusIdx, setFocusIdx] = useState(0)
-  const rowH = 46
+  const rowH = 54
 
   useEffect(() => {
     const el = scrollRef.current
@@ -575,6 +591,8 @@ function VirtualTable({
     })
     return list.filter(Boolean) as { key: string; label: string; def?: FieldDefinition }[]
   }, [prefs.columnConfig, ctx.fieldDefinitions])
+
+  const nameDef = useMemo(() => ctx.fieldDefinitions.find((d) => d.key === 'name'), [ctx.fieldDefinitions])
 
   const sorted = useMemo(() => {
     const arr = [...rows]
@@ -632,7 +650,7 @@ function VirtualTable({
           <tr>
             <th style={{ width: 36, paddingLeft: 12 }}>
               <button className={cn('check', allSelected && 'on')} onClick={onToggleAll} aria-label="全选">
-                {allSelected && <Check size={12} strokeWidth={3} />}
+                {allSelected && <Check size={14} strokeWidth={3} />}
               </button>
             </th>
             {columns.map((c) => (
@@ -673,25 +691,24 @@ function VirtualTable({
                     onClick={(e) => onToggle(p.id, idx, e.shiftKey)}
                     aria-label={`选择 ${meta.name}`}
                   >
-                    {selected && <Check size={12} strokeWidth={3} />}
+                    {selected && <Check size={14} strokeWidth={3} />}
                   </button>
                 </td>
                 {columns.map((c) => (
-                  <td key={c.key} className={cn(c.key === 'name' ? 'cell-name' : undefined, c.key === 'company' && 'cell-inline')}>
+                  <td
+                    key={c.key}
+                    className={cn(c.key === 'name' && 'cell-name', c.def?.type === 'phone' && 'cell-multi')}
+                  >
                     {c.key === 'lastInteraction' ? (
                       <span className="muted">{relativeTime(meta.lastInteractionAt)}</span>
                     ) : c.key === 'name' ? (
-                      <span className="row" style={{ gap: 7 }}>
+                      <span className="row cell-name-row" style={{ gap: 7 }}>
                         <Avatar name={meta.name} src={meta.avatar?.thumbnail} size={22} color={meta.groupColor} />
-                        {meta.name}
+                        {nameDef ? <EditableCell def={nameDef} person={p} ctx={ctx} /> : meta.name}
                       </span>
-                    ) : c.key === 'company' ? (
-                      <InlineCell def={c.def!} person={p} ctx={ctx} />
-                    ) : (
-                      <span title={displayValue(c.def, p.fields[c.key], ctx)}>
-                        {displayValue(c.def, p.fields[c.key], ctx) || '—'}
-                      </span>
-                    )}
+                    ) : c.def ? (
+                      <EditableCell def={c.def} person={p} ctx={ctx} />
+                    ) : null}
                   </td>
                 ))}
               </tr>
@@ -708,7 +725,8 @@ function VirtualTable({
   )
 }
 
-function InlineCell({
+/* 表格单元格：点一下就地编辑，任何字段都能改（姓名与「上次互动」除外） */
+function EditableCell({
   def,
   person,
   ctx,
@@ -719,42 +737,216 @@ function InlineCell({
 }) {
   const updatePerson = useStore((s) => s.updatePerson)
   const [editing, setEditing] = useState(false)
-  const value =
-    def.type === 'date'
-      ? ((person.fields[def.key] as { value: string } | undefined)?.value ?? '')
-      : String(person.fields[def.key] ?? '')
+  const [draft, setDraft] = useState<unknown>(person.fields[def.key])
+
+  const boxRef = useRef<HTMLDivElement>(null)
+  const open = () => {
+    setDraft(person.fields[def.key])
+    setEditing(true)
+  }
+  /* 进入编辑就把光标放进输入框，键盘直接能打字；选择型字段不抢焦点（面板自带搜索） */
+  useEffect(() => {
+    if (!editing) return
+    if (def.type === 'select' || def.type === 'multiselect') {
+      // 选择型字段：直接展开面板，少一次点击
+      const t = window.setTimeout(() => boxRef.current?.querySelector<HTMLElement>('.pk-trigger')?.click(), 30)
+      return () => window.clearTimeout(t)
+    }
+    const t = window.setTimeout(() => {
+      const el = boxRef.current?.querySelector<HTMLElement>('input:not([type="hidden"]), textarea')
+      el?.focus()
+      if (el instanceof HTMLInputElement) el.select()
+    }, 20)
+    return () => window.clearTimeout(t)
+  }, [editing, def.type])
+  const commit = (next?: unknown) => {
+    updatePerson(person.id, { [def.key]: next === undefined ? draft : next })
+    setEditing(false)
+  }
 
   if (!editing) {
     return (
-      <span
+      <button
+        type="button"
+        className="cell-view"
         onClick={(e) => {
           e.stopPropagation()
-          setEditing(true)
+          open()
         }}
-        style={{ display: 'block', cursor: 'text', minHeight: 20, overflow: 'hidden', textOverflow: 'ellipsis' }}
         title="点击编辑"
       >
-        {displayValue(def, person.fields[def.key], ctx) || <span className="muted">—</span>}
-      </span>
+        {def.type === 'phone' ? (
+          <PhoneLines person={person} />
+        ) : (
+          <span className="cell-text">
+            {displayValue(def, person.fields[def.key], ctx) || <span className="muted">—</span>}
+          </span>
+        )}
+      </button>
     )
   }
+
+  if (def.type === 'phone') {
+    return <PhoneCellEditor person={person} onDone={() => setEditing(false)} />
+  }
+
+  const choice = def.type === 'select' || def.type === 'multiselect'
   return (
-    <input
-      className="cell-edit cell-edit--overlay"
-      autoFocus
-      type={def.type === 'date' ? 'date' : def.type === 'number' ? 'number' : 'text'}
-      value={value}
+    <div
+      ref={boxRef}
+      className={cn('cell-editing', choice && 'is-choice')}
       onClick={(e) => e.stopPropagation()}
-      onChange={(e) => {
-        if (def.type === 'date') updatePerson(person.id, { [def.key]: { value: e.target.value, hasTime: false } })
-        else if (def.type === 'number') updatePerson(person.id, { [def.key]: Number(e.target.value) })
-        else updatePerson(person.id, { [def.key]: e.target.value })
-      }}
-      onBlur={() => setEditing(false)}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === 'Escape') setEditing(false)
+        /* 表格行本身用 Enter 打开详情、↑↓ 换行：编辑期间键盘要留在单元格里 */
+        e.stopPropagation()
+        if (e.key === 'Enter') {
+          e.preventDefault()
+          commit()
+        } else if (e.key === 'Escape') {
+          e.preventDefault()
+          setEditing(false)
+        }
       }}
-    />
+    >
+      <FieldInput
+        def={def}
+        value={draft}
+        personId={person.id}
+        onChange={(v) => {
+          setDraft(v)
+          /* 单选一点即生效，和详情页的行为一致 */
+          if (def.type === 'select') {
+            updatePerson(person.id, { [def.key]: v })
+            setEditing(false)
+          }
+        }}
+      />
+      {def.type !== 'select' && (
+        <span className="cell-ops">
+          <button type="button" className="btn icon sm" aria-label="保存" onClick={() => commit()}>
+            <Check size={13} />
+          </button>
+          <button type="button" className="btn icon sm" aria-label="取消" onClick={() => setEditing(false)}>
+            <X size={13} />
+          </button>
+        </span>
+      )}
+    </div>
+  )
+}
+
+/* 联系方式在表格里按通道分行显示，不再用「/」一路排到右边 */
+function PhoneLines({ person }: { person: Person }) {
+  const channels = useStore((s) => normalizeChannels(s.settings.contactChannels))
+  const arr = ((person.fields.phones as { label: string; number: string }[]) ?? []).filter((p) => (p.number ?? '').trim())
+  if (arr.length === 0) return <span className="muted">—</span>
+  const shown = arr.slice(0, 2)
+  const rest = arr.length - shown.length
+  return (
+    <span className="cell-lines">
+      {shown.map((p, i) => (
+        <span className="cell-line" key={`${p.label}-${i}`}>
+          <span className="cell-line-label">{channelLabel(p.label, channels)}</span>
+          <span className="cell-line-value">{p.number}</span>
+        </span>
+      ))}
+      {rest > 0 && (
+        <span className="cell-line-more" title={arr.slice(2).map((p) => `${channelLabel(p.label, channels)} ${p.number}`).join('\n')}>
+          +{rest}
+        </span>
+      )}
+    </span>
+  )
+}
+
+/* 表格里的联系方式编辑：一行一个通道，改完点保存，不弹二级面板 */
+function PhoneCellEditor({ person, onDone }: { person: Person; onDone: () => void }) {
+  const channels = useStore((s) => normalizeChannels(s.settings.contactChannels))
+  const updatePerson = useStore((s) => s.updatePerson)
+  const [rows, setRows] = useState(() => {
+    const arr = (person.fields.phones as { label: string; number: string }[]) ?? []
+    return arr.length ? arr.map((p) => ({ label: channelId(p.label, channels), number: p.number })) : [{ label: channels[0]?.id ?? 'mobile', number: '' }]
+  })
+
+  const save = () => {
+    const order = channels.map((c) => c.id)
+    const list = rows
+      .filter((r) => (r.number ?? '').trim())
+      .map((r) => ({ label: r.label, number: r.number.trim() }))
+    list.sort((a, b) => order.indexOf(a.label) - order.indexOf(b.label))
+    updatePerson(person.id, { phones: list })
+    onDone()
+  }
+
+  return (
+    <div
+      className="cell-editing cell-editing--phone"
+      onClick={(e) => e.stopPropagation()}
+      onKeyDown={(e) => {
+        e.stopPropagation()
+        if (e.key === 'Enter') {
+          e.preventDefault()
+          save()
+        } else if (e.key === 'Escape') {
+          e.preventDefault()
+          onDone()
+        }
+      }}
+    >
+      <div className="cell-phone-rows">
+        {rows.map((r, i) => (
+          <div className="cell-phone-row" key={`${r.label}-${i}`}>
+            <select
+              className="cell-phone-ch"
+              value={r.label}
+              aria-label="联系方式通道"
+              onChange={(e) => setRows((prev) => prev.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))}
+            >
+              {channels.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+            <input
+              className="cell-phone-input"
+              autoFocus={i === 0}
+              inputMode={channels.find((c) => c.id === r.label)?.kind === 'tel' ? 'tel' : 'text'}
+              value={r.number}
+              placeholder="填写号码"
+              onChange={(e) => setRows((prev) => prev.map((x, j) => (j === i ? { ...x, number: e.target.value } : x)))}
+            />
+            <button
+              type="button"
+              className="cell-phone-del"
+              aria-label="删除这一行"
+              onClick={() => setRows((prev) => (prev.length > 1 ? prev.filter((_, j) => j !== i) : prev.map((x) => ({ ...x, number: '' }))))}
+            >
+              <Trash2 size={11} />
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          className="cell-phone-add"
+          onClick={() => {
+            const used = new Set(rows.map((r) => r.label))
+            const free = channels.find((c) => !used.has(c.id))
+            if (free) setRows((prev) => [...prev, { label: free.id, number: '' }])
+          }}
+        >
+          <Plus size={11} /> 再加一个通道
+        </button>
+      </div>
+      <span className="cell-ops">
+        <button type="button" className="btn icon sm" aria-label="保存" onClick={save}>
+          <Check size={13} />
+        </button>
+        <button type="button" className="btn icon sm" aria-label="取消" onClick={onDone}>
+          <X size={13} />
+        </button>
+      </span>
+    </div>
   )
 }
 
