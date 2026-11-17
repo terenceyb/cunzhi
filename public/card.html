@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232f6feb'/%3E%3Cpath d='M8 11l8-4 8 4v10l-8 4-8-4V11z' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round'/%3E%3Cpath d='M8 11l8 4 8-4M16 15v10' stroke='white' stroke-width='2'/%3E%3C/svg%3E">
+<title>名片 · 存知</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f2f4f7;
+    --bg-2: #e8ebf0;
+    --card: #ffffff;
+    --text: #16191f;
+    --text-2: #6b7280;
+    --text-3: #9aa1ad;
+    --line: #eceef2;
+    --accent: #2f6feb;
+    --accent-soft: #eef3ff;
+    --chip: #f4f6f9;
+    --shadow: 0 1px 2px rgba(16,24,40,.04), 0 18px 48px -24px rgba(16,24,40,.28);
+    --radius: 22px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d0f13;
+      --bg-2: #15181e;
+      --card: #1b1f26;
+      --text: #f2f4f8;
+      --text-2: #a8afba;
+      --text-3: #79818e;
+      --line: #2a2f38;
+      --accent: #6f9dff;
+      --accent-soft: #1b2740;
+      --chip: #232833;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 24px 60px -28px rgba(0,0,0,.8);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    color: var(--text);
+    background:
+      radial-gradient(120% 80% at 50% -10%, var(--bg-2) 0%, var(--bg) 55%) fixed;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: max(24px, env(safe-area-inset-top)) 18px max(24px, env(safe-area-inset-bottom));
+  }
+  .wrap { width: 100%; max-width: 460px; }
+
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    animation: rise .5s cubic-bezier(.2,.7,.2,1) both;
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px) scale(.985); }
+    to { opacity: 1; transform: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { .card { animation: none; } }
+
+  .head {
+    padding: 30px 26px 24px;
+    background: linear-gradient(160deg, var(--accent-soft), transparent 72%);
+    border-bottom: 1px solid var(--line);
+    position: relative;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: .02em;
+    margin-bottom: 18px;
+  }
+  .brand svg { width: 15px; height: 15px; }
+  .avatar {
+    width: 58px; height: 58px;
+    border-radius: 18px;
+    background: var(--accent);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 14px;
+    box-shadow: 0 8px 20px -10px var(--accent);
+  }
+  .name { font-size: 25px; font-weight: 700; letter-spacing: -.02em; line-height: 1.2; }
+  .role { margin-top: 6px; font-size: 14px; color: var(--text-2); line-height: 1.5; }
+  .role .sep { color: var(--text-3); margin: 0 6px; }
+
+  .rows { padding: 10px 26px 16px; }
+  .row {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .row:last-child { border-bottom: 0; }
+  .ic {
+    flex: 0 0 auto;
+    width: 34px; height: 34px;
+    border-radius: 10px;
+    background: var(--chip);
+    display: grid;
+    place-items: center;
+    color: var(--text-2);
+  }
+  .ic svg { width: 17px; height: 17px; }
+  .body { min-width: 0; flex: 1 1 auto; }
+  .k { font-size: 11.5px; color: var(--text-3); margin-bottom: 2px; }
+  .v { font-size: 15px; color: var(--text); line-height: 1.5; word-break: break-word; }
+  .v a { color: var(--accent); text-decoration: none; }
+  .v a:hover { text-decoration: underline; }
+  .multi { display: flex; flex-direction: column; gap: 4px; }
+
+  .empty {
+    padding: 44px 26px 48px;
+    text-align: center;
+    color: var(--text-2);
+  }
+  .empty .em-ic {
+    width: 54px; height: 54px; margin: 0 auto 14px;
+    border-radius: 16px; background: var(--chip);
+    display: grid; place-items: center; color: var(--text-3);
+  }
+  .empty .em-ic svg { width: 24px; height: 24px; }
+  .empty h2 { font-size: 17px; margin: 0 0 6px; color: var(--text); }
+  .empty p { font-size: 13px; margin: 0; line-height: 1.6; }
+
+  .foot {
+    text-align: center;
+    padding: 18px 20px max(20px, env(safe-area-inset-bottom));
+    font-size: 12px;
+    color: var(--text-3);
+  }
+  .foot b { color: var(--text-2); font-weight: 600; }
+  .dot { margin: 0 6px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" id="card" aria-live="polite"></div>
+    <div class="foot"><b>存知</b><span class="dot">·</span>本地优先的人脉工作台</div>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+  var card = document.getElementById("card");
+
+  var ICON = {
+    grid: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+    pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+    phone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2Z"/></svg>',
+    mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>',
+    link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.1.1l2.4-2.4a5 5 0 0 0-7.1-7.1L11.5 4.6"/><path d="M14 11a5 5 0 0 0-7.1-.1l-2.4 2.4a5 5 0 0 0 7.1 7.1l1-1"/></svg>'
+  };
+
+  function txt(v) { return v == null ? "" : String(v); }
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;   // textContent：不解析 HTML，防 XSS
+    return n;
+  }
+  function icon(name) {
+    var s = document.createElement("span");
+    s.className = "ic";
+    s.innerHTML = ICON[name];                  // 仅注入内置可信 SVG
+    return s;
+  }
+  function safeUrl(raw, scheme) {
+    var v = txt(raw).trim();
+    if (/^(https?:|mailto:|tel:)/i.test(v)) return v;
+    if (scheme === "tel") {
+      // 仅纯电话（数字/空格/+/-括号）才生成 tel:；微信号等含字母的保持文本
+      return /^[\d\s+()-]+$/.test(v) ? "tel:" + v.replace(/[^\d+]/g, "") : "";
+    }
+    if (scheme === "mail") return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v) ? "mailto:" + encodeURIComponent(v) : "";
+    if (/^[\w-]+(\.[\w-]+)+(\/|$|\?)/.test(v) && !/\s/.test(v)) return "https://" + v;
+    return "";
+  }
+  function row(iconName, label, values, linkScheme) {
+    var r = el("div", "row");
+    r.appendChild(icon(iconName));
+    var body = el("div", "body");
+    body.appendChild(el("div", "k", label));
+    var v = el("div", "v");
+    var list = Array.isArray(values) ? values : [values];
+    if (list.length > 1) {
+      var multi = el("div", "multi");
+      list.forEach(function (item) { multi.appendChild(valueNode(item, linkScheme)); });
+      v.appendChild(multi);
+    } else {
+      v.appendChild(valueNode(list[0], linkScheme));
+    }
+    body.appendChild(v);
+    r.appendChild(body);
+    return r;
+  }
+  function valueNode(item, linkScheme) {
+    var label = txt(item && item.l || "");
+    var value = txt(typeof item === "object" && item ? item.v : item);
+    var shown = label && label !== "电话" ? label + " · " + value : value;
+    if (linkScheme) {
+      var href = safeUrl(value, linkScheme);
+      if (href) {
+        var a = el("a", "", shown);
+        a.href = href;
+        if (linkScheme === "http") { a.target = "_blank"; a.rel = "noopener noreferrer"; }
+        return a;
+      }
+    }
+    return el("span", "", shown);
+  }
+
+  function decode(hash) {
+    var m = /(?:^#|[#&])d=([^&]+)/.exec(hash.charAt(0) === "#" ? hash : "#" + hash);
+    if (!m) return null;
+    try {
+      var b64 = m[1].replace(/-/g, "+").replace(/_/g, "/");
+      var bin = atob(b64);
+      var bytes = new Uint8Array(bin.length);
+      for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return JSON.parse(new TextDecoder().decode(bytes));
+    } catch (e) { return null; }
+  }
+
+  function renderEmpty(title, desc) {
+    var box = el("div", "empty");
+    var e = document.createElement("div");
+    e.className = "em-ic";
+    e.innerHTML = ICON.grid;
+    box.appendChild(e);
+    box.appendChild(el("h2", "", title));
+    box.appendChild(el("p", "", desc));
+    card.appendChild(box);
+  }
+
+  var info = decode(location.hash);
+
+  if (!info || !txt(info.n)) {
+    renderEmpty("这张名片暂时没有内容", "名片码可能不完整，或信息已被主人修改。请重新向对方索取最新的名片。");
+    return;
+  }
+
+  // 头部
+  var head = el("div", "head");
+  var brand = el("div", "brand");
+  var bs = document.createElement("span");
+  bs.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></svg>';
+  brand.appendChild(bs);
+  brand.appendChild(el("span", "", "存知名片"));
+  head.appendChild(brand);
+
+  var name = txt(info.n);
+  var av = el("div", "avatar", name.charAt(0) || "名");
+  head.appendChild(av);
+  head.appendChild(el("div", "name", name));
+
+  var roleBits = [info.c, info.t].map(function (x) { return txt(x).trim(); }).filter(Boolean);
+  if (roleBits.length || info.y) {
+    var role = el("div", "role");
+    if (roleBits.length) role.appendChild(el("span", "", roleBits.join(" · ")));
+    if (info.y) {
+      if (roleBits.length) role.appendChild(el("span", "sep", "·"));
+      role.appendChild(el("span", "", txt(info.y)));
+    }
+    head.appendChild(role);
+  }
+  card.appendChild(head);
+
+  // 列表视图
+  var rows = el("div", "rows");
+  if (info.c) rows.appendChild(row("grid", "单位 / 公司", info.c));
+  if (info.t) rows.appendChild(row("grid", "职务", info.t));
+  if (info.y) rows.appendChild(row("pin", "城市", info.y));
+  if (info.p && info.p.length) rows.appendChild(row("phone", "联系方式", info.p, "tel"));
+  if (info.e && info.e.length) rows.appendChild(row("mail", "邮箱", info.e, "mail"));
+  if (info.w) rows.appendChild(row("link", "个人主页", info.w, "http"));
+  if (!rows.children.length) {
+    rows.appendChild(row("grid", "姓名", name));
+  }
+  card.appendChild(rows);
+})();
+</script>
+</body>
+</html>

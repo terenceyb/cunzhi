@@ -27,7 +27,7 @@ import { useUI } from '../ui'
 import { cn, formatDate, hostOf, sanitizeUrl, dayDiff } from '../lib/utils'
 import { ageOf, daysToBirthday, defByKey, isRefSnapshot, personName } from '../lib/derive'
 import { channelId, channelLabel, channelOf, normalizeChannels } from '../lib/channels'
-import { Avatar, CopyButton } from './ui'
+import { Avatar, CopyButton, Modal } from './ui'
 import { QrImage } from './QrImage'
 import { buildCardCode, cardCodeSummary } from '../lib/cardCode'
 
@@ -70,6 +70,7 @@ export function FieldValue({
   const setPrefs = useStore((s) => s.setPrefs)
   const mapProvider = useStore((s) => s.prefs.mapProvider)
   const [expanded, setExpanded] = useState(false)
+  const [cardQrOpen, setCardQrOpen] = useState(false)
 
   const options: SelectOption[] =
     def.key === 'groups'
@@ -342,22 +343,49 @@ export function FieldValue({
       if (autoCard) {
         const person = personId ? persons.find((p) => p.id === personId) : undefined
         const text = buildCardCode(person, { fieldDefinitions, groups, tags })
+        const name = String((person?.fields?.name as string) ?? '') || '未命名'
+        const summary = cardCodeSummary(person, { groups })
         return (
-          <span className={cn('barcode-view', compact && 'is-compact')}>
-            <QrImage value={text} size={compact ? 54 : 76} title="名片码：扫码即可存入通讯录" />
-            <span className="barcode-main">
-              <span className="barcode-title">名片码</span>
-              <span className="barcode-raw ellipsis">{cardCodeSummary(person, { groups }) || '由本人资料生成'}</span>
-              <span className="barcode-meta">
-                <span className="chip sm">扫码存联系人</span>
-                {!compact && (
-                  <CopyButton variant="text" text={text} label="复制名片码内容" className="copy-text">
-                    复制
-                  </CopyButton>
-                )}
+          <>
+            <span className={cn('barcode-view', compact && 'is-compact')}>
+              <button
+                type="button"
+                className="barcode-qr is-button"
+                onClick={() => setCardQrOpen(true)}
+                title="点击查看大图，扫码打开名片网页"
+                aria-label="放大名片码"
+              >
+                <QrImage value={text} size={compact ? 54 : 76} title="名片码：扫码打开名片网页" />
+              </button>
+              <span className="barcode-main">
+                <span className="barcode-title">名片码</span>
+                <span className="barcode-raw ellipsis">{summary || '由本人资料生成'}</span>
+                <span className="barcode-meta">
+                  <span className="chip sm">扫码看名片</span>
+                  {!compact && (
+                    <CopyButton variant="text" text={text} label="复制名片链接" className="copy-text">
+                      复制链接
+                    </CopyButton>
+                  )}
+                </span>
               </span>
             </span>
-          </span>
+            <Modal open={cardQrOpen} onClose={() => setCardQrOpen(false)} title="我的名片码" narrow>
+              <div className="card-qr-share">
+                <div className="card-qr-name">{name}</div>
+                {summary && <div className="card-qr-summary">{summary}</div>}
+                <div className="card-qr-big">
+                  <QrImage value={text} size={260} quiet={3} title="名片码大图" />
+                </div>
+                <p className="card-qr-tip">用手机相机或微信扫一扫，即可打开包含基本信息的名片网页。资料更新后，这张码会自动同步。</p>
+                <div className="card-qr-actions">
+                  <CopyButton variant="btn" className="primary" text={text} label="复制名片链接">
+                    复制名片链接
+                  </CopyButton>
+                </div>
+              </div>
+            </Modal>
+          </>
         )
       }
       const raw = String(bv.rawValue ?? '').trim()
