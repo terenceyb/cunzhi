@@ -32,10 +32,10 @@ export default function App() {
 ```tsx
 <GlassTabMenu
   items={[
-    { key: 'calendar', label: '首页' },
-    { key: 'notes', label: '人脉' },
-    { key: 'people', label: '互动' },
-    { key: 'folder', label: '设置' },
+    { key: 'home', label: '首页' },
+    { key: 'people', label: '人脉' },
+    { key: 'interactions', label: '互动记录' },
+    { key: 'settings', label: '设置' },
   ]}
   menuItems={[
     { key: 'note', label: '速记', action: 'note' },
@@ -70,7 +70,7 @@ export default function App() {
 | `transparent` | `false` | 关掉设计稿背景 |
 | `onAction` / `onChange` | — | 也可以用 `glass-tab-action` 自定义事件 |
 
-图标键：`calendar` `notes` `people` `folder` `note` `checklist` `photo` `scan` `voice` `sketch`。
+图标键：`home` `people` `interactions` `settings`（标签栏四格）；`note` `checklist` `photo` `scan` `voice` `sketch` `folder` `calendar` `notes`（菜单格与备用）。
 
 ## 动效是怎么算出来的
 

@@ -424,10 +424,10 @@ function StatusBanners() {
 
 /** 移动端四个标签：图标用灰阶立体 SVG，无可见文字，靠 aria-label 说明 */
 const GLASS_ITEMS = [
-  { key: 'calendar', label: '首页' },
-  { key: 'notes', label: '人脉' },
-  { key: 'people', label: '互动' },
-  { key: 'folder', label: '设置' },
+  { key: 'home', label: '首页' },
+  { key: 'people', label: '人脉' },
+  { key: 'interactions', label: '互动记录' },
+  { key: 'settings', label: '设置' },
 ]
 const GLASS_ROUTES: RouteName[] = ['dashboard', 'people', 'interactions', 'settings']
 

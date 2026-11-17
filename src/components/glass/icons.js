@@ -21,6 +21,14 @@ const PAPER_CALENDAR = ['0|#949496', '0.2|#b2b2b5', '0.6|#dad9dc', '1|#d9d8dc']
 /** folder 前层同理 */
 const PAPER_FOLDER = ['0|#929396', '0.25|#a3a3a6', '0.65|#cecdd2', '1|#d4d3d8']
 
+/** 互动记录的两个气泡：后层深灰在右上，前层银面在左下 */
+/** 互动记录的气泡：x 4..58 / y 10..48，左下再补一个三角尾巴到 58 */
+const BUBBLE = 'M16 10h30a10 10 0 0 1 10 10v16a10 10 0 0 1-10 10H28l-12 10V46h0a10 10 0 0 1-10-10V20a10 10 0 0 1 10-10Z'
+/** 设置齿轮：八枚平顶齿绕中心 (32,32) 均分，齿根藏在银面圆盘下 */
+const GEAR_TEETH = [0, 45, 90, 135, 180, 225, 270, 315]
+  .map((a) => `<rect x="26" y="1" width="12" height="9" rx="2.5" transform="rotate(${a} 32 32)"/>`)
+  .join('')
+
 const PATHS = {
   calendar:
     '<g transform="translate(-1 -1)"><rect x="5" y="9" width="53" height="48" rx="11" fill="{dark}"/><path d="M19 7v9m25-9v9" stroke="#626365" stroke-width="5" stroke-linecap="round"/><rect x="5" y="23" width="53" height="38" rx="9" fill="{paper}"/><path d="M7 31v-1a7 7 0 0 1 7-7h35a7 7 0 0 1 7 7" fill="none" stroke="white" stroke-opacity=".85" stroke-width="1.4"/><path d="m19 42 6-4v16m10-16h14L40 54" fill="none" stroke="#242526" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/></g>',
@@ -30,6 +38,13 @@ const PATHS = {
     '<g transform="translate(-2 1)"><circle cx="44" cy="20" r="10" fill="{dark}"/><path d="M27 58v-4a18 18 0 0 1 36 0v4Z" fill="{dark}"/><circle cx="25" cy="24" r="10" fill="{paper}" stroke="#fff" stroke-width="1.2"/><path d="M7 58v-4a18 18 0 0 1 36 0v4Z" fill="{paper}"/><path d="M7 58v-4a18 18 0 0 1 36 0v4Z" fill="{transmission}" opacity=".65"/></g>',
   folder:
     '<g transform="translate(2 1)"><path d="M6 23v-8a7 7 0 0 1 7-7h15l7 8h16a7 7 0 0 1 7 7v25H6Z" fill="{dark}"/><rect x="6" y="24" width="52" height="35" rx="9" fill="{paper}"/><path d="M7 34v-2a8 8 0 0 1 8-8h34a8 8 0 0 1 8 8" fill="none" stroke="white" stroke-opacity=".8" stroke-width="1.5"/></g>',
+  /** 首页：深灰屋顶压住银面墙体，屋檐出挑两格，门是近黑 */
+  home:
+    '<path d="M32 5 6 29h52Z" fill="{dark}" stroke="{rim}" stroke-width="1.4"/><path d="M10 27h44v23a8 8 0 0 1-8 8H18a8 8 0 0 1-8-8Z" fill="{paper}"/><path d="M10 27h44v6H10Z" fill="{transmission}" opacity=".55"/><path d="M26 58V47a6 6 0 0 1 12 0v11Z" fill="{black}"/>',
+  /** 互动记录：深灰气泡里嵌三条银面消息条，左下三角尾巴 */
+  interactions: `<g transform="translate(32 32) scale(1.06) translate(-32 -32)"><path d="${BUBBLE}" fill="{dark}"/><path d="M16 10h30a10 10 0 0 1 10 10v4H6v-4a10 10 0 0 1 10-10Z" fill="{rim}" opacity=".45"/><rect x="14" y="20" width="34" height="6" rx="3" fill="{paper}"/><rect x="14" y="30" width="24" height="6" rx="3" fill="{paper}"/><rect x="14" y="40" width="14" height="6" rx="3" fill="{paper}"/></g>`,
+  /** 设置：八枚平顶粗齿朝外，银面圆盘压住齿根，中心近黑轴 */
+  settings: `<g transform="translate(32 32) scale(.86) translate(-32 -32)"><g fill="{dark}">${GEAR_TEETH}</g><circle cx="32" cy="32" r="24" fill="{dark}"/><circle cx="32" cy="32" r="17" fill="{paper}"/><circle cx="32" cy="32" r="17" fill="{transmission}" opacity=".45"/><circle cx="32" cy="32" r="17" fill="none" stroke="{rim}" stroke-width="1.6"/><circle cx="32" cy="32" r="8" fill="{black}"/></g>`,
   note: '<rect x="5" y="9" width="42" height="49" rx="10" fill="{paper}" stroke="{rim}" stroke-width="1.2"/><path d="M15 25h17M15 36h10" stroke="#4c4d50" stroke-width="4.5" stroke-linecap="round"/><path d="m39 39 15-16" stroke="{dark}" stroke-width="11" stroke-linecap="round"/><path d="M33 49Q32 49 33 46L35 38 43 44 35 49Q34 50 33 49Z" fill="#26272a"/>',
   checklist:
     '<rect x="7" y="6" width="50" height="53" rx="12" fill="{paper}" stroke="{rim}" stroke-width="1.3"/><path d="m17 21 5 5 10-10M41 21h8m-8 22h8" stroke="#444548" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="23" cy="44" r="7" fill="none" stroke="#292a2c" stroke-width="5"/>',
@@ -45,7 +60,7 @@ const PATHS = {
 export const ICON_KEYS = Object.keys(PATHS)
 
 /** 标签栏用；菜单用同一套图形，只是银面暗一档 */
-const BUTTON_KEYS = new Set(['calendar', 'notes', 'people', 'folder'])
+const BUTTON_KEYS = new Set(['home', 'people', 'interactions', 'settings', 'calendar', 'notes', 'folder'])
 
 const stops = (list) =>
   list
@@ -63,7 +78,8 @@ function paperStops(key) {
 
 /**
  * 生成一个图标。
- * @param {string} key  calendar | notes | people | folder | note | checklist | photo | scan | voice | sketch
+ * @param {string} key  home | people | interactions | settings | calendar | notes | folder |
+ *                      note | checklist | photo | scan | voice | sketch
  * @param {string} uid 实例唯一前缀
  */
 export function iconSvg(key, uid) {

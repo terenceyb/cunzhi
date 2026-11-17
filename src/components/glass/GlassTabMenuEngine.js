@@ -59,10 +59,10 @@ const K = {
 }
 
 export const DEFAULT_ITEMS = [
-  { key: 'calendar', label: 'Calendar' },
-  { key: 'notes', label: 'Notes' },
+  { key: 'home', label: 'Home' },
   { key: 'people', label: 'People' },
-  { key: 'folder', label: 'Files' },
+  { key: 'interactions', label: 'Activity' },
+  { key: 'settings', label: 'Settings' },
 ]
 
 export const DEFAULT_MENU = [

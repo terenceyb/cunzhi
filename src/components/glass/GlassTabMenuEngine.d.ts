@@ -4,7 +4,7 @@
  */
 
 export interface GlassTabItem {
-  /** 图标键：calendar | notes | people | folder | note | checklist | photo | scan | voice | sketch */
+  /** 图标键：home | people | interactions | settings | calendar | notes | folder | note | checklist | photo | scan | voice | sketch */
   key: string
   /** 无障碍名称（标签栏不显示文字） */
   label: string
