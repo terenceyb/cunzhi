@@ -97,9 +97,9 @@ export const DEFAULT_PREFS: Prefs = {
   },
   theme: 'system',
   highContrast: false,
-  dashAccent: 'snow',
-  accentCustom: '#6f6659',
-  accentV: 3,
+  dashAccent: 'slate',
+  accentCustom: '#2f6feb',
+  accentV: 4,
   dashMobileOrder: ['todos', 'reminders', 'anniversaries'],
   detailPanelWidth: 420,
   columnConfig: ['name', 'phones', 'company', 'groups', 'tags', 'city', 'lastInteraction'],
@@ -246,15 +246,14 @@ function loadPrefs(): Prefs {
     if (!raw) return { ...DEFAULT_PREFS }
     const parsed = JSON.parse(raw) as Partial<Prefs>
     const prefs = { ...DEFAULT_PREFS, ...parsed }
-    /* 主题色改版（v2.1）：老版本默认的石墨蓝统一换成云母，只迁一次 */
-    if ((parsed.accentV ?? 1) < 2) {
-      if (!parsed.dashAccent || parsed.dashAccent === 'slate') prefs.dashAccent = 'mica'
-      prefs.accentV = 2
-    }
-    /* v3：默认主题色由「云母」换成「素白」，只迁移从没主动换过色的人 */
-    if ((parsed.accentV ?? 1) < 3) {
-      if (!parsed.dashAccent || parsed.dashAccent === 'mica') prefs.dashAccent = 'snow'
-      prefs.accentV = 3
+    /* ---- 主题色迁移：v4 起默认靛蓝，并移除「云母 / 暖沙」两个色板 ----
+       历史默认值依次是 石墨蓝(slate) → 云母(mica) → 素白(snow)。
+       只把「仍是旧默认 / 空值 / 已删色」的人迁到新默认，主动选的其它色原样保留。
+       被删的色已不在 DashAccent 联合类型里，这里用字符串比较兼容老数据。 */
+    if ((parsed.accentV ?? 1) < 4) {
+      const old = (parsed.dashAccent ?? '') as string
+      if (!old || old === 'snow' || old === 'mica' || old === 'sand') prefs.dashAccent = 'slate'
+      prefs.accentV = 4
     }
     return prefs
   } catch {

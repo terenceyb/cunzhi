@@ -322,7 +322,7 @@ export interface Prefs {
   dashAccent: DashAccent
   /** 自定义主题色的色值（dashAccent === 'custom' 时生效） */
   accentCustom?: string
-  /** 主题色方案版本：老数据迁移用，2 起默认云母 */
+  /** 主题色方案版本：老数据迁移用，4 起默认靛蓝（云母 / 暖沙已移除） */
   accentV?: number
   /** 移动端工作台卡片顺序：待办 → 走动提醒 → 纪念日 为默认 */
   dashMobileOrder: string[]
@@ -347,7 +347,7 @@ export interface Prefs {
 
 export type ThemeMode = 'system' | 'light' | 'dark'
 
-export type DashAccent = 'snow' | 'mica' | 'slate' | 'sand' | 'forest' | 'ocean' | 'plum' | 'coral' | 'bamboo' | 'custom'
+export type DashAccent = 'snow' | 'slate' | 'forest' | 'ocean' | 'plum' | 'coral' | 'bamboo' | 'teal' | 'rose' | 'custom'
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'dirty' | 'error' | 'no-file'
 

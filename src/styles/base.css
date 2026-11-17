@@ -10,9 +10,9 @@
   --text-3: #6b7583;
   --line: #e6e8ec;
   --line-strong: #d5d9e0;
-  /* 默认主题色「素白」：几乎无彩的石板灰，白底上只做一点点温度 */
-  --accent: #6b7280;
-  --accent-soft: #eef0f4;
+  /* 默认主题色「靛蓝」：清爽利落的商务蓝（运行时由 html[data-accent] 覆盖） */
+  --accent: #2f6feb;
+  --accent-soft: #eaf0fe;
   --danger: #d94a3d;
   --danger-soft: #fdecea;
   --warn: #b4530a;
@@ -1198,21 +1198,15 @@ table.data tbody tr:focus-visible {
 }
 
 /* ---- 全局主题色：只换强调色，其余调色板不动 ----
-   云母是默认值（写在 :root 里），其余每个色相一对浅 / 深值，
+   靛蓝（slate）是默认值，其余每个色相一对浅 / 深值，
     --accent-soft 统一由 --accent 混出来，新增色相只需加一行。 */
 html[data-accent='snow'] {
   --accent: #6b7280;
   --accent-soft: #eef0f4;
   --bg: #f5f6f8;
 }
-html[data-accent='mica'] {
-  --accent: #6f6659;
-}
 html[data-accent='slate'] {
   --accent: #2f6feb;
-}
-html[data-accent='sand'] {
-  --accent: #a9772c;
 }
 html[data-accent='forest'] {
   --accent: #1e7a58;
@@ -1229,13 +1223,20 @@ html[data-accent='coral'] {
 html[data-accent='bamboo'] {
   --accent: #4f7a4a;
 }
+html[data-accent='teal'] {
+  --accent: #12807d;
+}
+html[data-accent='rose'] {
+  --accent: #c2306b;
+}
 html[data-accent='slate'],
-html[data-accent='sand'],
 html[data-accent='forest'],
 html[data-accent='ocean'],
 html[data-accent='plum'],
 html[data-accent='coral'],
-html[data-accent='bamboo'] {
+html[data-accent='bamboo'],
+html[data-accent='teal'],
+html[data-accent='rose'] {
   --accent-soft: color-mix(in srgb, var(--accent) 12%, var(--surface));
 }
 html[data-theme='dark'][data-accent='snow'] {
@@ -1243,16 +1244,9 @@ html[data-theme='dark'][data-accent='snow'] {
   --accent-soft: #21252c;
   --bg: #0d0f13;
 }
-html[data-theme='dark'][data-accent='mica'] {
-  --accent: #cabdac;
-  --accent-soft: #262219;
-}
 html[data-theme='dark'][data-accent='slate'] {
   --accent: #5b91ff;
   --accent-soft: #17243c;
-}
-html[data-theme='dark'][data-accent='sand'] {
-  --accent: #d7a15a;
 }
 html[data-theme='dark'][data-accent='forest'] {
   --accent: #4bbd92;
@@ -1268,4 +1262,10 @@ html[data-theme='dark'][data-accent='coral'] {
 }
 html[data-theme='dark'][data-accent='bamboo'] {
   --accent: #86b47d;
+}
+html[data-theme='dark'][data-accent='teal'] {
+  --accent: #4fc4bf;
+}
+html[data-theme='dark'][data-accent='rose'] {
+  --accent: #ef7fae;
 }

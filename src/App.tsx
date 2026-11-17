@@ -37,8 +37,8 @@ import { cn, relativeTime } from './lib/utils'
 /** 明暗模式 + 主题色 + 对比度：只改 <html data-*>，CSS 变量接管一切 */
 function ThemeSync() {
   const theme = useStore((s) => s.prefs.theme ?? 'system')
-  const accent = useStore((s) => s.prefs.dashAccent ?? 'mica')
-  const accentCustom = useStore((s) => s.prefs.accentCustom ?? '#6f6659')
+  const accent = useStore((s) => s.prefs.dashAccent ?? 'slate')
+  const accentCustom = useStore((s) => s.prefs.accentCustom ?? '#2f6feb')
   const highContrast = useStore((s) => s.prefs.highContrast ?? false)
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
@@ -405,6 +405,40 @@ const SETTING_LABEL: Record<string, string> = {
   about: '关于存知',
 }
 
+/** 顶栏「结束体验，正式使用」：只在示例体验态出现，固定在保存状态左侧。
+ *  清空示例后短暂延时弹出本地挂载引导，与「从零开始」首次体验一致。 */
+function EndDemoButton() {
+  const demoMode = useStore((s) => s.prefs.demoMode)
+  const toast = useUI((s) => s.toast)
+  if (!demoMode) return null
+  return (
+    <button
+      className="top-demo-btn"
+      onClick={() =>
+        useUI.getState().askConfirm({
+          title: '结束体验，正式使用？',
+          message: '将清空全部示例人脉、待办、互动与纪念日，回到空白工作台。此操作会移除示例数据，且不可撤销。',
+          confirmText: '清空示例，正式开始',
+          cancelText: '再体验一会',
+          danger: true,
+          onConfirm: async () => {
+            await useStore.getState().endDemo()
+            toast('示例已清空，可以正式开始建立你的人脉库了', 'success')
+            // 让空工作台先渲染出来，再弹出「给数据安一个固定的家」
+            window.setTimeout(() => useUI.getState().openMountHint(), 320)
+          },
+        })
+      }
+      title="清空示例数据，从零开始正式使用"
+      aria-label="结束体验，正式使用"
+    >
+      <Sparkles size={13} />
+      <span className="td-full">结束体验，正式使用</span>
+      <span className="td-short">结束体验</span>
+    </button>
+  )
+}
+
 function TopBar() {
   const mobile = useBreakpoint() === 'mobile'
   const route = useUI((s) => s.route)
@@ -441,12 +475,14 @@ function TopBar() {
       ) : (
         /* 桌面端没有标题，状态胶囊落在最左，把工具栏填满 */
         <div className="topbar-status">
+          <EndDemoButton />
           <SavePill />
         </div>
       )}
       <div className="spacer" />
       {mobile && (
         <div className="topbar-status">
+          <EndDemoButton />
           <SavePill />
         </div>
       )}

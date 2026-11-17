@@ -188,15 +188,15 @@ export function Settings() {
 
 /* ================= 外观 ================= */
 const ACCENTS: { key: DashAccent; label: string; color: string }[] = [
-  { key: 'snow', label: '素白', color: '#dfe3ea' },
-  { key: 'mica', label: '云母', color: '#6f6659' },
   { key: 'slate', label: '靛蓝', color: '#2f6feb' },
-  { key: 'sand', label: '暖沙', color: '#a9772c' },
+  { key: 'snow', label: '素白', color: '#dfe3ea' },
   { key: 'forest', label: '松绿', color: '#1e7a58' },
   { key: 'ocean', label: '远海', color: '#1c6ea6' },
   { key: 'plum', label: '梅紫', color: '#7b4a9d' },
   { key: 'coral', label: '珊瑚', color: '#b8553f' },
   { key: 'bamboo', label: '竹青', color: '#4f7a4a' },
+  { key: 'teal', label: '青碧', color: '#12807d' },
+  { key: 'rose', label: '玫红', color: '#c2306b' },
 ]
 
 const THEMES = [
@@ -210,8 +210,8 @@ const DASH_LABEL: Record<string, string> = { todos: '待办事项', reminders: '
 function AppearanceSettings() {
   const isMobileLayout = useBreakpoint() === 'mobile'
   const theme = useStore((s) => s.prefs.theme ?? 'system')
-  const accent = useStore((s) => s.prefs.dashAccent ?? 'mica')
-  const accentCustom = useStore((s) => s.prefs.accentCustom ?? '#6f6659')
+  const accent = useStore((s) => s.prefs.dashAccent ?? 'slate')
+  const accentCustom = useStore((s) => s.prefs.accentCustom ?? '#2f6feb')
   const highContrast = useStore((s) => s.prefs.highContrast ?? false)
   const mobileOrder = useStore((s) => s.prefs.dashMobileOrder)
   const setPrefs = useStore((s) => s.setPrefs)
@@ -288,7 +288,7 @@ function AppearanceSettings() {
           </label>
         </div>
         {/* 上面那行已经说了「会跟着变」，这里只说默认值好坏，不复述效果 */}
-        <p className="field-hint accent-hint">默认「素白」：几乎无彩的冷灰，白底上最不抢内容。</p>
+        <p className="field-hint accent-hint">默认「靛蓝」：清爽利落的商务蓝，按钮与图标都跟着它变。</p>
       </div>
 
       {/* 提高对比度：把文字、描边、浅底都加深一档，强光下更好认 */}

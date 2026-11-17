@@ -2085,3 +2085,104 @@ html[data-theme='dark'] .mount-hint-warn {
   background: color-mix(in srgb, #f0b45a 12%, var(--surface));
   color: #f0b45a;
 }
+
+/* ================================================================================
+   v3.1 · 三卡标题栏统一 + 顶栏结束体验按钮 + 主题色方案调整
+   ----------------------------------------------------------------------------
+   1. 三卡标题栏：图标统一主题色、尺寸对齐右侧文字（20px），数字徽标改红圈白字；
+   2. 结束体验按钮从页头移到顶栏「文件保存状态」左侧，醒目主题色，全页常驻；
+   3. 主题色默认改靛蓝、删云母/暖沙、增青碧/玫红（CSS 见 base.css，选项见 Settings）。
+   ================================================================================ */
+
+/* ---------------- 1. 三卡标题栏 ---------------- */
+/* 1.1 图标统一用主题色：覆盖 v3.0 的三色分色（todos/reminders/anniversaries） */
+.dash-page .dash-module[data-module='todos'] .dash-module-icon,
+.dash-page .dash-module[data-module='reminders'] .dash-module-icon,
+.dash-page .dash-module[data-module='anniversaries'] .dash-module-icon {
+  background: var(--accent) !important;
+  box-shadow: 0 2px 6px -2px color-mix(in srgb, var(--accent) 55%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+}
+/* 1.2 图标高度对齐右侧标题文字：h2 行高 20px，图标收成 20×20 的方块 */
+.dash-page .dash-module-head {
+  min-height: 40px;
+}
+.dash-page .dash-module-icon {
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 6px !important;
+}
+.dash-page .dash-module-icon svg {
+  width: 13px !important;
+  height: 13px !important;
+}
+.dash-page .dash-module-head h2 {
+  line-height: 20px;
+}
+/* 1.3 数字徽标：红底白字圆胶囊，醒目 */
+.dash-page .dash-module-head .badge,
+.dash-page .dash-module-head .badge.soft {
+  background: var(--danger) !important;
+  color: #fff !important;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  font-weight: 700;
+  box-shadow: none !important;
+}
+
+/* ---------------- 2. 顶栏「结束体验」按钮 ---------------- */
+.topbar-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.top-demo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  white-space: nowrap;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.16), 0 6px 16px -8px color-mix(in srgb, var(--accent) 80%, transparent);
+  cursor: pointer;
+  transition: filter var(--dur-apple) var(--ease-apple), transform var(--dur-apple) var(--ease-apple);
+}
+.top-demo-btn:active {
+  transform: scale(0.97);
+}
+@media (hover: hover) {
+  .top-demo-btn:hover {
+    filter: brightness(1.07);
+  }
+}
+@media (max-width: 767px) {
+  .top-demo-btn {
+    height: 30px;
+    padding: 0 9px;
+    font-size: 11px;
+    border-radius: 9px;
+  }
+  .top-demo-btn .td-full {
+    display: none;
+  }
+  .top-demo-btn .td-short {
+    display: inline;
+  }
+}
+@media (min-width: 768px) {
+  .top-demo-btn .td-full {
+    display: inline;
+  }
+  .top-demo-btn .td-short {
+    display: none;
+  }
+}
