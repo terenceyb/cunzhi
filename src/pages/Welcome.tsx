@@ -1,4 +1,5 @@
 import React from 'react'
+import { ChevronRight, FolderOpen, PenLine, Sparkles } from 'lucide-react'
 import { useStore } from '../store'
 import { useUI } from '../ui'
 import { Logo } from '../components/ui'
@@ -66,18 +67,17 @@ export function Welcome() {
 
   return (
     <div className="land">
+      <div className="land-aura" aria-hidden="true" />
+
       <div className="land-inner">
         <div className="land-brand">
-          <Logo size={84} />
+          <Logo size={76} />
           <h1 className="land-name">存知</h1>
           <p className="land-sub">本地优先的人脉工作台</p>
         </div>
 
-        <p className="land-poem">
-          海内存知己，
-          <br />
-          天涯若比邻。
-        </p>
+        {/* 一行放完，窄屏靠 clamp 自动收字号，绝不折行 */}
+        <p className="land-poem">海内存知己，天涯若比邻。</p>
 
         <InlineTextMorph
           className="land-morph"
@@ -88,7 +88,7 @@ export function Welcome() {
           pills={morphPills}
         />
 
-        <div className="land-actions">
+        <div className="land-cta">
           <button
             className="land-btn land-btn--primary"
             onClick={async () => {
@@ -102,22 +102,33 @@ export function Welcome() {
               }
             }}
           >
-            打开数据包
+            <FolderOpen size={17} />
+            <span>打开数据包</span>
           </button>
+
           <button
-            className="land-btn"
+            className="land-btn land-btn--plain"
             onClick={() => {
               setPrefs({ landingSeen: true })
               navigate('dashboard')
             }}
           >
-            从零开始
+            <PenLine size={17} />
+            <span>从零开始</span>
+          </button>
+
+          {/* 首次使用只有这一条路是「点一下就能看到全部功能」，所以给它最大的面积 */}
+          <button className="land-demo" onClick={startDemo}>
+            <span className="land-demo-badge" aria-hidden="true">
+              <Sparkles size={17} />
+            </span>
+            <span className="land-demo-text">
+              <span className="land-demo-title">先看看演示数据</span>
+              <span className="land-demo-sub">第一次使用？先用它体验全部功能</span>
+            </span>
+            <ChevronRight size={16} className="land-demo-arrow" aria-hidden="true" />
           </button>
         </div>
-
-        <button className="land-link" onClick={startDemo}>
-          先看看演示数据
-        </button>
 
         <p className="land-foot">
           数据只写在你选中的那个文件里 · 不用注册 · 不上传服务器

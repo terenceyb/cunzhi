@@ -100,7 +100,13 @@ export function Settings() {
   /* 每个分组的正文，桌面与移动端共用同一份 */
   const renderPanel = (key: string) => (
     <>
-      {key === 'profile' && <ProfilePage />}
+      {key === 'profile' && (
+        <div className="settings-section">
+          <h2>我的信息</h2>
+          <p className="desc">这张名片只存在你的数据包里，导出时一起带走。</p>
+          <ProfilePage embedded />
+        </div>
+      )}
       {key === 'appearance' && <AppearanceSettings />}
       {key === 'fields' && <FieldsSettings />}
       {key === 'package' && <PackageSettings />}

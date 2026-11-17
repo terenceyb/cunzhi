@@ -6,7 +6,8 @@ import { Avatar, CopyButton, PageHead } from '../components/ui'
 import { EMAIL_RE } from '../components/FieldInput'
 import { cn, formatDate } from '../lib/utils'
 
-export function ProfilePage() {
+/** embedded：被「设置 → 我的信息」内嵌时不再自带页面容器与大标题 */
+export function ProfilePage({ embedded = false }: { embedded?: boolean } = {}) {
   const profile = useStore((s) => s.settings.profile)
   const attachments = useStore((s) => s.attachments)
   const updateProfile = useStore((s) => s.updateProfile)
@@ -17,10 +18,10 @@ export function ProfilePage() {
   const avatar = profile.avatarAttachmentId ? attachments[profile.avatarAttachmentId] : undefined
 
   return (
-    <div className="page">
-      <PageHead title="我的信息" />
+    <div className={cn('page', embedded && 'page-embed')}>
+      {!embedded && <PageHead title="我的名片" desc="这些信息会随数据包一起带走，不进任何服务器。" />}
 
-      <div className="card pad" style={{ marginBottom: 16, background: 'linear-gradient(160deg,#fff,#f7f8fa)' }}>
+      <div className="card pad" style={{ marginBottom: 16, background: 'linear-gradient(160deg, var(--surface), var(--surface-2))' }}>
         <div className="row" style={{ gap: 14, alignItems: 'flex-start' }}>
           <div style={{ position: 'relative' }}>
             <Avatar name={profile.nickname || '我'} src={avatar?.data} size={64} color="#131619" />

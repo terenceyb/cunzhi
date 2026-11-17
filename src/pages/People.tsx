@@ -207,6 +207,16 @@ export function People() {
       }}
     >
       <div className="people-list-col">
+        {/* 桌面端的页面大标题：与首页、互动页共用同一套「一个大标题 + 一句灰字」的节奏。
+            移动端顶栏已经写着「人脉」，这里用 CSS 隐藏，避免同屏两个标题 */}
+        <div className="people-head">
+          <div className="hello">人脉</div>
+          <div className="sub">
+            共 {store.persons.length} 位人脉
+            {rows.length !== store.persons.length ? ` · 当前筛选出 ${rows.length} 位` : ''}
+            {reminders.length > 0 ? ` · ${reminders.length} 位待联系` : ''}
+          </div>
+        </div>
         <div className="people-toolbar" ref={toolbarRef}>
           <div className="pt-main">
             <div className="search-box pt-search">

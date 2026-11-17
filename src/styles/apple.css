@@ -1,0 +1,1033 @@
+/* ================================================================================
+   v2.6 · Apple 设计语言覆盖层
+   ----------------------------------------------------------------------------
+   这一层只改「看得见的东西」，不动任何交互逻辑：调色板、圆角、发丝线、阴影、
+   字号节奏、控件形态与留白。放在最后加载，同特异性下覆盖前几轮的写法，
+   所以之前的页面代码一行都不用改。
+
+   几条原则（都是 Apple 那套东西的可执行版）：
+   1. 层次靠「底色差 + 发丝线 + 极淡投影」做，不靠 1px 实线边框。边框一多，
+      页面就变成后台系统；留白一多，才像产品。
+   2. 一个页面只有一个视觉主角（大标题），其余全部降一级。
+   3. 圆角分三档：控件 10、卡片 18、浮层 24。同一页里不出现第四种。
+   4. 数字用 tabular-nums 对齐；标题一律负字距。
+   5. 动效统一 320ms cubic-bezier(.32,.72,0,1)，只动 transform / opacity。
+   ================================================================================ */
+
+/* ---------------- 1. 变量：调色板、圆角、材质 ---------------- */
+:root {
+  --bg: #f2f2f7;
+  --surface: #ffffff;
+  --surface-2: #f7f7fa;
+  --surface-3: #ececf1;
+  --text: #1c1c1e;
+  --text-2: #48484a;
+  --text-3: #8a8a8e;
+  --line: rgba(60, 60, 67, 0.1);
+  --line-strong: rgba(60, 60, 67, 0.18);
+
+  /* 卡片与控件的「边缘」：半像素描边 + 一层薄影，替代实线边框 */
+  --card-edge: rgba(17, 22, 30, 0.05);
+  --card-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 10px 26px -18px rgba(16, 24, 40, 0.18);
+  --card-shadow-hover: 0 1px 2px rgba(16, 24, 40, 0.05), 0 18px 40px -22px rgba(16, 24, 40, 0.26);
+  --ctl-edge: rgba(17, 22, 30, 0.08);
+
+  --radius-xs: 9px;
+  --radius-sm: 11px;
+  --radius: 16px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+
+  --ease-apple: cubic-bezier(0.32, 0.72, 0, 1);
+  --dur-apple: 320ms;
+
+  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro SC", "PingFang SC",
+    "Helvetica Neue", sans-serif;
+}
+
+html[data-accent='snow'] {
+  --bg: #f2f2f7;
+  --surface-2: #f7f7fa;
+  --surface-3: #ececf1;
+}
+
+html[data-theme='dark'] {
+  --bg: #000000;
+  --surface: #1c1c1e;
+  --surface-2: #242426;
+  --surface-3: #2c2c2e;
+  --text: #f5f5f7;
+  --text-2: #c7c7cc;
+  --text-3: #8e8e93;
+  --line: rgba(255, 255, 255, 0.1);
+  --line-strong: rgba(255, 255, 255, 0.2);
+  --card-edge: rgba(255, 255, 255, 0.07);
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 10px 26px -18px rgba(0, 0, 0, 0.9);
+  --card-shadow-hover: 0 1px 2px rgba(0, 0, 0, 0.55), 0 18px 40px -22px rgba(0, 0, 0, 1);
+  --ctl-edge: rgba(255, 255, 255, 0.09);
+}
+html[data-theme='dark'][data-accent='snow'] {
+  --bg: #000000;
+}
+
+/* 之前那层「全局强调色光晕」在素白主题下把整页涂成灰蓝色，Apple 的做法是
+   背景几乎无彩、颜色只出现在内容上。这里收成一层几乎看不见的顶光。 */
+body {
+  background-image: radial-gradient(
+    70% 44% at 50% -12%,
+    color-mix(in srgb, var(--accent) 5%, transparent),
+    transparent 72%
+  );
+  font-size: 14px;
+  letter-spacing: -0.006em;
+}
+
+/* ---------------- 2. 外壳：侧栏 / 顶栏 / 内容轴 ---------------- */
+.sidebar {
+  width: 244px;
+  background: color-mix(in srgb, var(--surface) 55%, var(--bg));
+  border-right: 1px solid var(--line);
+  padding: 0 10px 12px;
+}
+html[data-theme='dark'] .sidebar {
+  background: color-mix(in srgb, var(--surface) 70%, var(--bg));
+}
+.sidebar-head {
+  height: 54px;
+}
+.brand {
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+}
+.brand .logo-mark {
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.14);
+}
+.nav-group {
+  padding: 14px 10px 5px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-3);
+}
+.nav-item {
+  height: 33px;
+  padding: 0 9px;
+  border-radius: 9px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text-2);
+  gap: 10px;
+}
+.nav-item.active {
+  background: var(--surface);
+  color: var(--text);
+  font-weight: 560;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.07), 0 0 0 0.5px var(--card-edge);
+}
+.nav-item.active .count {
+  color: var(--text-3);
+}
+.nav-item .count {
+  font-size: 11.5px;
+  font-weight: 500;
+}
+.sidebar-profile {
+  border: 0;
+  background: var(--surface);
+  border-radius: 12px;
+  box-shadow: 0 0 0 0.5px var(--card-edge), 0 1px 2px rgba(16, 24, 40, 0.05);
+  padding: 8px;
+}
+@media (hover: hover) {
+  .sidebar-profile:hover {
+    background: var(--surface);
+    box-shadow: 0 0 0 0.5px var(--card-edge), 0 4px 14px -8px rgba(16, 24, 40, 0.24);
+  }
+}
+
+/* 顶栏：77% 不透明的毛玻璃，滚动时下面的内容透一点上来，像 iOS 的导航栏 */
+.topbar {
+  height: 54px;
+  padding: 0 18px;
+  gap: 8px;
+  background: color-mix(in srgb, var(--bg) 76%, transparent);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border-bottom: 1px solid var(--line);
+}
+.topbar h1 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--text-2);
+}
+.topbar-brand span {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+.save-pill {
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  font-size: 11.5px;
+  color: var(--text-2);
+}
+.save-pill.error {
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+.content {
+  background: var(--bg);
+}
+.page {
+  padding: 24px 28px 56px;
+  max-width: 1100px;
+}
+
+/* 大标题：整页唯一的主角。字重 700 而不是 600 —— Apple 的标题是「压得住」的 */
+.dash-hero {
+  align-items: flex-end;
+  gap: 16px;
+  padding: 6px 0 22px;
+}
+.dash-hero .hello {
+  font-family: var(--font-display);
+  font-size: clamp(23px, 1.5vw + 13px, 30px);
+  font-weight: 700;
+  line-height: 1.16;
+  letter-spacing: -0.032em;
+}
+.dash-hero .sub {
+  margin-top: 6px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-3);
+}
+
+/* ---------------- 3. 控件 ---------------- */
+.btn {
+  height: 34px;
+  padding: 0 13px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 510;
+  border: 1px solid transparent;
+  background: var(--surface);
+  box-shadow: 0 0 0 0.5px var(--ctl-edge), 0 1px 2px rgba(16, 24, 40, 0.05);
+  transition: transform 120ms var(--ease-apple), box-shadow 160ms var(--ease-apple),
+    background-color 160ms var(--ease-apple);
+}
+.btn.sm {
+  height: 29px;
+  padding: 0 10px;
+  font-size: 12.5px;
+  border-radius: 9px;
+}
+.btn.lg {
+  height: 44px;
+  padding: 0 20px;
+  font-size: 14.5px;
+  border-radius: 12px;
+}
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.btn.primary {
+  background: var(--text);
+  color: var(--on-inverse);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.18), 0 8px 18px -12px rgba(16, 24, 40, 0.55);
+}
+.btn.accent {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.14), 0 8px 18px -12px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+.btn.ghost,
+.btn.icon,
+.btn.icon.sm {
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-2);
+}
+.btn.subtle {
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  box-shadow: none;
+}
+.btn.danger {
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  color: var(--danger);
+  box-shadow: none;
+}
+.btn:disabled {
+  opacity: 0.4;
+}
+@media (hover: hover) {
+  .btn:hover {
+    background: var(--surface);
+    box-shadow: 0 0 0 0.5px var(--ctl-edge), 0 4px 12px -8px rgba(16, 24, 40, 0.3);
+  }
+  .btn.ghost:hover,
+  .btn.icon:hover,
+  .btn.icon.sm:hover {
+    background: color-mix(in srgb, var(--text) 6%, transparent);
+    box-shadow: none;
+    color: var(--text);
+  }
+  .btn.primary:hover {
+    background: color-mix(in srgb, var(--text) 86%, var(--surface));
+  }
+  .btn.subtle:hover {
+    background: color-mix(in srgb, var(--text) 9%, transparent);
+  }
+}
+
+.input,
+.textarea,
+select.input {
+  height: 36px;
+  padding: 0 11px;
+  border-radius: 10px;
+  /* 输入框的边界要比卡片明显一档：卡片可以「没有边」，控件不行，
+     否则一行行输入框会飘在白底上，看不出哪里能点 */
+  border: 1px solid color-mix(in srgb, var(--text) 15%, transparent);
+  background: var(--surface);
+  font-size: 13.5px;
+  letter-spacing: -0.004em;
+  transition: border-color 160ms var(--ease-apple), box-shadow 160ms var(--ease-apple);
+}
+.input.sm {
+  height: 30px;
+  font-size: 12.5px;
+  border-radius: 9px;
+}
+.input:focus,
+.textarea:focus {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+  box-shadow: 0 0 0 3.5px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.input.invalid {
+  border-color: color-mix(in srgb, var(--danger) 60%, transparent);
+  background: var(--surface);
+  box-shadow: 0 0 0 3.5px color-mix(in srgb, var(--danger) 10%, transparent);
+}
+.field-label {
+  font-size: 12.5px;
+  font-weight: 550;
+  color: var(--text-2);
+}
+.field-hint {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+/* 分段控件：iOS 的底槽 + 会「浮起来」的白滑块 */
+.segmented {
+  padding: 2px;
+  gap: 0;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+.segmented button {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-2);
+}
+.segmented button.active {
+  background: var(--surface);
+  font-weight: 600;
+  box-shadow: 0 3px 8px rgba(16, 24, 40, 0.12), 0 3px 1px rgba(16, 24, 40, 0.04);
+}
+html[data-theme='dark'] .segmented button.active {
+  background: #48484a;
+}
+
+.switch {
+  width: 42px;
+  height: 26px;
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--text) 14%, transparent);
+}
+.switch::after {
+  width: 22px;
+  height: 22px;
+  box-shadow: 0 2px 4px rgba(16, 24, 40, 0.2);
+  transition: transform 240ms var(--ease-apple);
+}
+.switch.on::after {
+  transform: translateX(16px);
+}
+.switch.sm {
+  width: 38px;
+  height: 23px;
+}
+.switch.sm::after {
+  width: 19px;
+  height: 19px;
+}
+.switch.sm.on::after {
+  transform: translateX(15px);
+}
+
+.chip {
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 500;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  color: var(--text-2);
+}
+.chip.accent {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: color-mix(in srgb, var(--accent) 88%, var(--text));
+}
+.chip.outline {
+  background: transparent;
+  border-color: var(--line);
+}
+.chip.sm {
+  height: 20px;
+  font-size: 11px;
+  border-radius: 6px;
+}
+
+.card,
+.set-card,
+.dash-module,
+.welcome-card {
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 0 0 0.5px var(--card-edge), var(--card-shadow);
+}
+.card {
+  background: var(--surface);
+}
+
+/* 表格：Apple 的分组表 —— 行高给足、分隔线缩进、表头小字 */
+table.data th {
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-3);
+  text-transform: none;
+}
+table.data td {
+  font-size: 13px;
+}
+
+/* 浮层玻璃：面板底色提一点不透明度，正文才不会被背后的页面透花；
+   头部单独关掉透明度，否则滚动时内容会从标题后面穿过去 */
+:root {
+  --panel-a: rgba(255, 255, 255, 0.88);
+  --panel-b: rgba(255, 255, 255, 0.72);
+}
+html[data-theme='dark'] {
+  --panel-a: rgba(52, 54, 60, 0.84);
+  --panel-b: rgba(26, 28, 33, 0.76);
+}
+.overlay {
+  background: rgba(12, 14, 18, 0.3);
+  -webkit-backdrop-filter: blur(6px) saturate(115%);
+  backdrop-filter: blur(6px) saturate(115%);
+}
+.modal-header,
+.sheet > .modal-header,
+.settings-detail-head {
+  background: color-mix(in srgb, var(--surface) 52%, transparent);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  backdrop-filter: blur(16px) saturate(160%);
+}
+
+/* 菜单 / 弹窗：圆角再大一档，玻璃再透一点 */
+.menu {
+  border-radius: 14px;
+  padding: 5px;
+  border-color: var(--panel-line);
+}
+.menu button {
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+.modal {
+  border-radius: var(--radius-xl);
+  max-width: 512px;
+}
+.modal.wide {
+  max-width: 780px;
+}
+.modal-header {
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--panel-hair);
+}
+.modal-header h2 {
+  font-size: 16.5px;
+  font-weight: 650;
+  letter-spacing: -0.022em;
+}
+.modal-body {
+  padding: 18px 20px;
+}
+.modal-footer {
+  padding: 14px 20px;
+  gap: 8px;
+}
+.sheet {
+  border-radius: 22px 22px 0 0;
+}
+.toast {
+  border-radius: 14px;
+  font-size: 13px;
+  padding: 10px 16px;
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* 去掉那一圈「强调色竖条」：Apple 用留白和字重分节，不用装饰条 */
+.section-title h3::before,
+.detail-section-head h4::before {
+  display: none;
+}
+.section-title h3 {
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: -0.018em;
+}
+
+/* ---------------- 4. 工作台 ---------------- */
+.dash-module {
+  border-radius: var(--radius-lg);
+}
+.dash-module-head {
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.dash-module-head h2 {
+  font-size: 14.5px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+.dash-module-body {
+  padding: 8px;
+}
+.dash-module-icon {
+  border-radius: 10px;
+}
+
+/* ---------------- 5. 互动记录 ---------------- */
+/* .wide 的 max-width:none 特异性更高，这里必须带上 .page 才能收窄 */
+.page.ix-page {
+  padding: 24px 28px 56px;
+  /* 收窄一档：卡片行最长约 850px，中文一行 40 字左右，眼睛不用来回扫 */
+  max-width: 1020px;
+}
+.ix-toolbar {
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.ix-ranges {
+  padding: 2px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+}
+.ix-range {
+  height: 26px;
+  border-radius: 7px;
+  font-size: 12px;
+}
+.ix-range.on {
+  box-shadow: 0 3px 8px rgba(16, 24, 40, 0.12), 0 3px 1px rgba(16, 24, 40, 0.04);
+}
+.ix-stream > .ix-group {
+  grid-template-columns: 88px minmax(0, 1fr);
+  column-gap: 18px;
+}
+.ix-row {
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  box-shadow: 0 0 0 0.5px var(--card-edge), 0 1px 2px rgba(16, 24, 40, 0.03);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ix-row:hover {
+    border-color: transparent;
+    box-shadow: 0 0 0 0.5px var(--card-edge), 0 10px 26px -18px rgba(16, 24, 40, 0.28);
+  }
+}
+.ix-name {
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.ix-content {
+  font-size: 13px;
+  line-height: 1.62;
+  color: var(--text-2);
+}
+.ix-day-main {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------- 6. 设置 ---------------- */
+/* 内嵌进设置的「我的信息」不再自带页面内边距与标题 */
+.page-embed {
+  padding: 0;
+  max-width: none;
+}
+
+/* 主题卡与色点：选中态从「换底色」改成「一圈实心环」，白底上认得出来 */
+.theme-opt {
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 0 0 0.5px var(--card-edge), 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+.theme-opt.on {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 68%, transparent),
+    0 8px 18px -14px rgba(16, 24, 40, 0.3);
+}
+.accent-dot {
+  border-color: transparent;
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: 0 0 0 0.5px var(--card-edge), 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+.accent-dot.on {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 68%, transparent);
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+}
+
+.settings-layout {
+  gap: 0;
+}
+.settings-nav {
+  background: transparent;
+  border-right: 1px solid var(--line);
+}
+.settings-nav .nav-item {
+  height: 34px;
+  border-radius: 9px;
+}
+.settings-content {
+  padding: 26px 30px 56px;
+}
+.settings-section > h2,
+.settings-content h2 {
+  letter-spacing: -0.024em;
+}
+.set-card {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+.set-card-head {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.set-card-body {
+  padding: 4px 0;
+}
+/* 设置项行高与缩进：像 iOS 的 grouped list，行与行之间只留发丝线 */
+.set-row {
+  border-bottom: 1px solid var(--line);
+}
+.set-row:last-child {
+  border-bottom: 0;
+}
+
+/* ---------------- 7. 人脉 ---------------- */
+.people-toolbar {
+  padding-block: 10px;
+  /* 与下方卡片流同一条轴：卡片 660 居中，工具栏内容也跟着缩进到 660，
+     否则搜索框贴左、卡片居中，两套边线错开着，一眼就看出没对齐 */
+  padding-inline: max(18px, calc((100% - 640px) / 2));
+  background: transparent;
+  border-bottom: 1px solid var(--line);
+}
+.people-head {
+  padding-block: 22px 4px;
+  padding-inline: max(18px, calc((100% - 640px) / 2));
+}
+.people-head .hello {
+  font-family: var(--font-display);
+  font-size: clamp(23px, 1.5vw + 13px, 29px);
+  font-weight: 700;
+  letter-spacing: -0.032em;
+  line-height: 1.16;
+}
+.people-head .sub {
+  margin-top: 5px;
+  font-size: 13px;
+  color: var(--text-3);
+}
+.people-scroll {
+  padding: 18px;
+}
+.card-flow {
+  max-width: 640px;
+  gap: 14px;
+}
+@media (min-width: 1200px) {
+  .card-flow {
+    max-width: 640px;
+  }
+}
+/* 名片卡堆与工具栏同一条轴：两处都是 640 居中，边线才对得上 */
+.w2-wallet--stack {
+  max-width: 640px;
+}
+
+/* ---------------- 8. 移动端 ---------------- */
+@media (max-width: 767px) {
+  body {
+    font-size: 15px;
+  }
+  .topbar {
+    height: 52px;
+    padding: 0 14px;
+  }
+  .topbar h1 {
+    font-size: 17px;
+    font-weight: 650;
+    color: var(--text);
+    letter-spacing: -0.024em;
+  }
+  .page,
+  .ix-page {
+    padding: 16px 16px calc(96px + var(--safe-b));
+  }
+  .dash-hero {
+    padding: 6px 2px 18px;
+  }
+  .dash-hero .hello {
+    font-size: 26px;
+  }
+  .dash-hero .sub {
+    font-size: 13px;
+  }
+  .dash-module {
+    border-radius: 18px;
+  }
+  .people-head {
+    display: none;
+  }
+  .people-toolbar {
+    padding: 8px 14px;
+  }
+  .people-scroll {
+    padding: 14px;
+  }
+  .card-flow {
+    max-width: none;
+  }
+  .ix-row {
+    border-radius: 15px;
+  }
+  .settings-detail-body {
+    padding-bottom: calc(96px + var(--safe-b));
+  }
+  .modal {
+    border-radius: 22px;
+  }
+  /* 触屏上输入框统一 44 高：低于这个尺寸，点起来要瞄 */
+  .input,
+  .textarea,
+  select.input {
+    height: 44px;
+    font-size: 16px;
+    border-radius: 12px;
+  }
+  .input.sm {
+    height: 38px;
+    font-size: 15px;
+  }
+  /* 顶栏在手机上只留一个状态灯：三个图标 + 一段文字的排布会挤掉标题 */
+  .save-pill {
+    width: 30px;
+    padding: 0;
+    justify-content: center;
+    /* 手机上只留一颗状态灯：有底色的胶囊会被误读成按钮 */
+    background: transparent;
+  }
+  .save-pill > span:not(.led) {
+    display: none;
+  }
+  .save-pill.error,
+  .save-pill.dirty {
+    width: auto;
+    padding: 0 10px;
+  }
+  .save-pill.error > span:not(.led),
+  .save-pill.dirty > span:not(.led) {
+    display: inline;
+  }
+}
+
+/* ---------------- 9. 启动页 ---------------- */
+/* 一列到底、全部居中：所有元素的水平中心都落在同一条竖轴上 */
+.land {
+  position: relative;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: clamp(40px, 8vh, 88px) 22px;
+  background: var(--bg);
+}
+/* 顶部一层极淡的主题色光，页面才不显得是「一张白纸」 */
+.land-aura {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(52% 38% at 50% -6%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 72%),
+    radial-gradient(40% 30% at 50% 108%, color-mix(in srgb, var(--accent) 6%, transparent), transparent 70%);
+}
+html[data-theme='dark'] .land-aura {
+  background: radial-gradient(52% 38% at 50% -6%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 74%);
+}
+.land-inner {
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  /* 上下自动外边距：内容比视口矮时严格垂直居中，高时自然从顶部开始 */
+  margin: auto;
+}
+
+.land-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+.land-brand .logo-mark {
+  border-radius: 18px;
+  box-shadow: 0 12px 30px -14px rgba(16, 24, 40, 0.55), 0 0 0 0.5px rgba(17, 22, 30, 0.06);
+}
+.land-name {
+  margin-top: 16px;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  color: var(--text);
+}
+.land-sub {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 450;
+  letter-spacing: 0.01em;
+  color: var(--text-3);
+}
+
+/* 一行放完：字号跟着视口走，最窄的 320px 屏也不会折行 */
+.land-poem {
+  margin: clamp(24px, 4.6vh, 40px) 0 0;
+  font-family: var(--font-display);
+  font-size: clamp(21px, 6.1vw, 46px);
+  font-weight: 640;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  white-space: nowrap;
+  text-wrap: nowrap;
+}
+
+.land-morph {
+  width: 100%;
+  max-width: 540px;
+  margin: 8px 0 0;
+  --itm-ink: var(--text-2);
+  --itm-pill: color-mix(in srgb, var(--text) 8%, transparent);
+  --itm-pill-hover: color-mix(in srgb, var(--text) 12%, transparent);
+  --itm-pill-active: color-mix(in srgb, var(--text) 18%, transparent);
+  --itm-focus: color-mix(in srgb, var(--text) 46%, transparent);
+  --itm-mark-bg: var(--surface);
+  --itm-mark-line: var(--text);
+}
+
+/* 三个入口：同宽、同圆角、同高度节奏，靠「材质」而不是「大小」区分主次 */
+.land-cta {
+  width: 100%;
+  max-width: 360px;
+  margin-top: clamp(20px, 3.6vh, 32px);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+.land-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 50px;
+  padding: 0 18px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 590;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid transparent;
+  box-shadow: 0 0 0 0.5px var(--card-edge), 0 1px 2px rgba(16, 24, 40, 0.05);
+  transition: transform 130ms var(--ease-apple), box-shadow 200ms var(--ease-apple),
+    background-color 200ms var(--ease-apple);
+}
+.land-btn > svg {
+  flex: 0 0 auto;
+  opacity: 0.72;
+}
+.land-btn:active {
+  transform: scale(0.975);
+}
+.land-btn--primary {
+  background: var(--text);
+  color: var(--on-inverse);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.2), 0 14px 28px -16px rgba(16, 24, 40, 0.6);
+}
+.land-btn--primary > svg {
+  opacity: 0.88;
+}
+.land-btn--plain {
+  color: var(--text);
+  /* 白底在白背景上必须靠一圈明确的描边立住，否则看着像禁用态 */
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 16%, transparent), 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+@media (hover: hover) and (pointer: fine) {
+  .land-btn:hover {
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 16%, transparent), 0 8px 20px -12px rgba(16, 24, 40, 0.32);
+  }
+  .land-btn--primary:hover {
+    background: color-mix(in srgb, var(--text) 88%, var(--surface));
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.22), 0 18px 34px -16px rgba(16, 24, 40, 0.62);
+  }
+}
+
+/* 演示数据：三行里唯一给出「这是什么、为什么点」的入口，所以做成一张卡 */
+.land-demo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 68px;
+  padding: 12px 14px;
+  text-align: left;
+  border-radius: 16px;
+  background: var(--surface);
+  border: 1px solid transparent;
+  box-shadow: 0 0 0 0.5px var(--card-edge), 0 1px 2px rgba(16, 24, 40, 0.04),
+    0 12px 26px -18px rgba(16, 24, 40, 0.2);
+  transition: transform 130ms var(--ease-apple), box-shadow 200ms var(--ease-apple);
+}
+.land-demo:active {
+  transform: scale(0.985);
+}
+.land-demo-badge {
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  color: color-mix(in srgb, var(--accent) 78%, var(--text));
+  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
+  box-shadow: inset 0 0 0 0.5px color-mix(in srgb, var(--accent) 18%, transparent);
+}
+.land-demo-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.land-demo-title {
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.014em;
+  color: var(--text);
+}
+.land-demo-sub {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-3);
+}
+.land-demo-arrow {
+  flex: 0 0 auto;
+  color: var(--text-3);
+  transition: transform 200ms var(--ease-apple);
+}
+@media (hover: hover) and (pointer: fine) {
+  .land-demo:hover {
+    box-shadow: 0 0 0 0.5px var(--card-edge), 0 16px 32px -18px rgba(16, 24, 40, 0.3);
+  }
+  .land-demo:hover .land-demo-arrow {
+    transform: translateX(2px);
+  }
+}
+
+.land-foot {
+  margin-top: clamp(20px, 3.4vh, 30px);
+  font-size: 11.5px;
+  line-height: 1.7;
+  color: var(--text-3);
+  max-width: 400px;
+}
+
+@media (max-width: 767px) {
+  .land {
+    padding: 28px 20px calc(32px + var(--safe-b));
+        align-items: center;
+  }
+  .land-brand .logo-mark {
+    border-radius: 16px;
+  }
+  .land-name {
+    font-size: 25px;
+    margin-top: 13px;
+  }
+  .land-poem {
+    margin-top: 22px;
+  }
+  .land-morph {
+    max-width: 100%;
+  }
+  .land-cta {
+    max-width: none;
+  }
+  .land-btn {
+    height: 48px;
+  }
+  .land-foot {
+    font-size: 11px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .land-btn,
+  .land-demo,
+  .land-demo-arrow {
+    transition-duration: 1ms;
+  }
+}
