@@ -105,6 +105,26 @@ export function Welcome() {
         />
 
         <div className="land-cta">
+          {/* 首次使用只有这一条路是「点一下就能看到全部功能」，所以放在最上面 */}
+          <button className="land-demo" onClick={startDemo}>
+            <span className="land-demo-badge" aria-hidden="true">
+              <Sparkles size={17} />
+            </span>
+            <span className="land-demo-text">
+              <span className="land-demo-title">先看看演示数据</span>
+              <span className="land-demo-sub">第一次使用？先用它体验全部功能</span>
+            </span>
+            <ChevronRight size={16} className="land-demo-arrow" aria-hidden="true" />
+          </button>
+
+          <button
+            className="land-btn land-btn--plain"
+            onClick={startFresh}
+          >
+            <PenLine size={17} />
+            <span>从零开始</span>
+          </button>
+
           <button
             className="land-btn land-btn--primary"
             onClick={async () => {
@@ -119,27 +139,7 @@ export function Welcome() {
             }}
           >
             <FolderOpen size={17} />
-            <span>打开数据包</span>
-          </button>
-
-          <button
-            className="land-btn land-btn--plain"
-            onClick={startFresh}
-          >
-            <PenLine size={17} />
-            <span>从零开始</span>
-          </button>
-
-          {/* 首次使用只有这一条路是「点一下就能看到全部功能」，所以给它最大的面积 */}
-          <button className="land-demo" onClick={startDemo}>
-            <span className="land-demo-badge" aria-hidden="true">
-              <Sparkles size={17} />
-            </span>
-            <span className="land-demo-text">
-              <span className="land-demo-title">先看看演示数据</span>
-              <span className="land-demo-sub">第一次使用？先用它体验全部功能</span>
-            </span>
-            <ChevronRight size={16} className="land-demo-arrow" aria-hidden="true" />
+            <span>打开本地数据包</span>
           </button>
         </div>
 
