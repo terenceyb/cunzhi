@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { ChevronRight, Phone } from 'lucide-react'
 import type { DeriveCtx, PersonMeta } from '../lib/derive'
 import { buildPersonMeta } from '../lib/derive'
@@ -25,73 +25,6 @@ function buildMeta(p: Person, ctx: DeriveCtx): WalletMeta {
    露出的部分是每张卡的上半截（信息区），所以名字与单位职务都放在卡片最上面，
    露出的高度 = 上内边距 12 + 姓名 20 + 间距 3 + 单位职务 16 + 12 —— 与「姓名到卡上沿」等距。
 --------------------------------------------------------------------------- */
-
-function useReel(text: string) {
-  const prev = useRef(text)
-  const [from, setFrom] = useState<string[]>([])
-  const [seq, setSeq] = useState(0)
-  useEffect(() => {
-    if (prev.current === text) return
-    setFrom(prev.current.split(''))
-    prev.current = text
-    setSeq((n) => n + 1)
-  }, [text])
-  return { from, seq }
-}
-
-/** 数字鼓轮：只滚变化的位，从末位往前错峰 19ms，滚动中带一点模糊 */
-function Reel({ text }: { text: string }) {
-  const { from, seq } = useReel(text)
-  const chars = text.split('')
-  const [settled, setSettled] = useState(true)
-
-  useEffect(() => {
-    if (!seq) return
-    setSettled(false)
-    const t = window.setTimeout(() => setSettled(true), 327 + 19 * 4)
-    return () => window.clearTimeout(t)
-  }, [seq])
-
-  return (
-    <span className="w2-reel" aria-label={text}>
-      {chars.map((ch, i) => {
-        if (!/\d/.test(ch)) {
-          return (
-            <span key={`${i}-${ch}`} className="w2-reel-sym">
-              {ch}
-            </span>
-          )
-        }
-        const fromEnd = chars.length - 1 - i
-        const prevCh = from[from.length - (chars.length - i)]
-        const to = Number(ch)
-        const prevNum = prevCh && /\d/.test(prevCh) ? Number(prevCh) : to
-        const moving = !settled && prevNum !== to
-        const target = moving && to < prevNum ? to + 10 : to
-        return (
-          <span key={`${i}-${ch}-${seq}`} className="w2-reel-col">
-            <span
-              className="w2-reel-strip"
-              style={{
-                transform: `translateY(calc(var(--w2-reel-cell) * -${moving ? target : to}))`,
-                transition: moving
-                  ? `transform var(--w2-reel-dur) var(--w2-reel-ease) ${fromEnd * 19}ms, filter var(--w2-reel-dur) var(--w2-reel-ease) ${fromEnd * 19}ms`
-                  : 'none',
-                filter: moving ? 'blur(1.2px)' : 'none',
-              }}
-            >
-              {Array.from({ length: 20 }, (_, k) => (
-                <span key={k} className="w2-reel-digit">
-                  {k % 10}
-                </span>
-              ))}
-            </span>
-          </span>
-        )
-      })}
-    </span>
-  )
-}
 
 function cardColors(color: string) {
   return {
@@ -234,7 +167,7 @@ export function WalletCardFace({
   )
 }
 
-/* ---------------- 卡堆：顶部整块吸顶（天数 + 固定卡），下面是滚动的叠放卡 ---------------- */
+/* ---------------- 卡堆：顶部固定卡整块吸顶，下面是滚动的叠放卡 ---------------- */
 export function WalletStackView({ rows, ctx }: { rows: Person[]; ctx: DeriveCtx }) {
   const openPerson = useUI((s) => s.openPerson)
   const [order, setOrder] = useState<number[]>(() => rows.map((_, i) => i))
@@ -272,25 +205,11 @@ export function WalletStackView({ rows, ctx }: { rows: Person[]; ctx: DeriveCtx 
 
   return (
     <div className="w2-wallet w2-wallet--stack">
-      {/* 天数说明 + 固定卡整块吸顶，背景与页面同色，滑上来的卡片会藏到它后面 */}
+      {/* 固定卡整块吸顶：实底层与页面同色，滑上来的卡片藏到它后面；
+          底沿那道「进卡口」让卡片像被吞进卡机一样消失 */}
       <div className="w2-sticky">
         {/* 与固定区同高的实底层：和固定区融成一层，滚动卡片永远在它下面，交界处不会有阴影 */}
         <div className="w2-shade" aria-hidden />
-        <div className="w2-head">
-          <div className="w2-balance">
-            <Reel text={String(pinnedMeta.daysSinceLast ?? 0)} />
-            <span className="w2-balance-unit">天</span>
-          </div>
-          <div className="w2-head-text">
-            <p className="w2-meta">
-              距上次与 <span className="w2-caption">{pinnedMeta.name}</span> 联系
-            </p>
-            {/* 不再重复「共 N 位人脉」：工具栏已经写着「N 人」，
-                同一个数字在一屏里出现两次只是噪音 */}
-            <p className="w2-meta w2-meta--sub">按联系紧迫度排序</p>
-          </div>
-        </div>
-
         <div className="w2-pin">
           <div className="w2-pin-inner" key={pinnedPerson.id} style={{ ['--w2-tint' as string]: pinnedMeta.groupColor }}>
             <WalletCardFace
@@ -317,6 +236,10 @@ export function WalletStackView({ rows, ctx }: { rows: Person[]; ctx: DeriveCtx 
             />
           </div>
         </div>
+
+        {/* 进卡口：固定卡下沿的一道卡槽。堆叠卡滑到这里被“吞”进去，
+            左右两瓣小唇片是卡机开口的边沿，让「滑走」有明确的终点 */}
+        <div className="w2-slotmouth" aria-hidden />
       </div>
 
       {rest.length > 0 && (

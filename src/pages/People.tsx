@@ -72,6 +72,9 @@ export function People() {
       const lr = layout.getBoundingClientRect()
       const tr = el.getBoundingClientRect()
       setDetailTop(Math.max(10, Math.round(tr.bottom - lr.top + 8)))
+      /* 工具栏高度写给 CSS 变量：手机上工具栏与固定卡都吸顶，
+         固定卡要贴在工具栏下沿而不是盖住它，offset 必须取实测高度 */
+      layout.style.setProperty('--people-toolbar-h', `${Math.round(tr.height)}px`)
     }
     measure()
     const ro = new ResizeObserver(measure)
@@ -80,6 +83,7 @@ export function People() {
     return () => {
       ro.disconnect()
       window.removeEventListener('resize', measure)
+      layout.style.removeProperty('--people-toolbar-h')
     }
   }, [])
 
@@ -278,10 +282,16 @@ export function People() {
                     ]
               }
             />
-            {/* 桌面端的「新建」已经上移到标题行，这里只给手机留 */}
+            {/* 桌面端的「新建」已经上移到标题行，这里只给手机留。
+                纯图标按钮走 icon primary：正方形墨底，和长方形文字按钮区分开 */}
             {isMobile && (
-              <button className="btn sm primary" onClick={() => useUI.getState().openPersonForm()}>
-                <Plus size={14} />
+              <button
+                className="btn icon primary"
+                onClick={() => useUI.getState().openPersonForm()}
+                aria-label="新建人脉"
+                title="新建人脉"
+              >
+                <Plus size={16} />
               </button>
             )}
           </div>

@@ -31,6 +31,8 @@
   --card-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 10px 26px -18px rgba(16, 24, 40, 0.18);
   --card-shadow-hover: 0 1px 2px rgba(16, 24, 40, 0.05), 0 18px 40px -22px rgba(16, 24, 40, 0.26);
   --ctl-edge: rgba(17, 22, 30, 0.08);
+  /* 卡片顶左 / 顶右两个角的柔影：卡堆「从上一张底下穿过」的层级线索 */
+  --card-corner-shadow: rgba(16, 24, 40, 0.3);
 
   --radius-xs: 9px;
   --radius-sm: 11px;
@@ -65,6 +67,8 @@ html[data-theme='dark'] {
   --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 10px 26px -18px rgba(0, 0, 0, 0.9);
   --card-shadow-hover: 0 1px 2px rgba(0, 0, 0, 0.55), 0 18px 40px -22px rgba(0, 0, 0, 1);
   --ctl-edge: rgba(255, 255, 255, 0.09);
+  /* 深色下角影用纯黑：深色卡本身就是深底，黑影才看得出来 */
+  --card-corner-shadow: rgba(0, 0, 0, 0.5);
 }
 html[data-theme='dark'][data-accent='snow'] {
   --bg: #000000;
@@ -780,6 +784,25 @@ html[data-theme='dark'] {
   .dash-module {
     border-radius: 18px;
   }
+  /* 每张卡最上方两个角的阴影：卡堆隐喻 —— 卡片像从上一张卡底下穿过来，
+     顶左、顶右各一层从角里往外淡出的柔影。::before 自 v2.5 起已禁用，正好复用。
+     选择器必须带上 .dash-flow：app.css 里同名的 .dash-flow .dash-module::before
+     特异性更高（还留着 2px 强调色条时代的尺寸），不压住它这里完全不生效。
+     渐变半径收得紧（只罩住角上约 13px），不会压到标题与图标。 */
+  .dash-flow .dash-module::before {
+    display: block;
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 26px;
+    opacity: 1;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    background:
+      radial-gradient(110px 34px at 0 0, var(--card-corner-shadow), transparent 68%),
+      radial-gradient(110px 34px at 100% 0, var(--card-corner-shadow), transparent 68%);
+    pointer-events: none;
+    z-index: 2;
+  }
   .people-head {
     display: none;
   }
@@ -1098,11 +1121,34 @@ html[data-theme='dark'] .land-aura {
   width: 32px;
   height: 32px;
   border-radius: 10px;
+  /* pages.css 移动端给 .btn 统一加了 min-height:38（触屏目标），
+     但它会把这里的正方形拉成长方形：显式归零，尺寸只认 width/height */
+  min-height: 0;
 }
 .btn.icon.sm {
   width: 28px;
   height: 28px;
   border-radius: 9px;
+  min-height: 0;
+}
+/* 图标 + 主色（如人脉工具栏的「新建」）：.btn.icon 的灰底会盖掉 .btn.primary 的墨底，
+   这里按「两者同时存在」补回主按钮材质，尺寸仍走上面的正方形 */
+.btn.icon.primary,
+.btn.icon.sm.primary {
+  background: var(--text);
+  color: var(--on-inverse);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.18), 0 8px 18px -12px rgba(16, 24, 40, 0.55);
+}
+.btn.icon.primary:active:not(:disabled),
+.btn.icon.sm.primary:active:not(:disabled) {
+  background: color-mix(in srgb, var(--text) 86%, var(--surface));
+}
+/* 深色模式下 .btn.icon 的规则带 html[data-theme] 前缀、特异性更高，主色同样要压回来 */
+html[data-theme='dark'] .btn.icon.primary,
+html[data-theme='dark'] .btn.icon.sm.primary {
+  background: var(--text);
+  color: var(--on-inverse);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 18px -12px rgba(0, 0, 0, 0.8);
 }
 /* 顶栏上三个主动作比正文重一档：它们是每页都会用到的入口 */
 .topbar .btn.icon {
@@ -1133,6 +1179,16 @@ html[data-theme='dark'] .topbar .btn.icon {
 .btn.icon:active:not(:disabled),
 .btn.icon.sm:active:not(:disabled) {
   background: color-mix(in srgb, var(--text) 16%, var(--surface));
+}
+/* 主色图标按钮的悬停：上面那条通用悬停带 :hover:not(:disabled)，特异性高过
+   .btn.icon.primary，不补这一条，悬停时墨底会掉回灰底 */
+@media (hover: hover) and (pointer: fine) {
+  .btn.icon.primary:hover:not(:disabled),
+  .btn.icon.sm.primary:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--text) 86%, var(--surface));
+    color: var(--on-inverse);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.22), 0 10px 22px -12px rgba(16, 24, 40, 0.6);
+  }
 }
 /* 不可用的图标按钮去掉底色，和可用状态拉开距离 */
 .field-manage-row .ops .btn:disabled,
@@ -1288,9 +1344,33 @@ html[data-theme='dark'] .save-pill.no-file .led {
 @media (max-width: 767px) {
   /* 6.1 顶栏：状态胶囊显示文字，别只剩一个看不出含义的小圆点 */
   .topbar {
-    height: 50px;
+    height: 56px;
     padding: 0 14px;
     gap: 6px;
+  }
+  /* 顶栏加高后内容同步放大一档：logo 与品牌字是首页的「脸面」，
+     页面标题、状态胶囊、三个主动作都跟着提一级，才不像被压扁的一行 */
+  .topbar-brand {
+    gap: 8px;
+  }
+  .topbar-brand .logo-mark {
+    width: 27px;
+    height: 27px;
+    border-radius: 8px;
+  }
+  .topbar-brand span {
+    font-size: 17px;
+    font-weight: 650;
+  }
+  .topbar h1 {
+    font-size: 18px;
+    font-weight: 680;
+  }
+  .topbar-status .save-pill {
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 9px;
+    font-size: 11.5px;
   }
   .topbar-status .save-pill {
     width: auto;
@@ -1317,11 +1397,12 @@ html[data-theme='dark'] .save-pill.no-file .led {
     background: color-mix(in srgb, #f5a524 18%, transparent);
     color: #f0b45c;
   }
-  /* 手机上三个图标缩到 30，给标题和状态让位 */
+  /* 手机上三个主动作放大到 34 见方：既补回触屏目标尺寸，也和新顶栏的高度成比例 */
   .topbar .btn.icon {
-    width: 30px;
-    height: 30px;
-    border-radius: 9px;
+    width: 34px;
+    height: 34px;
+    min-height: 0;
+    border-radius: 10px;
   }
 
   /* 6.2 人脉：搜索、筛选、计数、视图切换整块钉在顶栏下面 */
@@ -1608,5 +1689,109 @@ html[data-theme='dark'] .save-pill.no-file .led {
 @media (min-width: 768px) and (max-width: 1023px) {
   .topbar {
     padding: 0 16px;
+  }
+}
+
+/* ================================================================================
+   v2.8 · 移动端精修
+   ----------------------------------------------------------------------------
+   1. 图标按钮正方形：pages.css 移动端给 .btn 统一加的 min-height 把正方形拉成长方形，
+     已在上面 .btn.icon / .btn.icon.sm 上显式归零；
+   2. 顶栏加高（见 6.1），logo 与文字同步放大；
+   3. 首页卡片顶左 / 顶右两个角的柔影（见第 8 节 .dash-module::before）；
+   4. 人脉页：删掉「N 天 / 距上次与 X 联系 / 按联系紧迫度排序」，固定卡改贴工具栏下沿
+      吸顶，下沿加一道「进卡口」，堆叠卡滑进去被吞掉；
+   5. 互动记录：页面内边距与其他页拉齐（16px），搜索框与人脉页同一套样式。
+   ================================================================================ */
+
+/* ---------------- 4. 人脉卡堆：固定卡贴工具栏下沿 + 进卡口 ---------------- */
+@media (max-width: 767px) {
+  /* 手机上工具栏也是吸顶的（z-index 8），固定卡不能再粘到 top:0 盖住它：
+     top 取 People.tsx 实测写入的工具栏高度，两块正好首尾相接 */
+  .w2-sticky {
+    top: var(--people-toolbar-h, 0px);
+    padding-top: 0;
+  }
+  /* 吸顶后上方就是工具栏：实底层不再向上出血盖住工具栏，只留 1px 防拼缝 */
+  .w2-shade {
+    top: -1px;
+  }
+  /* 进卡口：固定卡下沿的一道卡槽，宽度与卡片对齐（不铺满屏幕）——
+     堆叠卡滑到这里被“吞”进去。槽顶一圈内阴影是唇片压在开口上的影子，
+     槽底一道细高光是开口下沿的受光面 */
+  .w2-slotmouth {
+    position: relative;
+    height: 12px;
+    border-radius: 0 0 5px 5px;
+    background: linear-gradient(
+      180deg,
+      rgba(16, 24, 40, 0.55) 0,
+      rgba(16, 24, 40, 0.34) 40%,
+      rgba(16, 24, 40, 0.08) 100%
+    );
+    box-shadow: inset 0 2px 3px -1px rgba(16, 24, 40, 0.45), inset 0 -1px 0 rgba(255, 255, 255, 0.55);
+    z-index: 1;
+  }
+  /* 开口左右两瓣唇片：长在槽体两端，像卡机两侧探出来的导向边 */
+  .w2-slotmouth::before,
+  .w2-slotmouth::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    width: 8px;
+    height: 6px;
+    border-radius: 0 0 4px 4px;
+    background: linear-gradient(180deg, rgba(16, 24, 40, 0.62), rgba(16, 24, 40, 0.16));
+  }
+  .w2-slotmouth::before {
+    left: -2px;
+  }
+  .w2-slotmouth::after {
+    right: -2px;
+  }
+  /* 深色下槽口做成“透光”的一道：黑底上只有提亮才看得出开口 */
+  html[data-theme='dark'] .w2-slotmouth {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08) 40%, transparent);
+    box-shadow: inset 0 2px 3px -1px rgba(0, 0, 0, 0.75), inset 0 -1px 0 rgba(255, 255, 255, 0.1);
+  }
+  html[data-theme='dark'] .w2-slotmouth::before,
+  html[data-theme='dark'] .w2-slotmouth::after {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.26), transparent);
+  }
+  /* 固定卡底沿压一点影在槽口上：卡片“浮”在开口沿的感觉 */
+  .w2-pin .w2-card {
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.16),
+      0 5px 12px -6px rgba(0, 0, 0, 0.35);
+  }
+}
+
+/* ---------------- 5. 互动记录：内边距拉齐 + 搜索框统一 ---------------- */
+@media (max-width: 767px) {
+  /* .page.ix-page（桌面收窄那条）特异性压过 .ix-page，移动端的 16px 一直没生效，
+     卡片因此比别的页多缩进 12px。这里带上 .page 把特异性补平。 */
+  .page.ix-page {
+    padding: 0 0 calc(122px + var(--safe-b));
+  }
+  /* 工具栏 / 列表 / 页脚统一 16px：与首页卡片、人脉卡堆、设置卡片同一条边线 */
+  .ix-toolbar {
+    padding: 10px 16px 12px;
+  }
+  .ix-filters {
+    margin: 0 -16px;
+    padding: 2px 16px 4px;
+  }
+  .ix-stream {
+    padding: 4px 16px 8px;
+  }
+  .ix-foot {
+    padding: 0 16px 8px;
+  }
+  /* 搜索框与人脉页同一套：等高、同圆角、同底色（原来是白底，人脉是灰底） */
+  .pt-search .input,
+  .ix-search .input {
+    height: 38px;
+    border-radius: 11px;
+    background: var(--surface-2);
+    font-size: 16px;
   }
 }

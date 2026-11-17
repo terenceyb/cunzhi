@@ -7854,8 +7854,10 @@ html[data-theme='dark'] .nav-item > .gi {
     overflow: visible;
   }
   .content.no-pad .people-scroll {
+    /* 两轴都必须是 visible：只要有一轴是 hidden，这里就会变成一个新的滚动容器，
+       里面的 .w2-sticky 改成相对它吸顶 —— 而它本身不滚动，固定卡就再也吸不住。
+       横向溢出由 .content.no-pad 的 overflow-x:hidden 负责剪。 */
     overflow: visible;
-    overflow-x: hidden;
     flex: 0 0 auto;
   }
 }
