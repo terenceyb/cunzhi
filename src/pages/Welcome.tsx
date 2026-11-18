@@ -13,6 +13,7 @@ import { useUI } from '../ui'
 import { Logo } from '../components/ui'
 import { Modal } from '../components/ui'
 import { InlineTextMorph } from '../components/morph/InlineTextMorph'
+import { isNative } from '../lib/nativeFs'
 
 export function Welcome() {
   const openPackage = useStore((s) => s.openPackage)
@@ -144,8 +145,9 @@ export function Welcome() {
         </div>
 
         <p className="land-foot">
-          数据只写在你选中的那个文件里 · 不用注册 · 不上传服务器
-          {supportsFsa ? '' : ' · 当前浏览器以「导出覆盖」方式保存'}
+          {isNative()
+            ? '数据保存在本机 cunzhi 文件夹 · 不用注册 · 不上传服务器 · 离线可用'
+            : <>数据只写在你选中的那个文件里 · 不用注册 · 不上传服务器{supportsFsa ? '' : ' · 当前浏览器以「导出覆盖」方式保存'}</>}
         </p>
       </div>
     </div>
@@ -295,8 +297,9 @@ export function MountHintDialog() {
   const savePackageAsFile = useStore((s) => s.savePackageAsFile)
   const [busy, setBusy] = React.useState(false)
   const [tried, setTried] = React.useState(false)
+  const native = isNative()
   const supportsPicker =
-    typeof window !== 'undefined' && typeof (window as any).showSaveFilePicker === 'function'
+    native || (typeof window !== 'undefined' && typeof (window as any).showSaveFilePicker === 'function')
 
   if (!open) return null
 
@@ -328,6 +331,31 @@ export function MountHintDialog() {
   const useCache = () => {
     toast('数据将存储在浏览器本地缓存，有数据丢失风险', 'warn')
     finish()
+  }
+
+  if (native) {
+    return (
+      <Modal open onClose={finish} narrow title="把数据存到你的文件夹">
+        <div className="mount-hint">
+          <div className="mount-hint-hero" aria-hidden="true">
+            <HardDriveDownload size={26} />
+          </div>
+          <p className="mount-hint-lead">给数据安一个固定的家</p>
+          <p className="mount-hint-desc">
+            数据已自动保存在本机的 <code>cunzhi</code> 文件夹中，每次改动都会实时写回，无需联网、不上传任何服务器。
+          </p>
+          <ul className="mount-hint-list">
+            <li><FileCheck2 size={14} /> 数据包就在本地 cunzhi 文件夹，可随时拷走、备份</li>
+            <li><FileCheck2 size={14} /> 不注册账号，不上传服务器，离线可用</li>
+          </ul>
+        </div>
+        <div className="row" style={{ gap: 8, flexWrap: 'wrap', marginTop: 16 }}>
+          <button className="btn primary" onClick={finish}>
+            <FileCheck2 size={14} /> 知道了，开始使用
+          </button>
+        </div>
+      </Modal>
+    )
   }
 
   return (

@@ -52,6 +52,7 @@ import { FIELD_TYPE_META } from '../lib/fieldTypes'
 import { normalizeChannels } from '../lib/channels'
 import { cleanStorage, scanStorage, type StorageReport } from '../lib/storage'
 import { downloadText } from '../lib/czdb'
+import { dataDirPath, isNative } from '../lib/nativeFs'
 
 const NAV = [
   { key: 'profile', label: '我的信息', icon: <UserRound size={15} /> },
@@ -2155,6 +2156,12 @@ function PrivacySettings() {
 
 /* ================= 关于存知 ================= */
 function AboutSettings() {
+  const native = isNative()
+  const [dir, setDir] = useState('')
+  useEffect(() => {
+    if (native) void dataDirPath().then(setDir)
+  }, [native])
+  const edition = native ? '安卓版' : '浏览器版'
   return (
     <div className="settings-section">
       <h2>关于存知</h2>
@@ -2163,7 +2170,7 @@ function AboutSettings() {
       <div className="set-card about-card">
         <div className="set-card-head">
           <h3>版本信息</h3>
-          <span className="chip sm">Beta V1.0 · 浏览器版</span>
+          <span className="chip sm">V2.0 · {edition}</span>
         </div>
         <div className="set-card-body">
           <div className="about-brand">
@@ -2176,8 +2183,14 @@ function AboutSettings() {
           <div className="kv-list">
             <div className="kv">
               <span className="k">版本号</span>
-              <span className="v">Beta V1.0（浏览器版）</span>
+              <span className="v">V2.0（{edition}）</span>
             </div>
+            {native && (
+              <div className="kv">
+                <span className="k">本地数据位置</span>
+                <span className="v" style={{ wordBreak: 'break-all', fontSize: 11 }}>{dir || 'cunzhi 文件夹'}</span>
+              </div>
+            )}
             <div className="kv">
               <span className="k">开发者</span>
               <span className="v">Evan</span>
@@ -2219,8 +2232,10 @@ function AboutSettings() {
         </div>
         <div className="set-card-body">
           <p className="field-hint" style={{ margin: 0 }}>
-            存知没有账号体系，也不会上传任何联系人数据。所有内容只存在这台设备的 IndexedDB 与你持有的
-            <b>.czdb</b> 文件里，随时可以带走、检查、删除。详见「隐私与安全」。
+            存知没有账号体系，也不会上传任何联系人数据。
+            {native
+              ? <>所有内容只存在本机 <b>cunzhi</b> 文件夹里，离线可用，随时可以拷走、检查、删除。详见「隐私与安全」。</>
+              : <>所有内容只存在这台设备的 IndexedDB 与你持有的 <b>.czdb</b> 文件里，随时可以带走、检查、删除。详见「隐私与安全」。</>}
           </p>
         </div>
       </div>

@@ -1,4 +1,6 @@
-/** IndexedDB 工作副本层 */
+/** IndexedDB 工作副本层（浏览器）/ 本地文件夹层（原生 Android） */
+import { isNative, nativeClear, nativeDel, nativeGet, nativeSet } from './nativeFs'
+
 const DB_NAME = 'cunzhi'
 const DB_VERSION = 1
 const STORE = 'kv'
@@ -20,6 +22,7 @@ function openDB(): Promise<IDBDatabase> {
 }
 
 export async function idbGet<T>(key: string): Promise<T | undefined> {
+  if (isNative()) return nativeGet<T>(key)
   const db = await openDB()
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE, 'readonly')
@@ -30,6 +33,7 @@ export async function idbGet<T>(key: string): Promise<T | undefined> {
 }
 
 export async function idbSet(key: string, value: unknown): Promise<void> {
+  if (isNative()) return nativeSet(key, value)
   const db = await openDB()
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE, 'readwrite')
@@ -40,6 +44,7 @@ export async function idbSet(key: string, value: unknown): Promise<void> {
 }
 
 export async function idbDel(key: string): Promise<void> {
+  if (isNative()) return nativeDel(key)
   const db = await openDB()
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE, 'readwrite')
@@ -50,6 +55,7 @@ export async function idbDel(key: string): Promise<void> {
 }
 
 export async function idbClear(): Promise<void> {
+  if (isNative()) return nativeClear()
   const db = await openDB()
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE, 'readwrite')

@@ -12,7 +12,7 @@ import type {
 } from './types'
 import { nowISO, uid } from './lib/utils'
 
-export const APP_VERSION = '1.0.0'
+export const APP_VERSION = '2.0.0'
 export const FORMAT_VERSION = 1
 
 /** 联系方式的默认下级通道：电话类可拨号，网络通联类只能复制 */

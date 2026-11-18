@@ -2,6 +2,12 @@ import type { DataPackage, FieldDefinition, Person, PersonRef, RefSnapshot, Sett
 import { APP_VERSION, FORMAT_VERSION, createDefaultFieldDefinitions, createDefaultSettings } from '../defaults'
 import { nowISO } from './utils'
 import { decryptPackage, encryptPackage, type EncryptedEnvelope } from './crypto'
+import {
+  isNative,
+  listLocalPackages,
+  readLocalPackage,
+  writeLocalPackage,
+} from './nativeFs'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -202,7 +208,36 @@ function pickerAllowed(): boolean {
   return true
 }
 
+/** 原生环境：应用内列出本地 cunzhi 文件夹的数据包，让用户选一个打开 */
+async function pickNativePackage(): Promise<OpenedFile | null> {
+  const files = await listLocalPackages()
+  if (files.length === 0) return null
+  const lines = files.map((f, i) => `${i + 1}. ${f.name} (${(f.size / 1024).toFixed(1)} KB)`)
+  const answer = window.prompt(
+    `本地 cunzhi 文件夹中的数据包：\n${lines.join('\n')}\n\n输入序号选择，取消则放弃：`,
+    '1',
+  )
+  if (answer === null) return null
+  const idx = Math.max(0, (parseInt(answer, 10) || 1) - 1)
+  const picked = files[Math.min(idx, files.length - 1)]
+  if (!picked) return null
+  const text = await readLocalPackage(picked.path)
+  const now = Date.now()
+  return {
+    handle: { __native: true, name: picked.name, path: picked.path, size: picked.size, lastModified: now },
+    name: picked.name,
+    text,
+    lastModified: now,
+    size: picked.size,
+  }
+}
+
+export function isNativeHandle(handle: any): boolean {
+  return !!(handle && handle.__native === true)
+}
+
 export async function pickPackageFile(): Promise<OpenedFile | null> {
+  if (isNative()) return pickNativePackage()
   const w = window as any
   if (typeof w.showOpenFilePicker === 'function' && pickerAllowed()) {
     try {
@@ -248,6 +283,7 @@ export function pickFileFallback(accept: string): Promise<File | null> {
 }
 
 export async function queryHandlePermission(handle: any): Promise<PermissionState> {
+  if (isNativeHandle(handle)) return 'granted'
   if (!handle?.queryPermission) return 'granted'
   try {
     return await handle.queryPermission({ mode: 'readwrite' })
@@ -258,6 +294,7 @@ export async function queryHandlePermission(handle: any): Promise<PermissionStat
 
 export async function ensureHandlePermission(handle: any): Promise<boolean> {
   if (!handle) return false
+  if (isNativeHandle(handle)) return true
   const state = await queryHandlePermission(handle)
   if (state === 'granted') return true
   try {
@@ -269,6 +306,10 @@ export async function ensureHandlePermission(handle: any): Promise<boolean> {
 }
 
 export async function writeHandle(handle: any, text: string): Promise<{ lastModified: number; size: number }> {
+  if (isNativeHandle(handle)) {
+    const res = await writeLocalPackage(handle.name, text)
+    return { lastModified: Date.now(), size: res.size }
+  }
   const writable = await handle.createWritable()
   await writable.write(text)
   await writable.close()
@@ -277,6 +318,17 @@ export async function writeHandle(handle: any, text: string): Promise<{ lastModi
 }
 
 export async function savePackageAs(text: string, suggestedName = '存知数据包.czdb'): Promise<OpenedFile | null> {
+  if (isNative()) {
+    const res = await writeLocalPackage(suggestedName, text)
+    const now = Date.now()
+    return {
+      handle: { __native: true, name: res.name, path: `cunzhi/${res.name}`, size: res.size, lastModified: now },
+      name: res.name,
+      text,
+      lastModified: now,
+      size: res.size,
+    }
+  }
   const w = window as any
   if (typeof w.showSaveFilePicker === 'function' && pickerAllowed()) {
     try {
@@ -318,6 +370,11 @@ export function humanizeFileError(e: unknown): string {
 }
 
 export function downloadText(text: string, filename: string, mime = 'text/plain;charset=utf-8'): void {
+  if (isNative()) {
+    // 原生环境：没有浏览器下载，把导出文件直接写进本地 cunzhi 文件夹
+    void writeLocalPackage(filename, text)
+    return
+  }
   const blob = new Blob([text], { type: mime })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')

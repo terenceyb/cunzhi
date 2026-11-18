@@ -39,6 +39,7 @@ import {
   ensureHandlePermission,
   humanizeFileError,
   hydratePackage,
+  isNativeHandle,
   parsePackageText,
   pickPackageFile,
   savePackageAs,
@@ -46,6 +47,15 @@ import {
   type DataSlots,
 } from './lib/czdb'
 import { PREFS_KEY, idbDel, idbGet, idbSet } from './lib/db'
+import {
+  hydratePrefsCache,
+  isNative,
+  listLocalPackages,
+  readLocalPackage,
+  readPrefsCache,
+  writeLocalPackage,
+  writePrefsCache,
+} from './lib/nativeFs'
 import { exportCSV, toCSV, toVCard } from './lib/io'
 import { fmtFileStamp, nowISO, deepClone, uid } from './lib/utils'
 import type { DeriveCtx } from './lib/derive'
@@ -242,7 +252,8 @@ const MAX_AUTO_SNAPSHOTS = 5
 
 function loadPrefs(): Prefs {
   try {
-    const raw = localStorage.getItem(PREFS_KEY)
+    // 原生环境：偏好已由 init() 从本地 cunzhi 文件夹 hydrate 到缓存，这里同步读缓存
+    const raw = isNative() ? readPrefsCache() : localStorage.getItem(PREFS_KEY)
     if (!raw) return { ...DEFAULT_PREFS }
     const parsed = JSON.parse(raw) as Partial<Prefs>
     const prefs = { ...DEFAULT_PREFS, ...parsed }
@@ -262,6 +273,10 @@ function loadPrefs(): Prefs {
 }
 
 function savePrefs(prefs: Prefs): void {
+  if (isNative()) {
+    writePrefsCache(prefs)
+    return
+  }
   try {
     localStorage.setItem(PREFS_KEY, JSON.stringify(prefs))
   } catch {
@@ -346,7 +361,7 @@ export const useStore = create<AppState>((set, get) => {
       return false
     }
     try {
-      if (!force && lastFileWrite) {
+      if (!force && lastFileWrite && !isNativeHandle(fileHandle)) {
         const file = await fileHandle.getFile()
         if (file.lastModified !== lastFileWrite.lastModified || file.size !== lastFileWrite.size) {
           set({
@@ -432,6 +447,8 @@ export const useStore = create<AppState>((set, get) => {
     lastBackupWarning: false,
 
     init: async () => {
+      // 原生环境：先从本地 cunzhi 文件夹读取偏好到同步缓存，再按常规流程加载
+      await hydratePrefsCache()
       const prefs = loadPrefs()
       const stored = await idbGet<DataPackage>('data')
       const storedHandle = await idbGet<any>('handle')
@@ -466,14 +483,20 @@ export const useStore = create<AppState>((set, get) => {
       let fileName = handleMeta?.fileName ?? null
       if (storedHandle) {
         fileHandle = storedHandle
-        try {
-          const perm = await storedHandle.queryPermission({ mode: 'readwrite' })
-          hasHandle = perm === 'granted'
-          const f = await storedHandle.getFile()
-          lastFileWrite = { lastModified: f.lastModified, size: f.size }
-          fileName = f.name
-        } catch {
-          hasHandle = false
+        if (isNativeHandle(storedHandle)) {
+          // 原生 handle：从 meta 恢复，始终视为可写（本地文件夹无需授权）
+          hasHandle = true
+          lastFileWrite = { lastModified: handleMeta?.lastModified ?? Date.now(), size: handleMeta?.size ?? 0 }
+        } else {
+          try {
+            const perm = await storedHandle.queryPermission({ mode: 'readwrite' })
+            hasHandle = perm === 'granted'
+            const f = await storedHandle.getFile()
+            lastFileWrite = { lastModified: f.lastModified, size: f.size }
+            fileName = f.name
+          } catch {
+            hasHandle = false
+          }
         }
       }
       const auto = snapshotList.filter((s) => s.kind === 'auto').sort((a, b) => +new Date(b.at) - +new Date(a.at))[0]
@@ -514,17 +537,20 @@ export const useStore = create<AppState>((set, get) => {
         /* ignore */
       }
       if (heartbeat) clearInterval(heartbeat)
-      heartbeat = setInterval(async () => {
-        if (!fileHandle) return
-        try {
-          const f = await fileHandle.getFile()
-          if (lastFileWrite && f.lastModified !== lastFileWrite.lastModified) {
-            set({ pkg: { ...get().pkg, error: '数据包文件已在外部被修改' } })
+      // 原生环境：本地文件夹只有本应用写，不需要轮询外部修改
+      if (!isNative()) {
+        heartbeat = setInterval(async () => {
+          if (!fileHandle || isNativeHandle(fileHandle)) return
+          try {
+            const f = await fileHandle.getFile()
+            if (lastFileWrite && f.lastModified !== lastFileWrite.lastModified) {
+              set({ pkg: { ...get().pkg, error: '数据包文件已在外部被修改' } })
+            }
+          } catch {
+            /* ignore */
           }
-        } catch {
-          /* ignore */
-        }
-      }, 300000)
+        }, 300000)
+      }
       window.addEventListener('beforeunload', (ev) => {
         const s = get()
         if (s.pkg.status === 'dirty' || s.pkg.status === 'saving') {
@@ -1170,10 +1196,14 @@ export const useStore = create<AppState>((set, get) => {
         })
         pkgPassword = password
         if (fileHandle) {
-          const f = await fileHandle.getFile()
-          lastFileWrite = { lastModified: f.lastModified, size: f.size }
+          if (isNativeHandle(fileHandle)) {
+            lastFileWrite = { lastModified: Date.now(), size: lastFileWrite?.size ?? 0 }
+          } else {
+            const f = await fileHandle.getFile()
+            lastFileWrite = { lastModified: f.lastModified, size: f.size }
+          }
           await idbSet('handle', fileHandle)
-          await idbSet('handleMeta', { fileName: pending.fileName, lastModified: f.lastModified, size: f.size })
+          await idbSet('handleMeta', { fileName: pending.fileName, lastModified: lastFileWrite.lastModified, size: lastFileWrite.size })
         }
         set({
           pkg: {
