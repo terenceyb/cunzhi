@@ -338,8 +338,8 @@ export function FieldValue({
     }
     case 'barcode': {
       const bv = (value as BarcodeValue) ?? { format: '', rawValue: '' }
-      /* 名片码：内容由这位联系人的资料在本机拼成 vCard 文本，
-         不是链接、不联网、不写死任何域名，扫码后系统直接问「是否新建联系人」。 */
+      /* 名片码：由本人资料在本机拼成一张自包含的 HTML 名片，
+         整张网页写进二维码（data URI）—— 扫码后本地直接渲染，不联网、不上传。 */
       if (autoCard) {
         const person = personId ? persons.find((p) => p.id === personId) : undefined
         const text = buildCardCode(person, { fieldDefinitions, groups, tags })
@@ -352,19 +352,19 @@ export function FieldValue({
                 type="button"
                 className="barcode-qr is-button"
                 onClick={() => setCardQrOpen(true)}
-                title="点击查看大图，扫码打开名片网页"
+                title="点击查看大图"
                 aria-label="放大名片码"
               >
-                <QrImage value={text} size={compact ? 54 : 76} title="名片码：扫码打开名片网页" />
+                <QrImage value={text} size={compact ? 54 : 76} ecc="L" title="个人名片码" />
               </button>
               <span className="barcode-main">
                 <span className="barcode-title">名片码</span>
                 <span className="barcode-raw ellipsis">{summary || '由本人资料生成'}</span>
                 <span className="barcode-meta">
-                  <span className="chip sm">扫码看名片</span>
+                  <span className="chip sm">扫码查看名片</span>
                   {!compact && (
-                    <CopyButton variant="text" text={text} label="复制名片链接" className="copy-text">
-                      复制链接
+                    <CopyButton variant="text" text={text} label="复制名片" className="copy-text">
+                      复制
                     </CopyButton>
                   )}
                 </span>
@@ -375,12 +375,11 @@ export function FieldValue({
                 <div className="card-qr-name">{name}</div>
                 {summary && <div className="card-qr-summary">{summary}</div>}
                 <div className="card-qr-big">
-                  <QrImage value={text} size={260} quiet={3} title="名片码大图" />
+                  <QrImage value={text} size={300} quiet={3} ecc="L" title="名片码大图" />
                 </div>
-                <p className="card-qr-tip">用手机相机或微信扫一扫，即可打开包含基本信息的名片网页。资料更新后，这张码会自动同步。</p>
                 <div className="card-qr-actions">
-                  <CopyButton variant="btn" className="primary" text={text} label="复制名片链接">
-                    复制名片链接
+                  <CopyButton variant="btn" className="primary" text={text} label="复制名片">
+                    复制名片
                   </CopyButton>
                 </div>
               </div>

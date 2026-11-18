@@ -2262,3 +2262,117 @@ html[data-theme='dark'] .card-qr-big {
 @media (prefers-reduced-motion: reduce) {
   .barcode-qr.is-button { transition-duration: 1ms; }
 }
+
+/* ================================================================================
+   v3.3 · 编辑框协调 / 名片码大码 / 互动记录版式
+   ----------------------------------------------------------------------------
+   1. 详情页字段编辑态：输入/文本域/placeholder 缩小到与阅读态同一视觉量级；
+   2. 名片码大码容器给 300px 自包含二维码留足宽度；
+   3. 互动记录：头像放大、底部「方式 + 操作」同行两端对齐、移动端去掉绝对定位。
+   ================================================================================ */
+
+/* ---- 1. 字段编辑态：收紧到与阅读态（22px 行高）协调 ---- */
+.field-row .fv-editor .input,
+.field-row .fv-editor select.input,
+.field-row .fv-editor .pk-trigger {
+  height: 26px;
+  min-height: 26px;
+  font-size: 12.5px;
+  line-height: 24px;
+  border-radius: 7px;
+}
+.field-row .fv-editor .input::placeholder,
+.field-row .fv-editor .textarea::placeholder {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.field-row .fv-editor .textarea {
+  min-height: 48px;
+  height: 48px;
+  padding: 6px 9px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  border-radius: 7px;
+}
+.field-row .fv-editor .btn.sm {
+  height: 26px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+.field-row.is-editing {
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+/* ---- 2. 名片码：大码容器容纳 300px 自包含二维码 ---- */
+.card-qr-share .card-qr-big {
+  padding: 12px;
+  max-width: 100%;
+  overflow: hidden;
+}
+.card-qr-share .card-qr-big svg {
+  display: block;
+  width: min(300px, calc(100vw - 96px));
+  height: auto;
+}
+
+/* ---- 3. 互动记录：卡片底部一行「方式（左）+ 操作（右）」---- */
+.ix-page .ix-row {
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 14px;
+}
+.ix-page .ix-avatar {
+  align-self: flex-start;
+  margin-top: 1px;
+}
+.ix-page .ix-body {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.ix-page .ix-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 9px;
+}
+.ix-page .ix-foot .ix-meta {
+  margin-top: 0;
+  padding-right: 0;
+  min-width: 0;
+}
+.ix-page .ix-ops {
+  position: static;
+  opacity: 1;
+  flex: 0 0 auto;
+  gap: 4px;
+}
+.ix-page .ix-ops .btn.icon.sm {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  box-shadow: none;
+  color: var(--text-3);
+}
+.ix-page .ix-ops .btn.icon.sm.accent {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--accent);
+}
+.ix-page .ix-ops .ix-del:hover {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+@media (max-width: 767px) {
+  .ix-page .ix-row {
+    padding: 12px;
+    gap: 11px;
+  }
+  .ix-page .ix-foot {
+    margin-top: 8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ix-page .ix-ops .btn.icon.sm { transition-duration: 1ms; }
+}

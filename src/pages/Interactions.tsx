@@ -255,7 +255,7 @@ export function Interactions() {
                       aria-label={`打开 ${name}`}
                       disabled={!person}
                     >
-                      <Avatar name={name} src={meta?.avatar?.thumbnail} size={isMobile ? 30 : 34} color={meta?.groupColor} />
+                      <Avatar name={name} src={meta?.avatar?.thumbnail} size={isMobile ? 38 : 42} color={meta?.groupColor} />
                     </button>
                     <div className="ix-body">
                       <div className="ix-top">
@@ -282,35 +282,37 @@ export function Interactions() {
                         </span>
                       </div>
                       <p className="ix-content">{e.content}</p>
-                      <div className="ix-meta">
-                        <span className={cn('chip tl-type')}>
-                          {KIND[e.type]?.icon}
-                          {KIND[e.type]?.label}
-                        </span>
-                        {e.channel && e.channel !== '普通备注' && <span className="ix-channel">{e.channel}</span>}
+                      <div className="ix-foot">
+                        <div className="ix-meta">
+                          <span className={cn('chip tl-type')}>
+                            {KIND[e.type]?.icon}
+                            {KIND[e.type]?.label}
+                          </span>
+                          {e.channel && e.channel !== '普通备注' && <span className="ix-channel">{e.channel}</span>}
+                        </div>
+                        <div className="ix-ops">
+                          <button
+                            className={cn('btn icon sm', pinned && 'accent')}
+                            title={pinned ? '取消置顶' : '置顶到该联系人详情页'}
+                            aria-label={pinned ? '取消置顶' : '置顶'}
+                            onClick={() => {
+                              if (!person) return
+                              pinTimeline(person.id, pinned ? null : e.id)
+                              toast(pinned ? '已取消置顶' : '已置顶到该联系人详情', 'success')
+                            }}
+                          >
+                            <Pin size={13} />
+                          </button>
+                          <button
+                            className="btn icon sm ix-del"
+                            title="删除这条记录"
+                            aria-label="删除这条记录"
+                            onClick={() => remove(e)}
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="ix-ops">
-                      <button
-                        className={cn('btn icon sm', pinned && 'accent')}
-                        title={pinned ? '取消置顶' : '置顶到该联系人详情页'}
-                        aria-label={pinned ? '取消置顶' : '置顶'}
-                        onClick={() => {
-                          if (!person) return
-                          pinTimeline(person.id, pinned ? null : e.id)
-                          toast(pinned ? '已取消置顶' : '已置顶到该联系人详情', 'success')
-                        }}
-                      >
-                        <Pin size={13} />
-                      </button>
-                      <button
-                        className="btn icon sm ix-del"
-                        title="删除这条记录"
-                        aria-label="删除这条记录"
-                        onClick={() => remove(e)}
-                      >
-                        <Trash2 size={13} />
-                      </button>
                     </div>
                   </article>
                 )

@@ -10,6 +10,7 @@ export function QrImage({
   quiet = 2,
   className,
   title,
+  ecc = 'M',
 }: {
   value: string
   size?: number
@@ -17,16 +18,18 @@ export function QrImage({
   quiet?: number
   className?: string
   title?: string
+  /** 纠错级别：内容较长（如名片 data URI）时用 L 降低矩阵密度、提升可扫性 */
+  ecc?: 'L' | 'M' | 'Q' | 'H'
 }) {
   const model = useMemo(() => {
     const text = String(value ?? '').trim()
     if (!text) return null
     // 中文等多字节内容走 UTF-8 模式，避免被当成单字节乱码
-    const qr = qrcode(0, 'M')
+    const qr = qrcode(0, ecc)
     qr.addData(text, 'Byte')
     qr.make()
     return { count: qr.getModuleCount(), cell: (x: number, y: number) => qr.isDark(y, x) }
-  }, [value])
+  }, [value, ecc])
 
   if (!model) return null
   const total = model.count + quiet * 2
