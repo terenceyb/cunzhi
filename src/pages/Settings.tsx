@@ -2215,6 +2215,8 @@ function AboutSettings() {
         </div>
       </div>
 
+      {!native && <InstallPwaCard />}
+
       {/* 弹性面板缩放的独立样张：与人脉详情页的左边缘是同一套引擎 */}
       <div className="set-card">
         <div className="set-card-head">
@@ -2238,6 +2240,63 @@ function AboutSettings() {
               : <>所有内容只存在这台设备的 IndexedDB 与你持有的 <b>.czdb</b> 文件里，随时可以带走、检查、删除。详见「隐私与安全」。</>}
           </p>
         </div>
+      </div>
+    </div>
+  )
+}
+
+/** 浏览器版 PWA 安装入口：Chrome/Edge 直接弹安装确认，iOS 给出「发送到主屏幕」引导 */
+function InstallPwaCard() {
+  const toast = useUI((s) => s.toast)
+  const [installEvent, setInstallEvent] = useState<any>(null)
+  const [standalone, setStandalone] = useState(false)
+
+  useEffect(() => {
+    const mq = window.matchMedia('(display-mode: standalone)')
+    const sync = () => setStandalone(mq.matches || (window.navigator as any).standalone === true)
+    sync()
+    mq.addEventListener('change', sync)
+    const onPrompt = (e: Event) => {
+      e.preventDefault()
+      setInstallEvent(e)
+    }
+    window.addEventListener('beforeinstallprompt', onPrompt)
+    return () => {
+      mq.removeEventListener('change', sync)
+      window.removeEventListener('beforeinstallprompt', onPrompt)
+    }
+  }, [])
+
+  if (standalone) return null
+  const ios = /iPad|iPhone|iPod/.test(navigator.userAgent)
+  return (
+    <div className="set-card">
+      <div className="set-card-head">
+        <h3>安装到桌面</h3>
+        <span className="field-hint">离线可用，桌面图标使用存知原 logo</span>
+      </div>
+      <div className="set-card-body">
+        <p className="field-hint" style={{ margin: '0 0 10px' }}>
+          浏览器菜单中的「安装应用 / 添加到主屏幕 / 发送到主屏幕」都可以本地安装，不上传任何数据。
+        </p>
+        <button
+          className="btn primary"
+          type="button"
+          onClick={async () => {
+            if (installEvent) {
+              await installEvent.prompt()
+              await installEvent.userChoice
+              setInstallEvent(null)
+              return
+            }
+            toast(
+              ios ? '点击底部分享按钮 → 添加到主屏幕' : '请在浏览器菜单中选择「安装应用 / 添加到主屏幕」',
+              'info',
+            )
+          }}
+        >
+          安装到桌面
+        </button>
       </div>
     </div>
   )

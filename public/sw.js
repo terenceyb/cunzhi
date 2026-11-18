@@ -1,6 +1,16 @@
 /* 存知 Service Worker：应用壳缓存 + 离线可打开 */
-const CACHE = 'cunzhi-shell-v2'
-const SHELL = ['./', './index.html', './manifest.webmanifest', './logo.svg', './icon-192.png', './icon-512.png']
+const CACHE = 'cunzhi-shell-v3'
+const SHELL = [
+  './',
+  './index.html',
+  './manifest.webmanifest',
+  './logo.svg',
+  './icon-192.png',
+  './icon-512.png',
+  './icon-maskable-512.png',
+  './apple-touch-icon.png',
+  './favicon-64.png',
+]
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

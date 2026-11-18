@@ -1,4 +1,5 @@
 {
+  "id": "./",
   "name": "存知 · 人脉管理工作台",
   "short_name": "存知",
   "description": "本地优先的人脉管理工作台：今天该联系谁，上次聊到了什么，数据是不是你的。",
@@ -6,15 +7,16 @@
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "any",
   "background_color": "#f3f4f6",
-  "theme_color": "#131619",
+  "theme_color": "#f3f4f6",
   "categories": ["productivity", "business"],
   "icons": [
-    { "src": "./logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
     { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "./icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "./logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ],
   "shortcuts": [
     { "name": "新建人脉", "short_name": "新建", "url": "./index.html?action=new", "icons": [{ "src": "./icon-192.png", "sizes": "192x192" }] },

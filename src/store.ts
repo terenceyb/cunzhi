@@ -316,6 +316,30 @@ function pushRefSnapshot(refs: PersonRef[], removedId: string, name: string, mod
   return refs.map((r) => (typeof r === 'string' && r === removedId ? { refId: removedId, snapshotName: name, deleted: true } : r))
 }
 
+/** 从关联人 / 引荐人里取出人脉 id，兼容字符串引用与删除快照 */
+function relationIds(value: unknown): string[] {
+  const list = Array.isArray(value) ? value : value ? [value] : []
+  return list
+    .map((x) => (typeof x === 'string' ? x : x && typeof x === 'object' ? String((x as { refId?: string }).refId ?? '') : ''))
+    .filter(Boolean)
+}
+
+/** 关系双向同步：别人被选为关联人 / 引荐人时，对方也自动关联回来源人脉 */
+function withBacklinks(persons: Person[], sourceId: string, fields: Record<string, unknown>): Person[] {
+  const ids = new Set([...relationIds(fields.relatedPersons), ...relationIds(fields.referrer)])
+  if (ids.size === 0) return persons
+  return persons.map((p) => {
+    if (p.id === sourceId || !ids.has(p.id)) return p
+    const own = relationIds(p.fields.relatedPersons)
+    if (own.includes(sourceId)) return p
+    return {
+      ...p,
+      fields: { ...p.fields, relatedPersons: [...own, sourceId] },
+      updatedAt: nowISO(),
+    }
+  })
+}
+
 export const useStore = create<AppState>((set, get) => {
   const schedulePersist = () => {
     if (persistTimer) clearTimeout(persistTimer)
@@ -593,7 +617,8 @@ export const useStore = create<AppState>((set, get) => {
         pinnedTimelineId: null,
         memo,
       }
-      commit({ persons: [...get().persons, person] })
+      const persons = withBacklinks(get().persons, person.id, fields)
+      commit({ persons: [...persons, person] })
       return person.id
     },
 
@@ -601,7 +626,7 @@ export const useStore = create<AppState>((set, get) => {
       const persons = get().persons.map((p) =>
         p.id === id ? { ...p, fields: { ...p.fields, ...fields }, updatedAt: nowISO() } : p,
       )
-      commit({ persons })
+      commit({ persons: withBacklinks(persons, id, fields) })
     },
 
     patchPerson: (id, patch) => {

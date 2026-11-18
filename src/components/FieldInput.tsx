@@ -307,7 +307,7 @@ export function FieldInput({
                   readOnly={readOnly}
                 />
                 {!readOnly && (
-                  <button className="btn icon sm" onClick={() => onChange(arr.filter((_, x) => x !== i))} aria-label={`删除${ch?.label ?? ''}`}>
+                  <button type="button" className="btn icon sm" onClick={() => onChange(arr.filter((_, x) => x !== i))} aria-label={`删除${ch?.label ?? ''}`}>
                     <Trash2 size={13} />
                   </button>
                 )}
@@ -316,6 +316,7 @@ export function FieldInput({
           })}
           {!readOnly && (
             <button
+              type="button"
               className="btn sm ghost"
               style={{ alignSelf: 'flex-start' }}
               onClick={() => onChange([...arr, { label: free?.id ?? 'mobile', number: '' }])}
@@ -370,14 +371,14 @@ export function FieldInput({
                 readOnly={readOnly}
               />
               {!readOnly && (
-                <button className="btn icon sm" onClick={() => onChange(arr.filter((_, x) => x !== i))} aria-label="删除邮箱">
+                <button type="button" className="btn icon sm" onClick={() => onChange(arr.filter((_, x) => x !== i))} aria-label="删除邮箱">
                   <Trash2 size={13} />
                 </button>
               )}
             </div>
           ))}
           {!readOnly && (
-            <button className="btn sm ghost" style={{ alignSelf: 'flex-start' }} onClick={() => onChange([...arr, { label: '工作', address: '' }])}>
+            <button type="button" className="btn sm ghost" style={{ alignSelf: 'flex-start' }} onClick={() => onChange([...arr, { label: '工作', address: '' }])}>
               <Plus size={13} /> 添加邮箱
             </button>
           )}
@@ -428,7 +429,7 @@ export function FieldInput({
                   readOnly={readOnly}
                 />
                 {!readOnly && (
-                  <button className="btn icon sm" onClick={() => onChange(arr.filter((_, x) => x !== i))} aria-label="删除地址">
+                  <button type="button" className="btn icon sm" onClick={() => onChange(arr.filter((_, x) => x !== i))} aria-label="删除地址">
                     <Trash2 size={13} />
                   </button>
                 )}
@@ -453,6 +454,7 @@ export function FieldInput({
           </datalist>
           {!readOnly && (
             <button
+              type="button"
               className="btn sm ghost"
               style={{ alignSelf: 'flex-start' }}
               onClick={() => onChange([...arr, { label: '公司', detail: '', province: '', city: '' }])}
@@ -485,7 +487,7 @@ export function FieldInput({
               readOnly={readOnly}
             />
             {!readOnly && (
-              <button className="btn sm" onClick={() => setScanOpen(true)}>
+              <button type="button" className="btn sm" onClick={() => setScanOpen(true)}>
                 <ScanLine size={14} /> 扫码
               </button>
             )}
@@ -545,9 +547,10 @@ export function FieldInput({
                     </div>
                   )}
                   {!readOnly && (
-                    <button
-                      className="btn icon sm"
-                      style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,.55)', color: '#fff', width: 20, height: 20 }}
+              <button
+                type="button"
+                className="btn icon sm"
+                style={{ position: 'absolute', top: 2, right: 2, background: 'rgba(0,0,0,.55)', color: '#fff', width: 20, height: 20 }}
                       onClick={() => onChange(metas.filter((x) => x.id !== m.id))}
                       aria-label="移除附件"
                     >
@@ -559,6 +562,7 @@ export function FieldInput({
             })}
             {!readOnly && (
               <button
+                type="button"
                 className="btn sm"
                 onClick={async () => {
                   const files = await openUpload({
@@ -688,7 +692,7 @@ function ScanDialog({ onClose, onResult }: { onClose: () => void; onResult: (raw
       <div className="modal narrow" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>扫描条码</h2>
-          <button className="btn icon sm" onClick={onClose} aria-label="关闭">
+          <button type="button" className="btn icon sm" onClick={onClose} aria-label="关闭">
             <X size={16} />
           </button>
         </div>
@@ -706,7 +710,7 @@ function ScanDialog({ onClose, onResult }: { onClose: () => void; onResult: (raw
             />
           </div>
           <div className="row" style={{ marginTop: 10 }}>
-            <button className="btn sm" onClick={toggleTorch}>
+            <button type="button" className="btn sm" onClick={toggleTorch}>
               {torch ? '关闭手电筒' : '打开手电筒'}
             </button>
             <span className="field-hint">将条码置于取景框内</span>
@@ -717,7 +721,7 @@ function ScanDialog({ onClose, onResult }: { onClose: () => void; onResult: (raw
             <span className="field-label">手动输入</span>
             <div className="row">
               <input className="input" value={manual} onChange={(e) => setManual(e.target.value)} placeholder="条码原始值" />
-              <button className="btn primary" onClick={() => manual && onResult(manual, 'MANUAL')}>
+              <button type="button" className="btn primary" onClick={() => manual && onResult(manual, 'MANUAL')}>
                 确定
               </button>
             </div>

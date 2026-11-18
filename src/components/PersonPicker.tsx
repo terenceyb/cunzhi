@@ -73,6 +73,7 @@ export function PersonPicker({
             <span style={{ color: deleted ? 'var(--text-3)' : undefined }}>{name}</span>
             {!readOnly && (
               <button
+                type="button"
                 onClick={() => emit(list.map(refId).filter((x) => x !== id))}
                 aria-label={`移除 ${name}`}
                 style={{ display: 'inline-flex', opacity: 0.5 }}
@@ -84,7 +85,7 @@ export function PersonPicker({
         )
       })}
       {!readOnly && (
-        <button className="btn sm ghost" onClick={() => setOpen(true)}>
+        <button type="button" className="btn sm ghost" onClick={() => setOpen(true)}>
           <UserPlus size={13} /> {list.length ? '添加' : placeholder}
         </button>
       )}
@@ -95,7 +96,7 @@ export function PersonPicker({
         footer={
           <>
             <span className="left field-hint">已选 {list.length} 人</span>
-            <button className="btn primary" onClick={() => setOpen(false)}>
+            <button type="button" className="btn primary" onClick={() => setOpen(false)}>
               完成
             </button>
           </>
@@ -117,6 +118,7 @@ export function PersonPicker({
             const on = list.map(refId).includes(id)
             return (
               <button
+                type="button"
                 key={id}
                 className={cn('picker-item', on && 'on')}
                 onClick={() => {

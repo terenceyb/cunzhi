@@ -15,6 +15,26 @@ const groupLabel: Record<string, string> = {
   custom: '自定义字段',
 }
 
+/** 引荐人填写后自动成为关联人：保存前把它并入 relatedPersons */
+function withReferrerAsRelated(values: Record<string, unknown>): Record<string, unknown> {
+  const ref = values.referrer
+  const id =
+    typeof ref === 'string'
+      ? ref
+      : ref && typeof ref === 'object'
+        ? String((ref as { refId?: string }).refId ?? '')
+        : ''
+  if (!id) return values
+  const list = Array.isArray(values.relatedPersons)
+    ? values.relatedPersons
+    : values.relatedPersons
+      ? [values.relatedPersons]
+      : []
+  const has = list.some((x) => (typeof x === 'string' ? x : (x as { refId?: string })?.refId) === id)
+  if (has) return values
+  return { ...values, relatedPersons: [...list, id] }
+}
+
 export function PersonForm({
   open,
   onClose,
@@ -41,18 +61,30 @@ export function PersonForm({
     () =>
       fieldDefinitions
         .filter((d) => !d.disabled && d.type !== 'timeline' && d.key !== 'avatar')
-        .sort((a, b) => a.sortOrder - b.sortOrder),
+        /* 引荐人固定在关联人上方，不受历史数据包里旧 sortOrder 影响 */
+        .sort((a, b) => (a.key === 'referrer' ? 10.5 : a.sortOrder) - (b.key === 'referrer' ? 10.5 : b.sortOrder)),
     [fieldDefinitions],
   )
 
+  /* 只在「打开新建 / 切换编辑对象」时初始化一次。
+     以前把整个 fieldDefinitions 放进依赖，新增一个单选/多选选项会改写它，
+     于是把已经填好的字段全部重置——这是表单内容突然消失的根因。 */
+  const initKey = useRef('')
   useEffect(() => {
-    if (!open) return
+    if (!open) {
+      initKey.current = ''
+      return
+    }
+    const key = person ? `edit:${person.id}` : 'new'
+    if (initKey.current === key) return
+    initKey.current = key
+    const defs = useStore.getState().fieldDefinitions
     if (person) {
       setValues(JSON.parse(JSON.stringify(person.fields)))
       setMemo(person.memo ?? '')
     } else {
       const init: Record<string, unknown> = {}
-      for (const d of fieldDefinitions) {
+      for (const d of defs) {
         if (d.type === 'timeline' || d.type === 'attachment') continue
         if (d.defaultValue !== undefined && d.defaultValue !== null) init[d.key] = d.defaultValue
       }
@@ -117,16 +149,18 @@ export function PersonForm({
       toast('请检查标红字段', 'error')
       return
     }
+    const next = withReferrerAsRelated(values)
     if (person) {
-      updatePerson(person.id, values)
+      updatePerson(person.id, next)
+      setValues(next)
       patchPerson(person.id, { memo })
       toast('已保存', 'success')
       onClose()
     } else {
-      const id = createPerson(values, memo)
+      const id = createPerson(next, memo)
       toast('已创建人脉', 'success')
       if (again) {
-        setValues((prev) => ({
+        setValues((prev) => withReferrerAsRelated({
           ...prev,
           name: '',
           phones: [{ label: 'mobile', number: '' }],
@@ -166,7 +200,7 @@ export function PersonForm({
         </>
       }
     >
-      <div className="stack" style={{ gap: 20 }}>
+      <div className="stack pf-form" style={{ gap: 20 }}>
         <AvatarField
           metas={(values.avatar as AttachmentMeta[]) ?? []}
           attachments={attachments}
@@ -182,7 +216,7 @@ export function PersonForm({
                 <h3>{groupLabel[sec]}</h3>
                 {sec === 'custom' && <span className="count">可在「设置 → 字段管理」中增删</span>}
               </div>
-              <div className="form-grid">
+              <div className="form-grid pf-grid">
                 {defs.map((def) => (
                   <FieldBlock
                     key={def.key}

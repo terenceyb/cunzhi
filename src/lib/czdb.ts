@@ -90,6 +90,10 @@ export function hydratePackage(raw: any): ParsedPackage {
   const fieldDefinitions: FieldDefinition[] = defaults.map((d) => {
     const match = incoming.find((f) => f && f.key === d.key)
     if (!match) return d
+    if (d.key === 'referrer') {
+      // 引荐人固定排在关联人上方；老数据包里的旧顺序在这里统一迁移
+      return { ...d, label: match.label || d.label, disabled: false }
+    }
     if (d.isLocked) {
       return { ...d, label: match.label || d.label, sortOrder: match.sortOrder ?? d.sortOrder, disabled: false }
     }

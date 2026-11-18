@@ -2401,3 +2401,96 @@ html.native .content {
   overscroll-behavior: contain;
 }
 
+/* ============ 新建/编辑人脉：Apple 设置列表式同行排版 ============
+   字段名（含小图标）与输入控件处在同一行，整块是一张分组卡片；
+   窄屏只收紧标签列，不改变「标签—输入」的同行关系。 */
+.pf-form {
+  gap: 18px !important;
+}
+.pf-form .section-title h3 {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.pf-form .section-title .count {
+  font-size: 11.5px;
+}
+.pf-grid {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 0 !important;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.pf-grid .field {
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 14px;
+  row-gap: 4px;
+  min-height: 46px;
+  margin: 0;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.pf-grid .field:last-child {
+  border-bottom: 0;
+}
+.pf-grid .field.full {
+  grid-column: auto !important;
+}
+.pf-grid .field-label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text-2);
+}
+.pf-grid .field-label-icon {
+  width: 15px;
+  height: 15px;
+  color: var(--accent);
+  opacity: 0.9;
+}
+.pf-grid .t-input {
+  min-width: 0;
+}
+.pf-grid .input,
+.pf-grid .textarea {
+  min-height: 34px;
+  padding: 7px 10px;
+  font-size: 13.5px;
+  border-color: transparent;
+  border-radius: 9px;
+  background: var(--surface-2);
+}
+.pf-grid .textarea {
+  min-height: 64px;
+  resize: vertical;
+}
+.pf-grid .field-hint {
+  grid-column: 2;
+  margin: 0;
+  font-size: 11.5px;
+}
+@media (max-width: 767px) {
+  .pf-grid .field {
+    grid-template-columns: 88px minmax(0, 1fr);
+    column-gap: 10px;
+    padding: 8px 12px;
+  }
+  .pf-grid .field-label {
+    font-size: 12.5px;
+  }
+  .pf-grid .field-label-icon {
+    width: 14px;
+    height: 14px;
+  }
+  .pf-grid .input,
+  .pf-grid .textarea {
+    font-size: 13px;
+  }
+}
+

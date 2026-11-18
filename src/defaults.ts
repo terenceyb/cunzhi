@@ -118,7 +118,7 @@ export function createDefaultFieldDefinitions(): FieldDefinition[] {
     mk('groups', '群组', 'select', 10, { config: { options: [] } }),
     mk('relatedPersons', '关联人', 'personRef', 11, { config: { multiple: true } }),
     mk('timeline', '互动记录', 'timeline', 12, { isLocked: true, group: 'basic' }),
-    mk('referrer', '引荐人', 'personRef', 13, { isLocked: true, group: 'basic', config: { multiple: false } }),
+    mk('referrer', '引荐人', 'personRef', 10.5, { isLocked: true, group: 'basic', config: { multiple: false } }),
   ]
 }
 
