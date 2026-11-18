@@ -1,7 +1,9 @@
 package cn.evanhub.cunzhi;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.net.Uri;
@@ -34,6 +36,23 @@ import java.util.Locale;
  */
 @CapacitorPlugin(name = "CunzhiNative")
 public class CunzhiNativePlugin extends Plugin {
+
+    /**
+     * 安装后首次打开判定。用 SharedPreferences 同步 commit 落盘，
+     * 即使用户在启动页立刻杀进程，下次打开也不会重复展示。
+     * 结果在 JS 侧按进程缓存，避免 React 严格模式下重复消耗首次标记。
+     */
+    @PluginMethod
+    public void isFirstLaunch(PluginCall call) {
+        SharedPreferences sp = getContext().getSharedPreferences("cunzhi_launch", Context.MODE_PRIVATE);
+        boolean first = !sp.getBoolean("launch_seen", false);
+        if (first) {
+            sp.edit().putBoolean("launch_seen", true).commit();
+        }
+        JSObject res = new JSObject();
+        res.put("first", first);
+        call.resolve(res);
+    }
 
     @PluginMethod
     public void setStatusBar(PluginCall call) {

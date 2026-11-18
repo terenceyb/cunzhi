@@ -33,7 +33,7 @@ import { ProfilePage } from './pages/Profile'
 import { ConflictDialog, LockScreen, MountHintDialog, UnlockDialog, Welcome } from './pages/Welcome'
 import { applyFilter } from './lib/filter'
 import { isNative } from './lib/nativeFs'
-import { nativeSetStatusBar } from './lib/nativeBridge'
+import { nativeIsFirstLaunch, nativeSetStatusBar } from './lib/nativeBridge'
 import { cn, relativeTime } from './lib/utils'
 
 /** 明暗模式 + 主题色 + 对比度：只改 <html data-*>，CSS 变量接管一切 */
@@ -137,8 +137,17 @@ export default function App() {
 
   useEffect(() => {
     if (!ready || bootstrapped) return
-    setBootstrapped(true)
-    if (!prefs.landingSeen) navigate('welcome')
+    let cancelled = false
+    void (async () => {
+      // 原生端用 SharedPreferences 原子判定首次打开；失败时回退 prefs 标记。
+      // 后续打开不再进启动页，直接落回 demoMode 所记载的上次模式（prefs 已持久化）。
+      const nativeFirst = isNative() ? await nativeIsFirstLaunch() : null
+      if (cancelled) return
+      setBootstrapped(true)
+      const first = nativeFirst === null ? !prefs.landingSeen : nativeFirst
+      if (first) navigate('welcome')
+    })()
+    return () => { cancelled = true }
   }, [ready, bootstrapped, prefs.landingSeen, navigate])
 
   // 首次进入的一次性备份提醒（替代原来常驻顶部的横幅）

@@ -1,5 +1,14 @@
 apply plugin: 'com.android.application'
 
+/* 正式签名：虚拟发布者信息的自签名证书，参数优先从环境变量读取。
+   文件不存在时退回默认 debug 签名，保证任何环境都能构建。 */
+def keystorePropertiesFile = rootProject.file('keystore.properties')
+def keystoreProperties = new Properties()
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+def hasReleaseKeystore = keystorePropertiesFile.exists()
+
 android {
     namespace "cn.evanhub.cunzhi"
     compileSdk rootProject.ext.compileSdkVersion
@@ -16,8 +25,21 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (hasReleaseKeystore) {
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword System.getenv('CUNZHI_STORE_PASSWORD') ?: keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword System.getenv('CUNZHI_KEY_PASSWORD') ?: keystoreProperties['keyPassword']
+            }
+        }
+    }
     buildTypes {
         release {
+            if (hasReleaseKeystore) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

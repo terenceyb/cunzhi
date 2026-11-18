@@ -8,6 +8,7 @@ import { isNative } from './nativeFs'
 interface CunzhiNativeInterface {
   setStatusBar(options: { color: string; light: boolean }): Promise<void>
   pickPackage(): Promise<{ name: string; path: string; size: number }>
+  isFirstLaunch(): Promise<{ first: boolean }>
 }
 
 const CunzhiNative = registerPlugin<CunzhiNativeInterface>('CunzhiNative')
@@ -38,4 +39,17 @@ export async function nativePickPackage(): Promise<PickedNativePackage | null> {
     if (message.includes('cancelled')) return null
     throw e
   }
+}
+
+let firstLaunchPromise: Promise<boolean | null> | null = null
+
+/** 安装后首次打开：原生层同步落盘标记；同进程只问一次，兼容 React 严格模式双调用 */
+export function nativeIsFirstLaunch(): Promise<boolean | null> {
+  if (!isNative()) return Promise.resolve(null)
+  if (!firstLaunchPromise) {
+    firstLaunchPromise = CunzhiNative.isFirstLaunch()
+      .then((r) => !!r.first)
+      .catch(() => null)
+  }
+  return firstLaunchPromise
 }
