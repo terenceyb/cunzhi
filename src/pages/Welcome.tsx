@@ -25,6 +25,12 @@ export function Welcome() {
   const prefs = useStore((s) => s.prefs)
   const supportsFsa = typeof window !== 'undefined' && 'showOpenFilePicker' in window
 
+  /* 安卓端：启动页只在安装后第一次打开时出现。
+     只要这一页被展示过就落盘标记，用户即使没点任何按钮就退出，下次也直接进工作台。 */
+  React.useEffect(() => {
+    if (isNative() && !prefs.landingSeen) setPrefs({ landingSeen: true })
+  }, [prefs.landingSeen, setPrefs])
+
   const startFresh = () => {
     // 真正从零开始：不是体验态；首次进入弹「挂载本地文件夹」引导
     setPrefs({ landingSeen: true, demoMode: false })
@@ -131,7 +137,7 @@ export function Welcome() {
             onClick={async () => {
               const res = await openPackage()
               if (res.ok) {
-                toast(res.message ?? '数据包已加载', 'success')
+                toast(res.message ?? (isNative() ? '数据包已复制到本地 cunzhi 文件夹并加载' : '数据包已加载'), 'success')
                 setPrefs({ landingSeen: true, demoMode: false })
                 navigate('dashboard')
               } else if (!res.needsPassword) {

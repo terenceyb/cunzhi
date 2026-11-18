@@ -2376,3 +2376,28 @@ html[data-theme='dark'] .card-qr-big {
 @media (prefers-reduced-motion: reduce) {
   .ix-page .ix-ops .btn.icon.sm { transition-duration: 1ms; }
 }
+
+/* ============ 原生 Android：WebView 流畅度适配 ============
+   玻璃模糊在移动端 WebView 上要反复重绘整层背景，低端机掉帧明显。
+   原生端改用不透明度更高的纯色面板，视觉仍是同一套浅玻璃语言，但只走一次合成。 */
+html.native {
+  --glass: color-mix(in srgb, var(--surface) 95%, transparent);
+  --glass-soft: color-mix(in srgb, var(--surface) 92%, transparent);
+  --glass-strong: var(--surface);
+  --panel-a: color-mix(in srgb, var(--surface) 96%, transparent);
+  --panel-b: color-mix(in srgb, var(--surface) 94%, transparent);
+  --panel-line: var(--line);
+}
+html.native *,
+html.native *::before,
+html.native *::after {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html.native,
+html.native body,
+html.native .content {
+  scroll-behavior: auto !important;
+  overscroll-behavior: contain;
+}
+

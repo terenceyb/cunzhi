@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 与应用主界面背景色一致；运行时由 JS 按深浅主题动态覆盖 -->
+    <color name="cunzhi_bg">#F3F4F6</color>
+    <color name="cunzhi_accent">#2F6FEB</color>
+</resources>

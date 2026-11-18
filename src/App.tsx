@@ -32,6 +32,8 @@ import { Settings } from './pages/Settings'
 import { ProfilePage } from './pages/Profile'
 import { ConflictDialog, LockScreen, MountHintDialog, UnlockDialog, Welcome } from './pages/Welcome'
 import { applyFilter } from './lib/filter'
+import { isNative } from './lib/nativeFs'
+import { nativeSetStatusBar } from './lib/nativeBridge'
 import { cn, relativeTime } from './lib/utils'
 
 /** 明暗模式 + 主题色 + 对比度：只改 <html data-*>，CSS 变量接管一切 */
@@ -65,6 +67,23 @@ function ThemeSync() {
   useEffect(() => {
     document.documentElement.dataset.contrast = highContrast ? 'high' : 'normal'
   }, [highContrast])
+  /* 原生端：状态栏底色始终等于主界面 --bg，图标明暗跟随深浅主题；
+     刘海屏下状态栏由系统绘制在 cutout 区域，颜色一致才不会出现两截白条。 */
+  useEffect(() => {
+    if (!isNative()) return
+    const apply = () => {
+      const root = document.documentElement
+      const raw = getComputedStyle(root).getPropertyValue('--bg').trim()
+      const fallback = root.dataset.theme === 'dark' ? '#0e1014' : '#f3f4f6'
+      const color = /^#[0-9a-f]{3,8}$/i.test(raw) ? raw : fallback
+      void nativeSetStatusBar(color, root.dataset.theme !== 'dark')
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', color)
+    }
+    apply()
+    const mo = new MutationObserver(apply)
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => mo.disconnect()
+  }, [])
   /* 把当前主题色算成两个 rgb 三元组交给玻璃组件：
      --gts-tint 是壳体白玻璃里掺的那点色，--gts-sel-rgb 是选中胶囊的底色。
      这两处以前写死 255,255,255，所以怎么换主题色导航都是纯白的。 */
@@ -96,12 +115,20 @@ function ThemeSync() {
 }
 
 export default function App() {
-  const store = useStore()
-  const ready = store.ready
-  const init = store.init
+  /* 细粒度订阅：任何一条人脉字段改动不再让整个 App 重渲染，
+     只让真正用到它的页面组件更新——安卓端滚动/输入明显更跟手。 */
+  const ready = useStore((s) => s.ready)
+  const init = useStore((s) => s.init)
+  const prefs = useStore((s) => s.prefs)
+  const persons = useStore((s) => s.persons)
+  const fieldDefinitions = useStore((s) => s.fieldDefinitions)
+  const groups = useStore((s) => s.groups)
+  const tags = useStore((s) => s.tags)
+  const timelineEvents = useStore((s) => s.timelineEvents)
+  const attachments = useStore((s) => s.attachments)
+  const defaultFrequencyDays = useStore((s) => s.settings.reminderPolicy.defaultFrequencyDays)
   const route = useUI((s) => s.route)
   const navigate = useUI((s) => s.navigate)
-  const prefs = store.prefs
   const [bootstrapped, setBootstrapped] = useState(false)
 
   useEffect(() => {
@@ -165,21 +192,22 @@ export default function App() {
     contentRef.current?.scrollTo({ top: 0 })
   }, [route])
 
-  // 注册 Service Worker
+  // 原生资源全打进 APK，Service Worker 只会带来额外的注册/缓存开销
   useEffect(() => {
+    if (isNative()) return
     if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       navigator.serviceWorker.register('./sw.js').catch(() => undefined)
     }
   }, [])
 
   const ctx = useMemo(
-    () => buildCtx(store),
-    [store.persons, store.fieldDefinitions, store.groups, store.tags, store.timelineEvents, store.attachments],
+    () => buildCtx(useStore.getState()),
+    [persons, fieldDefinitions, groups, tags, timelineEvents, attachments],
   )
 
   const reminderCount = useMemo(() => {
-    const days = store.settings.reminderPolicy.defaultFrequencyDays
-    return store.persons.filter((p) => {
+    const days = defaultFrequencyDays
+    return persons.filter((p) => {
       const last = ctx.timelineEvents
         .filter((e) => e.personId === p.id)
         .map((e) => +new Date(e.occurredAt))
@@ -187,7 +215,7 @@ export default function App() {
       const base = last ?? +new Date(p.createdAt)
       return (Date.now() - base) / 86400000 >= (p.reminderFrequencyDays ?? days)
     }).length
-  }, [store.persons, store.settings.reminderPolicy.defaultFrequencyDays, ctx.timelineEvents])
+  }, [persons, defaultFrequencyDays, ctx.timelineEvents])
 
   if (!ready) {
     return (

@@ -8,6 +8,7 @@ import {
   readLocalPackage,
   writeLocalPackage,
 } from './nativeFs'
+import { nativePickPackage } from './nativeBridge'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -237,7 +238,26 @@ export function isNativeHandle(handle: any): boolean {
 }
 
 export async function pickPackageFile(): Promise<OpenedFile | null> {
-  if (isNative()) return pickNativePackage()
+  if (isNative()) {
+    // 系统文件浏览器（SAF）可从设备任意文件夹选包；原生层已把文件复制到 cunzhi 文件夹，
+    // 这里直接以副本为句柄，之后所有写回都落在应用数据目录，不依赖原文件的临时授权。
+    try {
+      const copied = await nativePickPackage()
+      if (!copied) return null
+      const text = await readLocalPackage(copied.path)
+      const now = Date.now()
+      return {
+        handle: { __native: true, name: copied.name, path: copied.path, size: copied.size, lastModified: now },
+        name: copied.name,
+        text,
+        lastModified: now,
+        size: copied.size,
+      }
+    } catch {
+      // 系统选择器异常时退回应用内数据包列表，保证功能仍可用
+      return pickNativePackage()
+    }
+  }
   const w = window as any
   if (typeof w.showOpenFilePicker === 'function' && pickerAllowed()) {
     try {

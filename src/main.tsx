@@ -1,6 +1,11 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
+import { isNative } from './lib/nativeFs'
+
+// 原生端打标记：样式层据此关闭重型玻璃模糊等 WebView 上昂贵的合成效果
+if (isNative()) document.documentElement.classList.add('native')
+
 import './styles/base.css'
 import './styles/app.css'
 import './styles/pages.css'

@@ -1080,11 +1080,11 @@ function PackageSettings() {
                 setBusy(true)
                 const res = await store.openPackage()
                 setBusy(false)
-                if (res.ok) toast(res.message ?? '数据包已加载', 'success')
+                if (res.ok) toast(res.message ?? (isNative() ? '已复制到本地 cunzhi 文件夹并挂载' : '数据包已加载'), 'success')
                 else if (!res.needsPassword) toast(res.message ?? '未打开数据包', 'warn')
               }}
             >
-              <FolderClock size={14} /> 打开数据包
+              <FolderClock size={14} /> {isNative() ? '挂载本地数据包' : '打开数据包'}
             </button>
             <button
               className="btn"
