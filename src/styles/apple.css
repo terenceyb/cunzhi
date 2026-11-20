@@ -2494,3 +2494,161 @@ html.native .content {
   }
 }
 
+
+/* ================================================================================
+   v3.5 · 人脉详情页排版放松 / 字号放大
+   ----------------------------------------------------------------------------
+   用 .detail-panel 精确限定在详情页，不触碰新建/编辑人脉表单与设置页。
+   阅读态字号统一 +11%~15%，编辑态同步微调但保持略小于阅读态的协调关系；
+   字段行、分区、时间线的行距与留白整体放宽，缓解紧凑感。
+   ================================================================================ */
+
+/* ---- 1. 头部：姓名、元信息放大，垂直留白放松 ---- */
+.detail-panel .dhead {
+  padding: 16px 18px 14px;
+  gap: 12px;
+}
+.detail-panel .dhead-main {
+  gap: 5px;
+}
+.detail-panel .dhead .detail-name {
+  font-size: 20px;
+}
+.detail-panel .dhead-meta {
+  font-size: 13px;
+  line-height: 18px;
+}
+
+/* ---- 2. 分区：内边距与标题字号放大 ---- */
+.detail-panel .detail-section {
+  padding: 18px 18px;
+}
+.detail-panel .detail-section-head {
+  margin-bottom: 12px;
+}
+.detail-panel .detail-section-head h4 {
+  font-size: 15px;
+}
+
+/* ---- 3. 字段行：标签与值放大、行高放宽 ---- */
+.detail-panel .field-row {
+  min-height: 50px;
+  padding: 11px 8px;
+}
+.detail-panel .field-row .fk {
+  flex-basis: 104px;
+  font-size: 14px;
+  line-height: 26px;
+}
+.detail-panel .field-row .fv {
+  font-size: 15px;
+  line-height: 26px;
+}
+.detail-panel .field-row .fv-view {
+  min-height: 26px;
+}
+.detail-panel .field-row.is-empty {
+  min-height: 40px;
+  padding-top: 7px;
+  padding-bottom: 7px;
+}
+.detail-panel .field-row.is-empty .fk,
+.detail-panel .field-row.is-empty .fv {
+  font-size: 13.5px;
+  line-height: 24px;
+}
+
+/* ---- 4. 编辑态：同步放大但保持略小于阅读态 ---- */
+.detail-panel .field-row .fv-editor .input,
+.detail-panel .field-row .fv-editor select.input,
+.detail-panel .field-row .fv-editor .pk-trigger {
+  height: 30px;
+  min-height: 30px;
+  font-size: 13.5px;
+  line-height: 28px;
+}
+.detail-panel .field-row .fv-editor .input::placeholder,
+.detail-panel .field-row .fv-editor .textarea::placeholder {
+  font-size: 13px;
+}
+.detail-panel .field-row .fv-editor .textarea {
+  min-height: 56px;
+  height: 56px;
+  font-size: 13.5px;
+}
+.detail-panel .field-row .fv-editor .btn.sm {
+  height: 30px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+/* ---- 5. 联系方式行：字号与行高 ---- */
+.detail-panel .contact-line {
+  min-height: 38px;
+  padding: 2px 6px;
+}
+.detail-panel .cl-label {
+  font-size: 14px;
+}
+.detail-panel .cl-value {
+  font-size: 15px;
+}
+.detail-panel .contact-line.is-empty .cl-value {
+  font-size: 14px;
+}
+
+/* ---- 6. 时间线：内容、元信息字号与条目留白 ---- */
+.detail-panel .tl-content {
+  font-size: 14.5px;
+  line-height: 1.65;
+}
+.detail-panel .tl-meta {
+  font-size: 12.5px;
+}
+.detail-panel .tl-item {
+  padding: 10px 0 15px;
+}
+
+/* ---- 7. 置顶备注 / 提示小字 ---- */
+.detail-panel .pinned-note {
+  font-size: 14px;
+  margin-top: 14px;
+  margin-bottom: 2px;
+}
+.detail-panel .pinned-note .pin-label {
+  font-size: 11.5px;
+}
+.detail-panel .field-hint {
+  font-size: 12.5px;
+}
+
+/* ---- 8. 窄屏：姓名略收，标签列收窄避免挤压输入区 ---- */
+@media (max-width: 767px) {
+  .detail-panel .dhead {
+    padding: 14px 14px 12px;
+  }
+  .detail-panel .dhead .detail-name {
+    font-size: 18px;
+  }
+  .detail-panel .dhead-meta {
+    font-size: 12.5px;
+  }
+  .detail-panel .detail-section {
+    padding: 16px 14px;
+  }
+  .detail-panel .field-row {
+    padding: 10px 4px;
+  }
+  .detail-panel .field-row .fk {
+    flex-basis: 90px;
+    font-size: 13.5px;
+  }
+  .detail-panel .field-row .fv {
+    font-size: 14.5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .detail-panel .field-row,
+  .detail-panel .field-row .fv-view { transition-duration: 1ms; }
+}
